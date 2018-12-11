@@ -4,25 +4,9 @@
 module.exports = {
   
   configureWebpack: {
-    // plugins: [
-    //   new CopyWebpackPlugin([{
-    //     from: './src/opencv/opencv.js',
-    //     to: '.'
-    //   }])
-    // ],
-    // module: {
-    //   rules: [
-    //     {
-    //       test: /\.worker\.js$/,
-    //       use: { loader: 'worker-loader' }
-    //     }
-    //   ]
-    // }
-    // optimization: {
-    //   splitChunks: {
-    //     chunks: 'all'
-    //   }
-    // }
+    baseUrl: process.env.NODE_ENV === 'production'
+      ? '/imgalign/'
+      : '/'
     // module: {
     //   rules: [
     //     {
