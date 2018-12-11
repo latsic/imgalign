@@ -28,6 +28,7 @@ export class LocalStorageUtils {
     const value = Number(strValue);
     return isNaN(Number(value)) ? strValue : value;
   }
+  
 
   static getIdValueArr(ids) {
     const idValueArr = []
