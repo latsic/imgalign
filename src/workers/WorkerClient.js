@@ -32,7 +32,7 @@ export class WorkerClient {
 
     if(enforcer != singletonEnforcer) throw 'Cannot construct Singleton!';
     
-    this.worker = new Worker('/imgalign.worker.js');
+    this.worker = new Worker('js/imgalign.worker.js');
     this.worker.onmessage = e => this._handleMessage(e);
     this.worker.onerror = e => this._handleError(e);
   }

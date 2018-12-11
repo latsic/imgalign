@@ -578,7 +578,7 @@ onmessage = function(e) {
 
   switch(e.data.msg) {
     case msgLoad:
-      self.importScripts('/opencv_3_4_custom.js');
+      self.importScripts('./opencv_3_4_custom.js');
       // eslint-disable-next-line no-console
       // console.log('[webworker_matcher][importScripts][opencv.js][ms]', new Date() - startTime);
       consoleLog('[webworker_matcher][importScripts][opencv.js][ms]', new Date() - startTime);
