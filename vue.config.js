@@ -2,11 +2,11 @@
 // const CopyWebpackPlugin = require('copy-webpack-plugin')
 
 module.exports = {
-  
-  configureWebpack: {
-    baseUrl: process.env.NODE_ENV === 'production'
-      ? '/imgalign/'
-      : '/'
+  baseUrl: process.env.NODE_ENV === 'production'
+    ? '/imgalign/'
+    : '/'
+  // configureWebpack: {
+    
     // module: {
     //   rules: [
     //     {
@@ -20,5 +20,5 @@ module.exports = {
     //     }
     //   ]
     // }
-  }
+  // }
 }
