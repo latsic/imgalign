@@ -12,7 +12,11 @@
           >
             <v-flex>
               <div id="nav">
-                <app-navbar />
+                <app-navbar
+                  :busyWorker="$store.getters['worker/busy']"
+                  :busyInput="$store.getters['input/busyAny'] || $store.getters['multiInput/busy']"
+                  :workerReady="$store.getters['worker/ready']"
+                />
               </div>
               <router-view />
             </v-flex>
@@ -40,7 +44,9 @@ export default {
       () => this.$store.getters['settings/param'](paramTypes.logInfoEnabled.id),
       () => this.$store.getters['settings/param'](paramTypes.logErrorEnabled.id),
       () => this.$store.getters['settings/param'](paramTypes.logAssertEnabled.id),
-      () => this.$store.getters['settings/param'](paramTypes.logExternEnabled.id));
+      () => this.$store.getters['settings/param'](paramTypes.logExternEnabled.id),
+      (msg) => this.$store.commit('logs/addMessage', msg),
+      (msg) => this.$store.commit('worker/currentActionInfo', msg));
   }
 }
 </script>

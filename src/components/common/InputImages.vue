@@ -3,7 +3,7 @@
     row
     justify-space-around
     wrap
-    align-center
+    align-start
   >
     <v-flex
       v-for="imageName of imageNames"
@@ -12,43 +12,52 @@
       sm6
       pa-2
     > 
-      <div
-        :style="{
-          position: 'relative',
-          border: `1px solid ${$vuetify.theme.primary}`,
-          margin: '',
-          padding: '0.3rem',
-        }"
-      >      
-        <img
+      <v-layout
+        justify-center
+      > 
+        <div
           :style="{
-            cursor: 'crosshair',
-            display: 'block',
+            position: 'relative',
+            border: $store.getters['input/imageDataValid'](imageName) ? `1px solid ${$vuetify.theme.primary}` : null,
+            margin: '',
+            padding: '0.3rem',
           }"
-          :class="{
-            'drag-over-image-invalid': dragInfo.isInsideImage[imageName],
-            'drag-over-image-maybevalid': dragInfo.mayContainImageData[imageName],
-            'drag-over-image-valid': dragInfo.containsImageData[imageName]
-          }"
-          :id="imageName"
-          :ref="imageName"
-          width="100%"
-          :src="$store.getters['input/imageDataUrl'](imageName)"
-          @click.capture="event => addPoint(event, imageName)"
-          @mousedown.stop="(e) => {e.preventDefault()}"
-          @dragenter.prevent="e => dragEnter(imageName, e)"
-          @dragleave="e => dragLeave(imageName, e)"
-          @dragover.prevent="e => dragOver(imageName, e)"
-          @drop.prevent="e => dragDrop(imageName, e)"
-        >
-        <app-polygon
-          :ref="imageName + 'polygon'"
-          v-if="imageRef(imageName) && polygons[imageName] && polygons[imageName].pts.length > 0"
-          :width="imageWidth(imageName)"
-          :height="imageHeight(imageName)"
-          :polygon="polygonScaled(imageName)"
-        />
-      </div>
+        >      
+          <img
+            :style="{
+              cursor: 'crosshair',
+              display: 'block',
+              'max-width': '100%',
+              'max-height': '400px',
+              'width': 'auto',
+              'height': 'auto'
+            }"
+            :class="{
+              'drag-over-image-invalid': dragInfo.isInsideImage[imageName],
+              'drag-over-image-maybevalid': dragInfo.mayContainImageData[imageName],
+              'drag-over-image-valid': dragInfo.containsImageData[imageName],
+            }"
+            class="transparent-pattern"
+            :id="imageName"
+            :ref="imageName"
+            
+            :src="$store.getters['input/imageDataUrl'](imageName)"
+            @click.capture="event => addPoint(event, imageName)"
+            @mousedown.stop="(e) => {e.preventDefault()}"
+            @dragenter.prevent="e => dragEnter(imageName, e)"
+            @dragleave="e => dragLeave(imageName, e)"
+            @dragover.prevent="e => dragOver(imageName, e)"
+            @drop.prevent="e => dragDrop(imageName, e)"
+          >
+          <app-polygon
+            :ref="imageName + 'polygon'"
+            v-if="imageRef(imageName) && polygons[imageName] && polygons[imageName].pts.length > 0"
+            :width="imageWidth(imageName)"
+            :height="imageHeight(imageName)"
+            :polygon="polygonScaled(imageName)"
+          />
+        </div>
+      </v-layout>
     </v-flex>
   </v-layout>  
 </template>
@@ -58,6 +67,7 @@
 import Polygon from '@/components/common/Polygon';
 import { DragEventInfo } from '@/utilities/DragEventInfo';
 import { RemoteImage } from '@/utilities/RemoteImage';
+import { fixedImageName } from '@/models/constants/images';
 
 const imgIndex = 0;
 
@@ -152,10 +162,12 @@ export default {
       }
       else {
         const imageUrlBase64 = dragEventInfo.imageUrlBase64;
-        if(imageUrlBase64) {
+        if(imageUrlBase64 && (imageName == fixedImageName || !dragEventInfo.projected)) {
           this.$store.dispatch('input/imageUrlBase64', {
             name: imageName,
-            url: imageUrlBase64
+            url: imageUrlBase64,
+            fieldOfView: dragEventInfo.fieldOfView,
+            projected: dragEventInfo.projected
           });
         }
         else {
@@ -229,6 +241,24 @@ export default {
   }
   .drag-over-image-valid {
     outline: 2px solid green;
+  }
+  .transparent-pattern {
+    background: 
+      repeating-linear-gradient(
+        to right,
+        #ccccff99,
+        #ccccff99 5px,
+        #eeeeff99 5px,
+        #eeeeff99 10px
+      ),
+      repeating-linear-gradient(
+        to bottom,
+        #cccc88ff,
+        #cccc88ff 5px,
+        #999966ff 5px,
+        #999966ff 10px
+      );
+
   }
   
 </style>

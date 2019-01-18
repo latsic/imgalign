@@ -133,6 +133,26 @@ public:
 };
 
 
+class CV_EXPORTS_W ImgStitch
+{
+  public:
+    virtual ~ImgStitch();
+
+    CV_WRAP virtual void set(
+        CV_IN_OUT std::vector<int> &valueTypes,
+		CV_IN_OUT std::vector<float> &values);
+    CV_WRAP virtual int stitch(
+        CV_IN_OUT std::vector<float> &fieldsOfView,
+        OutputArray stitchedImage);
+    CV_WRAP virtual void stitchStart(
+      CV_IN_OUT std::vector<float> &fieldsOfView,
+      OutputArray stitchedImage,
+      CV_IN_OUT std::vector<int> &stitchIndices);
+    CV_WRAP virtual int stitchNext(OutputArray stitchedImage);
+
+    CV_WRAP static Ptr<ImgStitch> create(InputArrayOfArrays images);
+};
+
 class CV_EXPORTS_W ImgAlign
 {
   public:
@@ -165,19 +185,20 @@ class CV_EXPORTS_W ImgAlign
 
     CV_WRAP virtual void getImageBlended(
         InputArray transMatrix,
-        float weight,
+        double weight,
+        int doOverlay,
         OutputArray blendImage);
 
     CV_WRAP virtual void getImageBlendedPolygonFixedImage(
         InputArray transMatrix,
-        float weight,
+        double weight,
         int doOverlay,
         CV_IN_OUT std::vector<Point> &polygon,
         OutputArray blendImage);
 
     CV_WRAP virtual void getImageBlendedPolygonMovingImage(
         InputArray transMatrix,
-        float weight,
+        double weight,
         int doOverlay,
         CV_IN_OUT std::vector<Point> &polygon,
         OutputArray blendImage);
@@ -186,7 +207,7 @@ class CV_EXPORTS_W ImgAlign
         InputArray transMatrix,
         CV_IN_OUT std::vector<Point> &seedPts,
         CV_IN_OUT std::vector<int> &floodFillTolerances,
-        float weight,
+        double weight,
         int doOverlay,
         OutputArray blendImage);
 
@@ -194,8 +215,14 @@ class CV_EXPORTS_W ImgAlign
         InputArray transMatrix,
         CV_IN_OUT std::vector<Point> &seedPts,
         CV_IN_OUT std::vector<int> &floodFillTolerances,
-        float weight,
+        double weight,
         int doOverlay,
+        OutputArray blendImage);
+
+    CV_WRAP virtual void getStitchedImage(
+        InputArray transMatrix,
+        CV_IN_OUT std::vector<Point> &goodMatchesFixedImage,
+        double weight,
         OutputArray blendImage);
 
     CV_WRAP virtual void getFixedImageWithMatchedPoints(
@@ -219,6 +246,20 @@ class CV_EXPORTS_W ImgAlign
         CV_IN_OUT std::vector<int> &keyPointsN,
         CV_IN_OUT std::vector<cv::Point> &fixedImageMaskPolygon,
 		CV_IN_OUT std::vector<cv::Point> &movingImageMaskPolygon);
+
+    CV_WRAP virtual double stitch(
+        InputArray transMatrix,
+        int projectionType1,
+        int projectionType2,
+        int blend,
+        int transferColors,
+        double fieldOfViewFixedImage,
+        double fieldOfViewMovingImage,
+        int calcYaw2,
+        int calcPitch2,
+        double yaw1, double pitch1,
+        double yaw2, double pitch2,
+        OutputArray stitchedImage);
 
     CV_WRAP static Ptr<ImgAlign> create(
         InputArray fixedImage,

@@ -5,15 +5,16 @@
     <app-action-bar
       :compute="compare"
       :compute-success="$store.getters['worker/results/success'](compareName)"
-      :compute-time="$store.getters['worker/results/time'](compareName)"
       :worker-ready="$store.getters['worker/ready']"
-      :worker-busy="$store.getters['worker/busy']"
-      :fail-text="'Unknown Error'"
+      :worker-busy-compute="$store.getters['worker/busyCompute']"
+      :worker-busy-image="$store.getters['worker/busyImage']"
+      :worker-action-info="$store.getters['worker/currentActionInfo']"
+      :input-busy-image="$store.getters['input/busyFixedImage'] || $store.getters['input/busyMovingImage']"
+      :fail-text="errorText"
       :action-text="'Compare!'"
-      :computeText="'Detecting features'"
       :action-button-disabled-condition="detTypeValues.length == 0"
       :result-valid="$store.getters['worker/results/imageDataValid'](compareName)"
-      @deleteResult="$store.commit('worker/results/imageData', { name: compareName, imageData: null })"
+      @deleteResult="deleteResult"
     />
 
     <app-compare
@@ -113,7 +114,12 @@ export default {
     },
     resultValid() {
       return this.$store.getters['worker/results/imageDataValid'](compareName);
-    }
+    },
+    errorText() {
+      const e = this.$store.getters['worker/error'];
+      if(e && e.message) return e.message;
+      return 'Unknown error';
+    },
   },
   methods: {
     async compare() {
@@ -133,6 +139,10 @@ export default {
           settings: this.settings
         }
       );
+    },
+    deleteResult() {
+      this.$store.commit('worker/results/imageData', { name: compareName, imageData: null });
+      this.$store.dispatch('worker/resetWorkerData');
     },
     changed(obj) {
       this.$store.dispatch('settings/param', obj);

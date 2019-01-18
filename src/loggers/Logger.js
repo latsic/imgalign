@@ -36,7 +36,9 @@ export class Logger {
     isInfoLogEnabledFn,
     isErrorLogEnabledFn,
     isAssertLogEnabledFn,
-    isExternLogEnabled) {
+    isExternLogEnabled,
+    otherLogFn,
+    userInfoFn) {
 
     if(!this[singleton]) {
       this[singleton] = new Logger(singletonEnforcer);
@@ -45,35 +47,80 @@ export class Logger {
     this[singleton]._errorOn = isErrorLogEnabledFn;
     this[singleton]._assertOn = isAssertLogEnabledFn;
     this[singleton]._externOn = isExternLogEnabled;
+    this[singleton]._otherLogFn = otherLogFn;
+    this[singleton]._userInfoFn = userInfoFn;
   }
 
   log() {
-    if(!this._infoOn()) return;
-    if(!this._externOn() && this.isExtern(...arguments)) return;
 
-    this._consoleStdLog(...arguments);
+    if(this._userInfoFn) {
+      const userInfoMsg = this.userInfo(...arguments);
+      if(userInfoMsg) {
+        this._userInfoFn(userInfoMsg);
+      }
+    }
+
+    if(this._externOn() && this.isExtern(...arguments)) {
+      this._consoleStdLog(...arguments);
+      this.logOther(...arguments);
+    }
+    else if(this._infoOn()){
+      this._consoleStdLog(...arguments);
+      this.logOther(...arguments);
+    }
   }
   error() {
     if(!this._errorOn()) return;
     if(!this._externOn() && this.isExtern(...arguments)) return;
     
     this._consoleStdError(...arguments);
+    this.logOther(...arguments);
   }
   assert() {
     if(!this._assertOn()) return;
     if(!this._externOn() && this.isExtern(...arguments)) return;
 
     this._consoleStdAssert(...arguments);
+    this.logOther(...arguments);
   }
   info() {
-    if(!this._infoOn()) return;
-    if(!this._externOn() && this.isExtern(...arguments)) return;
-
-    this._consoleStdInfo(...arguments);
+    if(this._externOn() && this.isExtern(...arguments)) {
+      this._consoleStdInfo(...arguments);
+      this.logOther(...arguments);
+    }
+    else if(this._infoOn()){
+      this._consoleStdInfo(...arguments);
+      this.logOther(...arguments);
+    }
   }
 
   isExtern() {
-    return arguments.length > 0 && arguments[0] == 'extern';
+    return arguments.length > 0 && arguments[0] == 'opencv';
+  }
+  
+  userInfo() {
+
+    if(arguments.length == 0) return null;
+
+    let userInfoStr = ''
+    for(let i = 0; i < arguments.length; ++i) {
+      if(userInfoStr) {
+        userInfoStr += ' ' + arguments[i];
+      }
+      else if(typeof arguments[i] == 'string' && arguments[i].startsWith('user-info ')) {
+        userInfoStr = arguments[i].replace('user-info ', '');
+      }
+    }
+    return userInfoStr;
+  }
+
+  logOther() {
+    if(!this._otherLogFn) return;
+    let messageLine = '';
+    for(const arg of arguments) {
+      messageLine += arg + ' ';
+    }
+    this._otherLogFn(messageLine);
   }
 
 }

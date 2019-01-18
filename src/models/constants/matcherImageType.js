@@ -3,6 +3,8 @@
 export const matcherImageType = Object.freeze({
   aligned: 'Aligned',
   blended: 'Blended',
+  stitched: 'Stitched',
+  stitchedWithKeyPoints: 'Stitched key points',
   sideBySideGood: 'Side by side good matches',
   sideBySideGoodInliers: 'Side by side inlier matches',
   selectionImage1: 'Align selection image 1',

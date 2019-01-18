@@ -1,14 +1,18 @@
 
 import { WorkerMatchResult } from '@/models/WorkerMatchResult';
 import { WorkerCompareResult } from '@/models/WorkerCompareResult';
+import { WorkerStitchResult } from '@/models/WorkerStitchResult';
+import { WorkerMultiStitchResult } from '@/models/WorkerMultiStitchResult';
 
-import { matchName, compareName } from '@/models/constants/images';
+import { matchName, compareName, stitchName, multiStitchName } from '@/models/constants/images';
 import { ImageDataConversion } from '@/utilities/ImageDataConversion';
 
 const state = {
   imageResults: {
     [matchName]: new WorkerMatchResult(matchName, ImageDataConversion.imageSrcFromImageData),
-    [compareName]: new WorkerCompareResult(compareName, ImageDataConversion.imageSrcFromImageData)
+    [compareName]: new WorkerCompareResult(compareName, ImageDataConversion.imageSrcFromImageData),
+    [stitchName]: new WorkerStitchResult(stitchName, ImageDataConversion.imageSrcFromImageData),
+    [multiStitchName]: new WorkerMultiStitchResult(stitchName, ImageDataConversion.imageSrcFromImageData)
   }
 }
 
@@ -44,12 +48,24 @@ const getters = {
   },
   compareKeyPointsCountPerDet(state) {
     return state.imageResults[compareName].compareKeyPointsCountPerDet;
+  },
+
+  stitcherProjected(state) {
+    return state.imageResults[stitchName].projected;
+  },
+  stitcherFieldOfView(state) {
+    return state.imageResults[stitchName].fieldOfView; 
+  },
+
+  multiStitcherFieldOfView(state) {
+    return state.imageResults[multiStitchName].fieldOfView;
   }
 }
 
 const mutations = {
   imageData(state, { name, imageData }) {
-    state.imageResults[name].imageData = imageData;
+    if(!imageData) state.imageResults[name].imageData = null;
+    else state.imageResults[name].imageData = imageData;
   },
   success(state, { name, success }) {
     state.imageResults[name].success = success;
@@ -77,6 +93,17 @@ const mutations = {
   },
   compareKeyPointsCountPerDet(state, valueArr) {
     state.imageResults[compareName].compareKeyPointsCountPerDet = valueArr;
+  },
+
+  stitcherProjected(state, value) {
+    return state.imageResults[stitchName].projected = value;
+  },
+  stitcherFieldOfView(state, value) {
+    return state.imageResults[stitchName].fieldOfView = value; 
+  },
+
+  multiStitcherFieldOfView(state, value) {
+    return state.imageResults[multiStitchName].fieldOfView = value;
   }
 }
 

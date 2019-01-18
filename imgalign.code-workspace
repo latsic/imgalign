@@ -3,5 +3,10 @@
 		{
 			"path": "."
 		}
-	]
+	],
+	"settings": {
+		"files.exclude": {
+			"opencv_src": true
+		}
+	}
 }

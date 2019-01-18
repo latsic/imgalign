@@ -12,12 +12,13 @@ export class DragEventInfo {
     return this.dragEvent.dataTransfer.types.some(value => {
       return value == 'Files'
           || value == 'text/html'
-          || value == 'URL';
+          || value == 'URL'
+          || value == 'text/plain';
     })
   }
 
   get containsImageData() {
-    return this.imageFile || this.imageUrlBase64;
+    return this.imageFile || this.imageUrlBase64 || this.imageTextBase64;
   }
 
   get imageFile() {
@@ -55,6 +56,35 @@ export class DragEventInfo {
     const match = regEx.exec(dataText);
     return match && match.length == 4
       ? match[1]
+      : null;
+  }
+  get imageTextBase64() {
+
+    const dataText = this.dragEvent.dataTransfer.getData('text/plain')
+    if(!dataText) return null;
+
+    const regEx = /(data:image\/([a-zA-Z]*);base64,([^"]*))/;
+    const match = regEx.exec(dataText);
+    return match && match.length == 4
+      ? match[1]
+      : null;
+  }
+
+  get fieldOfView() {
+
+    let val = this.dragEvent.dataTransfer.getData('number/fieldOfView');
+    if(val) val = Number(val);
+    return val && !isNaN(val)
+      ? val
+      : null;
+  }
+
+  get projected() {
+
+    let val = this.dragEvent.dataTransfer.getData('number/projected');
+    if(val) val = Number(val);
+    return val && !isNaN(val)
+      ? val
       : null;
   }
 }

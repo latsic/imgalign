@@ -6,6 +6,7 @@
       :id="id"
       type="file"
       :name="name"
+      :value="value"
       :accept="accept"
       :multiple="multiple"
       @change="fileChanged"
@@ -13,7 +14,7 @@
     <label 
       :for="id"
       :class="`v-btn ${classes}${color} upload-btn`"
-      :style="{padding: '0', margin: '0'}"
+      :style="{padding: '0', margin: '0', 'text-transform': 'none !important'}"
     >
       <slot name="icon-left" />
       {{ icon ? '' : title }}
@@ -129,6 +130,11 @@
         return classString;
       }
     },
+    data() {
+      return {
+        value: ''
+      }
+    },
     methods: {
       fileChanged(e) {
         if(e) {
@@ -147,6 +153,7 @@
             else {
               this.fileChangedCallback(null);
             }
+            this.value = '';
           }
         }
       }

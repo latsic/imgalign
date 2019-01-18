@@ -2,13 +2,58 @@
 
 import { ImageDataConversion } from '@/utilities/ImageDataConversion';
 import { fixedImageName, movingImageName } from '@/models/constants/images';
-import { matchName, compareName } from '@/models/constants/images';
+import { matchName, compareName, stitchName } from '@/models/constants/images';
 import { close_snapDist } from '@/models/constants/polygon';
+import { ExifHelper } from '@/utilities/ExifHelper';
 
 import defaultImage1 from '@/assets/bild1.jpg';
 import defaultImage2 from '@/assets/bild2.jpg';
 import { Polygon } from '@/models/Polygon';
 import { paramTypes } from '@/models/constants/params';
+
+function setFieldOfView(context, imageName, fieldOfView) {
+  context.commit('imageFieldOfView', { name: imageName, fieldOfView });
+
+  if(imageName == fixedImageName) {
+
+    context.dispatch('settings/param', {
+      id: paramTypes.stitch_fieldOfView1.id,
+      value: fieldOfView }, {
+      root: true
+    });
+  }
+  else if(imageName == movingImageName) {
+    context.dispatch('settings/param', {
+      id: paramTypes.stitch_fieldOfView2.id,
+      value: fieldOfView }, {
+      root: true
+    });
+  }
+}
+
+function setAlreadyProjected(context, imageName, value) {
+
+  context.commit('imageProjected', { name: imageName, projected: value });
+
+  if(value) {
+
+    if(imageName == fixedImageName) {
+      context.dispatch('settings/param', {
+        id: paramTypes.stitch_projection.id,
+        value: paramTypes.stitch_projectionTypeNone.id }, {
+        root: true
+      });
+    }
+    else if(imageName == movingImageName) {
+      context.dispatch('settings/param', {
+        id: paramTypes.stitch_projection2.id,
+        value: paramTypes.stitch_projectionTypeNone.id }, {
+        root: true
+      });
+    }
+  }
+
+}
 
 const state = {
 
@@ -20,6 +65,14 @@ const state = {
     [fixedImageName]: null,
     [movingImageName]: null
   },
+  imageFieldOfView: {
+    [fixedImageName]: null,
+    [movingImageName]: null
+  },
+  imageProjected: {
+    [fixedImageName]: false,
+    [movingImageName]: false
+  },
   polygons: {
     [fixedImageName]: new Polygon(),
     [movingImageName]: new Polygon()
@@ -27,6 +80,10 @@ const state = {
   floodFillTolerances: {
     [fixedImageName]: [],
     [movingImageName]: []
+  },
+  busy: {
+    [fixedImageName]: false,
+    [movingImageName]: false
   }
 }
 
@@ -52,6 +109,14 @@ const getters = {
   allImageNames() {
     return [fixedImageName, movingImageName];
   },
+
+  imageFieldOfView(state) {
+    return name => state.imageFieldOfView[name];
+  },
+  imageProjected(state) {
+    return name => state.imageProjected[name];
+  },
+
   polygons(state) {
     return state.polygons;
   },
@@ -129,8 +194,21 @@ const getters = {
       }
       return state.floodFillTolerances[name];
     }
+  },
+  busy(state) {
+    return name => {
+      return state.busy[name];
+    }
+  },
+  busyFixedImage(state) {
+    return state.busy[fixedImageName];
+  },
+  busyMovingImage(state) {
+    return state.busy[movingImageName];
+  },
+  busyAny(state) {
+    return state.busy[fixedImageName] || state.busy[movingImageName];
   }
-
 }
 
 const mutations = {
@@ -140,6 +218,12 @@ const mutations = {
   },
   _imageDataUrl(state, { name, imageDataUrl }) {
     state.imageDataUrls[name] = imageDataUrl;
+  },
+  imageFieldOfView(state, { name, fieldOfView }) {
+    state.imageFieldOfView[name] = fieldOfView;
+  },
+  imageProjected(state, { name, projected }) {
+    state.imageProjected[name] = projected;
   },
   addPolygonPt(state, { name, pt, floodFillTolerance }) {
 
@@ -155,6 +239,9 @@ const mutations = {
   resetPolygon(state, name) {
     state.polygons[name] = new Polygon();
     state.floodFillTolerances[name] = [];
+  },
+  busy(state, { name, value }) {
+    state.busy[name] = value;
   }
 }
 
@@ -170,11 +257,19 @@ const actions = {
       if(!context.getters['imageDataValid'](name)) {
         const img = new Image();
         img.onload = () => {
-          const imageData = ImageDataConversion.imageDataFromImageSrc(img);
-          context.dispatch('imageData', { name, imageData });
-          img.onload = null;
+          try {
+            const imageData = ImageDataConversion.imageDataFromImageSrc(img);
+            context.dispatch('imageData', { name, imageData });
+            img.onload = null;
+          }
+          finally {
+            context.commit('busy', { name, value: false });
+          }
         }
-        img.src = dataUrl;
+        if(dataUrl) {
+          img.src = dataUrl;
+          context.commit('busy', { name, value: true });
+        }
       }
     }
   },
@@ -187,51 +282,88 @@ const actions = {
         const height = Math.floor(imageData.height * scaleF);
         const width = Math.floor(imageData.width * scaleF);
         if(rootGetters['worker/ready'])
-        await dispatch('worker/setInputImageResized', {
-          imageName: name,
-          imageDataSrc: imageData,
-          width,
-          height }, {
-            root: true
-            });
+          await dispatch('worker/setInputImageResized', {
+            imageName: name,
+            imageDataSrc: imageData,
+            width,
+            height }, {
+              root: true
+              });
         return;
       }
     }
 
     commit('imageData', { name, imageData });
     
-    dispatch('_imageDataUrl', {name, imageData });
+    dispatch('_imageDataUrl', { name, imageData });
     commit('resetPolygon', name);
-    
+    commit('imageFieldOfView', { name, fieldOfView: null });
+    commit('imageProjected', { name, projected: false });
     
     if(rootGetters['worker/ready']) {
       dispatch('worker/resetWorkerData', null, { root: true });
       commit('worker/results/imageData', { name: matchName, imageData: null}, { root: true });
       commit('worker/results/imageData', { name: compareName, imageData: null}, { root: true });
+      commit('worker/results/imageData', { name: stitchName, imageData: null}, { root: true });
     }
   },
   _imageDataUrl({ commit }, { name, imageData }) {
     if(!imageData) commit('_imageDataUrl', { name, imageDataUrl: null });
     else commit('_imageDataUrl', { name, imageDataUrl: ImageDataConversion.imageSrcFromImageData(imageData) });
   },
-  imageFile(context, { name, file }) {
+  async imageFile(context, { name, file }) {
 
     const img = new Image(); 
-    img.onload = () => {
-      const imageData = ImageDataConversion.imageDataFromImageSrc(img);
-      context.dispatch('imageData', { name, imageData });
-      img.onload = null;
+    img.onload = async () => {
+      try {
+        const imageData = ImageDataConversion.imageDataFromImageSrc(img);
+        await context.dispatch('imageData', { name, imageData });
+        
+        const fieldOfView = await ExifHelper.getFieldOfViewAsync(img);
+        if(fieldOfView) {
+          setFieldOfView(context, name, fieldOfView);
+        }
+
+        img.onload = null;
+      }
+      finally {
+        context.commit('busy', { name, value: false });
+      }
     }
-    img.src = URL.createObjectURL(file)
+    if(file) {
+      context.commit('busy', { name, value: true });
+      img.src = URL.createObjectURL(file);
+    }
   },
-  imageUrlBase64(context, { name, url }) {
+  async imageUrlBase64(context, { name, url, fieldOfView, projected }) {
     const img = new Image(); 
-    img.onload = () => {
-      const imageData = ImageDataConversion.imageDataFromImageSrc(img);
-      context.dispatch('imageData', { name, imageData });
-      img.onload = null;
+    img.onload = async () => {
+      try {
+        const imageData = ImageDataConversion.imageDataFromImageSrc(img);
+
+        await context.dispatch('imageData', { name, imageData });
+        
+        if(!fieldOfView) {
+          fieldOfView = await ExifHelper.getFieldOfViewAsync(img);
+        }
+
+        if(fieldOfView) {
+          setFieldOfView(context, name, fieldOfView);
+        }
+        if(projected) {
+          setAlreadyProjected(context, name, projected);
+        }
+
+        img.onload = null;
+      }
+      finally {
+        context.commit('busy', { name, value: false });
+      }
     }
-    img.src = url;
+    if(url) {
+      context.commit('busy', { name, value: true });
+      img.src = url;
+    }
   }
 }
 

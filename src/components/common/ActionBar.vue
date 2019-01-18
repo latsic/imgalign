@@ -9,21 +9,30 @@
         pr-2
         align-center
       >
-        <span>
+        <span v-if="!multiple">
           Template image / image to align
+        </span>
+        <span v-else>
+          Choose input
         </span>
         
         <span
           v-if="!workerReady"
           :style="{'color': $vuetify.theme.primary}"
         >
-          Loading OpenCV {{ currentLoadingTime }} ms
+          Loading OpenCV {{ timeStr(currentLoadingTime) }}
         </span>
         <span
-          v-else-if="workerBusy && !showStatusInfo"
+          v-else-if="workerBusyCompute || workerBusyImage && !showStatusInfo && currentComputeTime"
           :style="{'color': $vuetify.theme.primary}"
         >
-          {{ computeText + ' ' + currentComputeTime }} ms
+          {{ timeStr(currentComputeTime) + ', ' + workerActionInfo }}
+        </span>
+        <span
+          v-else-if="(inputBusyImage || resultValid) && !showStatusInfo && transitionDone && workerActionInfo"
+          :style="{'color': $vuetify.theme.primary}"
+          >
+          {{ workerActionInfo }} ...
         </span>
         <span
           v-else-if="resultValid && !showStatusInfo && transitionDone"
@@ -46,14 +55,14 @@
             v-if="showStatusInfo && computeSuccess === 1"
             :style="{'color': $vuetify.theme.success}"
           >
-            <strong>Success, time {{ computeTime }} ms</strong>
+            <strong>Success, time {{ timeStr(computeTimeTotal) }}</strong>
           </span>
           
           <span
             v-else-if="showStatusInfo && computeSuccess === 2"
             :style="{'color': $vuetify.theme.error}"
           >
-            <strong>Low confidence result, time {{ computeTime }} ms</strong>
+            <strong>Low confidence result, time {{ timeStr(computeTimeTotal) }}</strong>
           </span>
           <span
             v-else-if="showStatusInfo && computeSuccess === 0"
@@ -81,19 +90,47 @@
         <v-flex
           d-flex
         >
-          <v-layout>
+          <v-layout v-if="!multiple">
             <app-upload-button
               v-for="(imageName, index) of $store.getters['input/allImageNames']"
               :key="imageName"
               :unique-id="true"
               :style="{'padding': '0 0.2rem 0 0'}"
               :title="`${index + 1} ...`"
-              :disabled="workerBusy"
+              :disabled="workerBusy || inputBusyImage"
               :accept="'image/*'"
+              :multiple="multiple"
               small
               :file-changed-callback="file => onFileChanged(imageName, file)"
             />
           </v-layout>
+          <v-layout v-else>
+            <app-upload-button
+              :key="'multiStitch'"
+              :unique-id="true"
+              :style="{'padding': '0 0.2rem 0 0'}"
+              :title="`Images ...`"
+              :disabled="workerBusy || inputBusyImage"
+              :accept="'image/*'"
+              :multiple="multiple"
+              small
+              :file-changed-callback="files => onMultiFileChanged(files)"
+            />
+            <v-btn
+              :style="{
+                'padding': '0 0.2rem 0 0',
+                margin: '0',
+                'text-transform': 'none !important'
+              }"
+              small
+              color="primary"
+              :disabled="deleteDisabled"
+              @click="$emit('deleteClick');"
+            >
+              Delete
+            </v-btn>
+          </v-layout>
+          
         </v-flex>
         
         <v-flex>
@@ -102,22 +139,16 @@
             align-center
           >
             <v-btn
-              :style="{'text-transform': 'none !important', 'position': 'relative'}"
-              :disabled="actionButtonDisabledCondition || showStatusInfo || !workerReady || !$store.getters['input/allImageDataValid'] || workerBusy"
+              :style="{
+                'text-transform': 'none !important',
+                'position': 'relative'
+              }"
+              :color="(workerBusyCompute && kill != null) ? 'error' : 'primary'"
+              :disabled="computeButtonDisabled"
               small
-              color="primary"
-              @click="runCompute"
+              @click="(workerBusyCompute && kill != null) ? runKill() : runCompute()"
             >
-              {{ actionText }}
-              <div
-                :style="{position: 'absolute'}"
-              >
-                <app-spinner
-                  v-if="!workerReady || workerBusy"
-                  :color="$vuetify.theme.primary"
-                  :style="{transform:'translateX(-0%)'}"
-                />
-              </div>
+              {{ (workerBusyCompute && kill != null) ? 'Abort' : actionText }}
             </v-btn>
           </v-layout>
           
@@ -134,18 +165,20 @@
 
 import UploadButton from '@/components/gui/UploadButton';
 import ViewSpacer from '@/components/layout/ViewSpacer';
-import Spinner from '@/components/gui/Spinner';
 
 export default {
   components: {
     'AppUploadButton': UploadButton,
     'AppViewSpacer': ViewSpacer,
-    'AppSpinner': Spinner,
   },
   props: {
     compute: {
       type: Function,
       required: true
+    },
+    kill: {
+      type: Function,
+      default: null,
     },
     computeSuccess: {
       validator(value) {
@@ -153,17 +186,27 @@ export default {
       },
       required: true
     },
-    computeTime: {
-      validator(value) {
-        return value == null || value instanceof Date || typeof value == 'number';
-      },
-      required: true
-    },
     workerReady: {
       type: Boolean,
       required: true
     },
-    workerBusy: {
+    workerBusyCompute: {
+      type: Boolean,
+      required: true
+    },
+    workerBusyImage: {
+      type: Boolean,
+      required: true
+    },
+    workerActionInfo: {
+      type: String,
+      default: ''
+    },
+    workerlastCompletedActionTime: {
+      type: Number,
+      default: 0 
+    },
+    inputBusyImage: {
       type: Boolean,
       required: true
     },
@@ -175,15 +218,19 @@ export default {
       type: String,
       default: 'Match!'
     },
-    computeText: {
-      type: String,
-      default: 'Calculating alignment'
-    },
     actionButtonDisabledCondition: {
       type: Boolean,
       default: false
     },
     resultValid: {
+      type: Boolean,
+      default: false
+    },
+    multiple: {
+      type: Boolean,
+      default: false
+    },
+    deleteDisabled: {
       type: Boolean,
       default: false
     }
@@ -196,7 +243,9 @@ export default {
       currentComputeTime: 0,
       showStatusInfo: false,
       transitionDone: true,
-      currentLoadingTime: 0
+      currentLoadingTime: 0,
+      computeTimeTotal: 0,
+      killCalled: false
     }
   },
   computed: {
@@ -204,11 +253,27 @@ export default {
       const error = this.$store.getters['worker/error'];
       if(!error) return null;
       return error.message || 'Error!'
+    },
+    workerBusy() {
+      return this.workerBusyCompute || this.workerBusyImage;
+    },
+    computeButtonDisabled() {
+      return this.actionButtonDisabledCondition
+      || this.showStatusInfo
+      || !this.workerReady
+      || (!this.multiple && !this.$store.getters['input/allImageDataValid'])
+      || (this.multiple && this.$store.getters['multiInput/imageCount'] == 0)
+      //|| this.workerBusy
+      || (this.workerBusyCompute && this.kill == null)
+      || (this.multiple && this.inputBusyImage);
     }
   },
   methods: {
     onFileChanged(name, file) {
       this.$store.dispatch('input/imageFile', { name, file });
+    },
+    async onMultiFileChanged(files) {
+      this.$store.dispatch('multiInput/imageFiles', files);
     },
     afterEnter() {
       this.showStatusInfo = false;
@@ -216,19 +281,28 @@ export default {
     },
     afterLeave() {
       this.transitionDone = true;
+      this.currentComputeTime = null;
+    },
+    runKill() {
+      this.killCalled = true;
+      this.kill();
     },
     async runCompute() {
-
+      this.killCalled = false;
       this.showStatusInfo = false;
       this.startIntervalCurrentComputeTime();
+      const startTime = new Date();
 
       await this.compute();
 
-      this.showStatusInfo = true;
-      setTimeout(() => {
-        // just to be on the save side
-        this.showStatusInfo = false;
-      }, 10000);
+      this.computeTimeTotal = new Date() - startTime;
+      if(!this.killCalled) {
+        this.showStatusInfo = true;
+        setTimeout(() => {
+          // just to be on the save side
+          this.showStatusInfo = false;
+        }, 10000);
+      }    
     },
     startIntervalCurrentComputeTime() {
 
@@ -238,8 +312,9 @@ export default {
       if(!this.showStatusInfo) {
         const intervalId = setInterval(() => {
           this.currentComputeTime = new Date() - startTime;
-          if(this.showStatusInfo) {
+          if(this.showStatusInfo || this.killCalled) {
             clearInterval(intervalId);
+            if(this.killCalled) this.killCalled = false;
           }
         }, 100);
       }
@@ -254,9 +329,26 @@ export default {
           this.currentLoadingTime = new Date() - startTime;
           if(this.workerReady) {
             clearInterval(intervalId);
+            this.currentLoadingTime = 0;
           }
         }, 150);
       }
+    },
+    timeStr(timeMs) {
+      if(timeMs <= 0) return '';
+      if(timeMs < 1000) {
+        return timeMs + ' ms';
+      }
+      if(timeMs < 10000) {
+        return (timeMs / 1000.0).toFixed(3) + ' s';
+      }
+      if(timeMs < 100000) {
+        return (timeMs / 1000.0).toFixed(2) + ' s';
+      }
+      if(timeMs < 600000) {
+        return (timeMs / 1000.0).toFixed(1) + ' s';
+      }
+      return `${(timeMs / 600000).toFixed(0)} m, ${(timeMs % 600000)} s`;
     }
   }
 }
@@ -269,7 +361,6 @@ export default {
   .status-info-enter-to {
     opacity: 0.0;
   }
- 
   .status-info-leave{
     opacity: 0;
   }

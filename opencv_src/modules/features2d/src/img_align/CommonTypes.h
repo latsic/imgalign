@@ -34,6 +34,9 @@ namespace imgalign {
   typedef const std::vector<cv::Point>            TConstPoints;
   typedef std::vector<bool>                       TBools;
   typedef cv::Scalar                              TColor;
+
+  template <typename T>
+  using TVector2D = std::vector<std::vector<T>>;              
 }
 
 #endif

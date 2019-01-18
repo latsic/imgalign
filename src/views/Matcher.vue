@@ -11,12 +11,7 @@
         <span
           :style="{'white-space': 'nowrap'}"
         >
-          current detector:
-        </span>
-        <span
-          class="caption font-weight-bold"
-        >
-          {{ detTypeName }}
+          detector: <strong>{{ detTypeName }} </strong>
         </span>
       </div>
       
@@ -27,14 +22,15 @@
       <app-action-bar
         :compute="match"
         :compute-success="$store.getters['worker/results/success'](matchName)"
-        :compute-time="$store.getters['worker/results/time'](matchName)"
         :worker-ready="$store.getters['worker/ready']"
-        :worker-busy="$store.getters['worker/busy']"
-        :fail-text="'No match found!'"
+        :worker-busy-compute="$store.getters['worker/busyCompute']"
+        :worker-busy-image="$store.getters['worker/busyImage']"
+        :worker-action-info="$store.getters['worker/currentActionInfo']"
+        :input-busy-image="$store.getters['input/busyFixedImage'] || $store.getters['input/busyMovingImage']"
+        :fail-text="errorText"
         :action-text="'Match!'"
-        :computeText="'Calculating alignment'"
         :result-valid="$store.getters['worker/results/imageDataValid'](matchName)"
-        @deleteResult="$store.commit('worker/results/imageData', { name: matchName, imageData: null })"
+        @deleteResult="deleteResult"
       />
 
       <v-layout
@@ -127,12 +123,6 @@ export default {
     this.$store.dispatch('input/init');
     this.$store.dispatch('worker/load');
   },
-  props: {
-    isComparer: {
-      type: Boolean,
-      default: false
-    }
-  },
   computed: {
     matcherImageTypes() {
       return matcherImageType;
@@ -146,6 +136,11 @@ export default {
     resultValid() {
       return this.$store.getters['worker/results/imageDataValid'](matchName);
     },
+    errorText() {
+      const e = this.$store.getters['worker/error'];
+      if(e && e.message) return e.message;
+      return 'No match found!';
+    },
     detTypeName() {
       return ParamUtils.getParamName(this.$store.getters['settings/param'](paramTypes.detType.id));
     },
@@ -154,6 +149,8 @@ export default {
     },
     blendSliderVisible() {
       return this.matcherImageType == this.matcherImageTypes.blended
+          || this.matcherImageType == this.matcherImageTypes.stitched
+          || this.matcherImageType == this.matcherImageTypes.stitchedWithKeyPoints
           || this.matcherImageType == this.matcherImageTypes.selectionImage1
           || this.matcherImageType == this.matcherImageTypes.selectionImage2;
     },
@@ -199,6 +196,10 @@ export default {
           settings: this.$store.getters['settings/settings']
         }
       );
+    },
+    deleteResult() {
+      this.$store.commit('worker/results/imageData', { name: matchName, imageData: null });
+      this.$store.dispatch('worker/resetWorkerData');
     },
     imageSelectionChanged(value) {
       this.$store.commit('worker/results/matcherImageType', value);

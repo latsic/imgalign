@@ -6,6 +6,8 @@ const msgInit = 'init';
 const msgReset = 'reset';
 const msgAlignedImage = 'alignedImage';
 const msgBlendedImage = 'blendedImage';
+const msgStitchedImage = 'stitchedImage';
+const msgStitchedImageWithKeyPoints = 'stitchedImageWithKeyPoints';
 const msgBlendedImagePolygonFixedImage = 'blendedImagePolygonFixedImage';
 const msgBlendedImagePolygonMovingImage = 'blendedImagePolygonMovingImage';
 const msgBlendedImageFloodFillFixedImage = 'blendedImageFloodFillFixedImage';
@@ -22,6 +24,15 @@ const msgConsoleError = 'cError';
 const msgConsoleLog = 'cLog';
 const msgConsoleAssert = 'cAssert';
 const msgResize = 'resize';
+const msgStitch = 'stitch';
+
+const msgMultiStitchInit = 'multiStitchInit';
+const msgMultiStitchReset = 'multiStitchReset';
+const msgMultiStitchParams = 'multiStitchParams';
+const msgMultiStitch = 'multiStitch';
+
+const msgMultiStitchStart = 'multiStitchStart';
+const msgMultiStitchNext = 'multiStitchNext';
 
 let mFixedMat = null;
 let mMovingMat = null;
@@ -32,6 +43,9 @@ let mFixedPtsGood = null;
 let mMovingPtsGood = null;
 let mFixedPtsInlier = null;
 let mMovingPtsInlier = null;
+
+let mImgStitch = null;
+let mMultiStitchImages = null;
 
 
 function postMessageConsoleFromExtern(msg, args) {
@@ -65,9 +79,13 @@ function imageDataFromMat(mat) {
     throw new Error('not a valid opencv Mat instance');
   }
 
+  if(mat.rows == 0 || mat.cols == 0) {
+    throw new Error('Empty mat instance');
+  }
+
   // convert the mat type to cv.CV_8U
   const img = new cv.Mat();
-  const depth = mat.type()%8;
+  const depth = mat.type() % 8;
   const scale = depth <= cv.CV_8S? 1.0 : (depth <= cv.CV_32S? 1.0/256.0 : 255.0);
   const shift = (depth === cv.CV_8S || depth === cv.CV_16S)? 128.0 : 0.0;
   mat.convertTo(img, cv.CV_8U, scale, shift);
@@ -151,9 +169,26 @@ function _reset(resetResults = true) {
   }
 }
 
+function _multiStitchReset()
+{
+  if(mImgStitch) {
+    mImgStitch.delete();
+    mImgStitch = null;
+  }
+  if(mMultiStitchImages) {
+    mMultiStitchImages.delete();
+    mMultiStitchImages = null;
+  }
+}
+
 function reset(resetResults = true) {
   _reset(resetResults);
   return () => postDoneMessage(msgReset);
+}
+
+function multiStitchReset() {
+  _multiStitchReset();
+  return () => postDoneMessage(msgMultiStitchReset);
 }
 
 function init(payload) {
@@ -180,17 +215,40 @@ function init(payload) {
     mImgAlign = new cv.ImgAlign(mFixedMat, mMovingMat);
   }
   catch(error) {
-    mImgAlign = null;
+    _reset(false);
     throw error;
   }
   return () => postDoneMessage(msgInit);
 }
 
-function setParams(paramsArr) {
-
-  if(!mImgAlign) {
-    throw new Error('No instance available, forgot to call init?');
+function multiStitchInit(payload) {
+  if(!cv || !cv.Mat) {
+    throw new Error('No data available, forgot to call load?');
   }
+
+  if(mImgStitch == null) {
+
+    _multiStitchReset();
+    try {
+
+      mMultiStitchImages = new cv.MatVector();
+      for(const image of payload.images) {
+        mMultiStitchImages.push_back(cv.matFromImageData(image));
+      }   
+
+      mImgStitch = new cv.ImgStitch(mMultiStitchImages);
+      mMultiStitchImages.delete();
+      mMultiStitchImages = null;
+    }
+    catch(error) {
+      _multiStitchReset();
+      throw error;
+    }
+  }
+  return () => postDoneMessage(msgMultiStitchInit);
+}
+
+function _setParams(paramsArr, dstInstance) {
 
   if(paramsArr && paramsArr.length > 0) {
    
@@ -203,15 +261,34 @@ function setParams(paramsArr) {
     });
 
     try{
-      mImgAlign.set(paramTypes, paramValues);
+      dstInstance.set(paramTypes, paramValues);
     }
     finally{
       paramTypes.delete();
       paramValues.delete();
     }
   }
+}
+
+function setParams(paramsArr) {
+
+  if(!mImgAlign) {
+    throw new Error('No instance available, forgot to call init?');
+  }
+
+  _setParams(paramsArr, mImgAlign);
 
   return () => postDoneMessage(msgParams);
+}
+
+function multiStitchSetParams(paramsArr) {
+  if(!mImgStitch) {
+    throw new Error('No instance available, forgot to call init?');
+  }
+  _setParams(paramsArr, mImgStitch);
+
+  return () => postDoneMessage(msgMultiStitchParams);
+
 }
 
 function compare(payload) {
@@ -275,6 +352,124 @@ function compare(payload) {
     for(const poly of polys) {
       poly.v.delete();
     }
+  }
+}
+
+function stitch(payload) {
+  throwIfImageNotAvailable();
+
+  let stitchedImage = new cv.Mat();
+
+  try {
+    const fieldOfView = mImgAlign.stitch(
+      mTransMat,
+      payload.projectionType1,
+      payload.projectionType2,
+      payload.seamBlend,
+      payload.colorTransfer,
+      payload.fieldOfViewFixedImage,
+      payload.fieldOfViewMovingImage,
+      payload.calcRotationYaw2,
+      payload.calcRotationPitch2,
+      payload.yaw1,
+      payload.pitch1,
+      payload.yaw2,
+      payload.pitch2,
+      stitchedImage
+    );
+    
+    const imageData = imageDataFromMat(stitchedImage);
+
+    return () => postDoneMessageImage(
+      msgStitch, imageData, fieldOfView);
+  }
+  finally {
+    stitchedImage.delete();
+  }
+
+}
+
+function multiStitch(payload) {
+  if(!mImgStitch) {
+    throw new Error('No instance available, forgot to call init?');
+  }
+
+  let fieldsOfView = new cv.FloatVector();
+  let stitchedImage = new cv.Mat();
+
+  try {
+
+    for(let fieldOfView of payload.fieldsOfView) {
+      fieldsOfView.push_back(fieldOfView);
+    }
+    
+    const stitchedImagesN = mImgStitch.stitch(fieldsOfView, stitchedImage);    
+    const imageData = imageDataFromMat(stitchedImage);
+
+    return () => postDoneMessageImage(msgMultiStitch, imageData, stitchedImagesN);
+  }
+  finally {
+    fieldsOfView.delete();
+    stitchedImage.delete();
+  }
+}
+
+function multiStitchStart(payload) {
+  if(!mImgStitch) {
+    throw new Error('No instance available, forgot to call init?');
+  }
+
+  let fieldsOfView = new cv.FloatVector();
+  let stitchIndices = new cv.IntVector();
+  let stitchedImage = new cv.Mat();
+  try {
+
+    for(let fieldOfView of payload.fieldsOfView) {
+      fieldsOfView.push_back(fieldOfView);
+    }
+    
+    mImgStitch.stitchStart(fieldsOfView, stitchedImage, stitchIndices); 
+    const imageData = imageDataFromMat(stitchedImage);
+    
+    const stitchIndicesResult = [];
+    for(let i = 0; i < stitchIndices.size(); ++i) {
+      stitchIndicesResult.push(stitchIndices.get(i));
+    }
+
+    return () => postDoneMessageImage(msgMultiStitchStart, imageData, stitchIndicesResult);
+  }
+  finally {
+    fieldsOfView.delete();
+    stitchedImage.delete();
+    stitchIndices.delete();
+  }
+}
+
+function multiStitchNext() {
+  if(!mImgStitch) {
+    throw new Error('No instance available, forgot to call init?');
+  }
+
+  let stitchedImage = new cv.Mat();
+
+  try {
+    const imagesN = mImgStitch.stitchNext(stitchedImage);
+
+    if(imagesN == -1) {
+      throw new Error("failed to stitch image");
+    }
+
+    if(imagesN == 0) {
+      // throw new Error("stitching was already finished");
+      // eslint-disable-next-line no-console
+      console.warn("[webworker_matcher][multiStitchNext][info]", "failed to stitch all images");
+    }
+
+    const imageData = imageDataFromMat(stitchedImage);
+    return () => postDoneMessageImage(msgMultiStitchNext, imageData, imagesN);
+  }
+  finally {
+    stitchedImage.delete();
   }
 }
 
@@ -376,12 +571,44 @@ function blendedImage(payload) {
 
   let blendedImage = new cv.Mat();
   try {
-    mImgAlign.getImageBlended(mTransMat, payload.value, blendedImage);
+    mImgAlign.getImageBlended(mTransMat, payload.weight, payload.doOverlay, blendedImage);
     const imageData = imageDataFromMat(blendedImage);
     return () => postDoneMessageImage(msgBlendedImage, imageData);
   }
   finally {
     blendedImage.delete();
+  }
+}
+
+function stitchedImage(payload) {
+  throwIfImageNotAvailable();
+
+  let stitchedImage = new cv.Mat();
+  let pts = new cv.PointVector();
+
+  try {
+    mImgAlign.getStitchedImage(mTransMat, pts, payload.weight, stitchedImage);
+    const imageData = imageDataFromMat(stitchedImage);
+    return () => postDoneMessageImage(msgStitchedImage, imageData);
+  }
+  finally {
+    stitchedImage.delete();
+    pts.delete();
+  }
+}
+
+function stitchedImageWithKeyPoints(payload) {
+  throwIfImageNotAvailable();
+
+  let stitchedImage = new cv.Mat();
+
+  try {
+    mImgAlign.getStitchedImage(mTransMat, mFixedPtsInlier, payload.weight, stitchedImage);
+    const imageData = imageDataFromMat(stitchedImage);
+    return () => postDoneMessageImage(msgStitchedImageWithKeyPoints, imageData);
+  }
+  finally {
+    stitchedImage.delete();
   }
 }
 
@@ -612,6 +839,14 @@ onmessage = function(e) {
       postMessageFn = blendedImage(e.data.payload);
       break;
     }
+    case msgStitchedImage: {
+      postMessageFn = stitchedImage(e.data.payload);
+      break;
+    }
+    case msgStitchedImageWithKeyPoints: {
+      postMessageFn = stitchedImageWithKeyPoints(e.data.payload);
+      break;
+    }
     case msgBlendedImagePolygonFixedImage:
     case msgBlendedImagePolygonMovingImage: {
       postMessageFn = blendedImagePolygon(e.data.payload);
@@ -650,8 +885,38 @@ onmessage = function(e) {
       postMessageFn = compare(e.data.payload);
       break;
     }
+    case msgStitch: {
+      postMessageFn = stitch(e.data.payload);
+      break;
+    }
     case msgResize: {
       postMessageFn = resize(e.data.payload);
+      break;
+    }
+
+    case msgMultiStitchInit: {
+      postMessageFn = multiStitchInit(e.data.payload);
+      break;
+    }
+    case msgMultiStitchReset: {
+      postMessageFn = multiStitchReset();
+      break;
+    }
+    case msgMultiStitchParams: {
+      postMessageFn = multiStitchSetParams(e.data.payload);
+      break;
+    }
+    case msgMultiStitch: {
+      postMessageFn = multiStitch(e.data.payload);
+      break;
+    }
+
+    case msgMultiStitchStart: {
+      postMessageFn = multiStitchStart(e.data.payload);
+      break;
+    }
+    case msgMultiStitchNext: {
+      postMessageFn = multiStitchNext();
       break;
     }
 

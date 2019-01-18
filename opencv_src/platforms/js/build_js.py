@@ -158,6 +158,8 @@ class Builder:
             flags += "-s DISABLE_EXCEPTION_CATCHING=0 "
         if self.options.binaryen_trap_mode_clamp:
             flags += "-s BINARYEN_TRAP_MODE='clamp' "
+        if self.options.allow_memory_growth:
+            flags += "-s ALLOW_MEMORY_GROWTH=1 "
         return flags
 
     def config(self):
@@ -195,7 +197,9 @@ if __name__ == "__main__":
     parser.add_argument('--skip_config', action="store_true", help="Skip cmake config")
     parser.add_argument('--config_only', action="store_true", help="Only do cmake config")
     parser.add_argument('--enable_exception', action="store_true", help="Enable exception handling")
-    parser.add_argument('--binaryen_trap_mode_clamp', action="store_true", help="Enable exception handling")
+    parser.add_argument('--binaryen_trap_mode_clamp', action="store_true", help="Enable trap mode clamp")
+    parser.add_argument('--allow_memory_growth', action="store_true", help="Allow memory growth")
+
     args = parser.parse_args()
 
     log.basicConfig(format='%(message)s', level=log.DEBUG)

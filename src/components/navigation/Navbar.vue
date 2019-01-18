@@ -94,9 +94,31 @@
         >
           {{ item.title }}
         </v-btn>
+        <v-layout
+          v-if="busy"
+          align-center
+        >
+          <app-spinner
+            :color="busyColor"
+          />
+        </v-layout>
       </v-toolbar-items>
 
       <template
+        v-if="$vuetify.breakpoint.xsOnly && busy"
+      >
+        <v-spacer />
+        <v-toolbar-items>
+          <v-layout
+            align-center
+          >
+            <app-spinner
+              :color="busyColor"
+            />
+          </v-layout>
+        </v-toolbar-items>
+      </template>
+      <!-- <template
         v-if="$vuetify.breakpoint.xsOnly && relatedItem($route.name)"
       >
         <v-spacer />
@@ -108,9 +130,17 @@
           >
             {{ relatedItem($route.name).title }}
           </v-btn>
+          <v-layout
+            align-center
+            >
+            <app-spinner
+              :color="$vuetify.theme.accent"
+            />
+          </v-layout>
         </v-toolbar-items>
 
-      </template>
+      </template> -->
+
       
     </v-toolbar>
       
@@ -119,8 +149,26 @@
 </template>
 
 <script>
+
+import Spinner from '@/components/gui/Spinner';
+
 export default {
+  components: {
+    'AppSpinner': Spinner
+  },
   props: {
+    busyWorker: {
+      type: Boolean,
+      default: false
+    },
+    workerReady: {
+      type: Boolean,
+      default: true
+    },
+    busyInput: {
+      type: Boolean,
+      default: false
+    }
   },
   data() {
     return {
@@ -150,6 +198,18 @@ export default {
           icon: "compare"
         },
         {
+          title: "Stitcher",
+          componentName: "stitcher",
+          func: null,
+          icon: "border_all"
+        },
+        {
+          title: "MultiStitcher",
+          componentName: "multistitcher",
+          func: null,
+          icon: "border_all"
+        },
+        {
           title: "Settings",
           componentName: "settings",
           func: null,
@@ -164,10 +224,20 @@ export default {
       return [];
     },
     navItems() {
-      return [...this.itemsLeft, ...this.itemsRight];
+      return [...this.itemsLeft, ...this.itemsRight, ...this.itemsXsOnly];
+    },
+    itemsXsOnly() {
+      return [
+        {
+          title: "Log output",
+          componentName: "logoutput",
+          func: null,
+          icon: "border_all"
+        },
+      ];
     },
     allItems() {
-      return [...this.itemsLeft, ...this.itemsRight, ...this.nonNavItems];
+      return [...this.itemsLeft, ...this.itemsRight, ...this.nonNavItems, ...this.itemsXsOnly];
     },
     routeTitle() {
       for (const item of this.allItems) {
@@ -190,6 +260,15 @@ export default {
         ['matcher']: this.allItems.find(item => item.componentName == 'settings'),
         ['settings']: this.allItems.find(item => item.componentName == 'matcher')
       }
+    },
+    busy() {
+      return this.busyWorker || this.busyInput;
+    },
+    busyColor() {
+      if(this.busyWorker || !this.workerReady) {
+        return this.$vuetify.theme.accent;
+      }
+      return this.$vuetify.theme.error;
     }
   },
   methods: {

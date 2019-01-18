@@ -9,6 +9,9 @@ const msgMatch = 'match';
 const msgReset = 'reset';
 const msgAlignedImage = 'alignedImage';
 const msgBlendedImage = 'blendedImage';
+const msgStitchedImage = 'stitchedImage';
+const msgStitch = 'stitch';
+const msgStitchedImageWithKeyPoints = 'stitchedImageWithKeyPoints';
 const msgBlendedImagePolygonFixedImage = 'blendedImagePolygonFixedImage';
 const msgBlendedImagePolygonMovingImage = 'blendedImagePolygonMovingImage';
 const msgBlendedImageFloodFillFixedImage = 'blendedImageFloodFillFixedImage';
@@ -26,15 +29,21 @@ const msgConsoleLog = 'cLog';
 const msgConsoleAssert = 'cAssert';
 const msgResize = 'resize';
 
+const msgMultiStitchInit = 'multiStitchInit';
+const msgMultiStitchReset = 'multiStitchReset';
+const msgMultiStitchParams = 'multiStitchParams';
+const msgMultiStitch = 'multiStitch';
+
+const msgMultiStitchStart = 'multiStitchStart';
+const msgMultiStitchNext = 'multiStitchNext';
+
 export class WorkerClient {
 
   constructor(enforcer) {
 
     if(enforcer != singletonEnforcer) throw 'Cannot construct Singleton!';
     
-    this.worker = new Worker('js/imgalign.worker.js');
-    this.worker.onmessage = e => this._handleMessage(e);
-    this.worker.onerror = e => this._handleError(e);
+    this._init();
   }
 
   static get instance() {
@@ -44,11 +53,26 @@ export class WorkerClient {
     return this[singleton];
   }
 
+  _init() {
+    this.worker = new Worker('js/imgalign.worker.js');
+    this.worker.onmessage = e => this._handleMessage(e);
+    this.worker.onerror = e => this._handleError(e);
+  }
+
+  reInitWorker() {
+    this.__messageDone = null;
+    this.worker.terminate();
+    if(this.__messageAbort) this.__messageAbort();
+    this.__messageAbort = null; 
+    this._init();
+  }
+
   async postWorkerMessageAsync(msg) {
 
     return new Promise((resolve, reject) => {
 
       this.__messageDone = function(){ resolve(...arguments)};
+      this.__messageAbort = function(){ reject('ignore')};
       this.__error = (error) => reject(error);
       this.worker.postMessage(msg);
     });
@@ -56,6 +80,10 @@ export class WorkerClient {
 
   async resetWorkerDataAsync() {
     return await this.postWorkerMessageAsync({ msg: msgReset });
+  }
+
+  async resetMultiStitchWorkerDataAsync() {
+    return await this.postWorkerMessageAsync({ msg: msgMultiStitchReset });
   }
 
   async loadAsync() {
@@ -68,6 +96,15 @@ export class WorkerClient {
       payload: {
         fixedImage,
         movingImage
+      }
+    });
+  }
+
+  async _multiStitchInitAsync(images) {
+    return await this.postWorkerMessageAsync({
+      msg: msgMultiStitchInit,
+      payload: {
+        images
       }
     });
   }
@@ -86,6 +123,31 @@ export class WorkerClient {
     return await this.postWorkerMessageAsync({
       msg: msgParams,
       payload: paramsArr.filter(param => param.id != 301)
+    });
+  }
+
+  async _multiStitchSetParams(paramsArr) {
+    return await this.postWorkerMessageAsync({
+      msg: msgMultiStitchParams,
+      payload: paramsArr.filter(param => param.id != 301)
+    });
+  }
+
+  async _multiStitch(fieldsOfView) {
+    return await this.postWorkerMessageAsync({
+      msg: msgMultiStitch,
+      payload: {
+        fieldsOfView
+      }
+    });
+  }
+
+  async _multiStitchStart(fieldsOfView) {
+    return await this.postWorkerMessageAsync({
+      msg: msgMultiStitchStart,
+      payload: {
+        fieldsOfView
+      }
     });
   }
 
@@ -111,6 +173,33 @@ export class WorkerClient {
       imageType, detTypesArr, fixedImagePolygonPts, movingImagePolygonPts);
   }
 
+  
+  async stitchAsync(
+    projectionType1, projectionType2,
+    seamBlend, colorTransfer,
+    fieldOfViewFixedImage, fieldOfViewMovingImage,
+    calcRotationYaw2, calcRotationPitch2,
+    yaw1, pitch1, yaw2, pitch2) {
+    
+    return await this.postWorkerMessageAsync({
+      msg: msgStitch,
+      payload: {
+        projectionType1,
+        projectionType2,
+        seamBlend,
+        colorTransfer,
+        fieldOfViewFixedImage,
+        fieldOfViewMovingImage,
+        calcRotationYaw2,
+        calcRotationPitch2,
+        yaw1,
+        pitch1,
+        yaw2,
+        pitch2
+      }
+    });
+  }
+
   async matchAsync(
     fixedImage, movingImage, paramsArr, fixedImagePolygonPts, movingImagePolygonPts) {
 
@@ -119,12 +208,59 @@ export class WorkerClient {
     return await this._matchAsync(fixedImagePolygonPts, movingImagePolygonPts);
   }
 
+  async multiStitch(images, fieldsOfView, paramsArr) {
+    await this._multiStitchInitAsync(images);
+    await this._multiStitchSetParams(paramsArr);
+    return await this._multiStitch(fieldsOfView);
+  }
+
+  async multiStitchRecompute(fieldsOfView, paramsArr) {
+    await this._multiStitchSetParams(paramsArr);
+    return await this._multiStitch(fieldsOfView);
+  }
+
+  async multiStitchStart(images, fieldsOfView, paramsArr) {
+    await this._multiStitchInitAsync(images);
+    await this._multiStitchSetParams(paramsArr);
+    return await this._multiStitchStart(fieldsOfView);
+  }
+
+  async multiStitchNext() {
+    return await this.postWorkerMessageAsync({
+      msg: msgMultiStitchNext
+    });
+  }
+
+  async multiStitchStartRecompute(fieldsOfView, paramsArr) {
+    await this._multiStitchSetParams(paramsArr);
+    return await this._multiStitchStart(fieldsOfView);
+  }
+
   async requestAlignedImageAsync() {
     return await this.postWorkerMessageAsync({ msg: msgAlignedImage });
   }
 
-  async requestBlendedImageAsync(value) {
-    return await this.postWorkerMessageAsync({ msg: msgBlendedImage, payload: { value }});
+  async requestBlendedImageAsync(weight, doOverlay) {
+    return await this.postWorkerMessageAsync({
+      msg: msgBlendedImage,
+      payload: {
+        weight,
+        doOverlay
+      }
+    });
+  }
+
+  async requestStitchedImageAsync(weight) {
+    return await this.postWorkerMessageAsync({
+      msg: msgStitchedImage,
+      payload: { weight }
+    });
+  }
+  async requestStitchedImageWithKeyPointsAsync(weight) {
+    return await this.postWorkerMessageAsync({
+      msg: msgStitchedImageWithKeyPoints,
+      payload: { weight }
+    });
   }
 
   async requestBlendedImagePolygonAsync(weight, doOverlay, polygon, isFixedImage) {
@@ -209,7 +345,35 @@ export class WorkerClient {
     this._messageDone({
       imageData,
       timeUsedArr: payload.additionalData.timeUsedArr,
-      keyPointsCountArr: payload.additionalData.keyPointsCountArr });
+      keyPointsCountArr: payload.additionalData.keyPointsCountArr
+    });
+  }
+
+  _messageStitchedImage(payload) {
+    const clampedArray = new Uint8ClampedArray(payload.buf, payload.byteOffset, payload.bufLen);
+    const imageData = new ImageData(clampedArray, payload.width, payload.height);
+    this._messageDone({
+      imageData,
+      fieldOfView: payload.additionalData
+    });
+  }
+
+  _messageMultiStitchImage(payload) {
+    const clampedArray = new Uint8ClampedArray(payload.buf, payload.byteOffset, payload.bufLen);
+    const imageData = new ImageData(clampedArray, payload.width, payload.height);
+    this._messageDone({
+      imageData,
+      stitchedImagesN: payload.additionalData
+    });
+  }
+
+  _messageMultiStitchImageStart(payload) {
+    const clampedArray = new Uint8ClampedArray(payload.buf, payload.byteOffset, payload.bufLen);
+    const imageData = new ImageData(clampedArray, payload.width, payload.height);
+    this._messageDone({
+      imageData,
+      stitchIndices: payload.additionalData
+    });
   }
 
   _handleMessage(event) {
@@ -226,10 +390,15 @@ export class WorkerClient {
       case msgParams:
       case msgMatch:
       case msgReset:
+      case msgMultiStitchInit:
+      case msgMultiStitchReset:
+      case msgMultiStitchParams:    
         this._messageDone(event.data.payload);
         break;
       case msgAlignedImage:
       case msgBlendedImage:
+      case msgStitchedImage:
+      case msgStitchedImageWithKeyPoints:
       case msgBlendedImagePolygonFixedImage:
       case msgBlendedImagePolygonMovingImage:
       case msgBlendedImageFloodFillFixedImage:
@@ -243,10 +412,19 @@ export class WorkerClient {
       case msgResize:
         this._messageImage(event.data.payload);
         break;
+      case msgMultiStitchStart:
+        this._messageMultiStitchImageStart(event.data.payload);
+        break;
       case msgDetCompareImage:
         this._messageCompareImage(event.data.payload);
         break;
-      
+      case msgStitch:
+        this._messageStitchedImage(event.data.payload);
+        break;
+      case msgMultiStitch:
+      case msgMultiStitchNext:
+        this._messageMultiStitchImage(event.data.payload);
+        break;
       default:
     }
     // eslint-disable-next-line no-console
@@ -273,7 +451,7 @@ export class WorkerClient {
 
     function getArgs(info, payload) {
       if(info == 'extern') {
-        return ['extern', ...payload];
+        return ['opencv', ...payload];
       }
       return payload;
     }

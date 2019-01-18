@@ -5,12 +5,19 @@ import { Settings } from '@/models/Settings';
 const state = {
   settings: new Settings(),
   defaultSettings: null,
-  activeTabIndex: null
+  activeTabIndexDetector: null,
+  activeTabIndexStitcher: null,
+  stitcherSettingsOn: false,
+  activeTabIndexMultiStitcher: false,
+  multiStitcherSettingsOn: false
 }
 
 const getters = {
   param(state) {
     return id => state.settings.getParamValueById(id);
+  },
+  paramDefault(state) {
+    return id => state.settings.getParamDefaultValueById(id);
   },
   settings(state) {
     return state.settings;
@@ -21,11 +28,23 @@ const getters = {
   idValueArrExcludingDefaults(state) {
     return state.settings.getIdValueArrExcludingDefaults();
   },
-  activeTabIndex(state) {
-    return state.activeTabIndex;
+  activeTabIndexDetector(state) {
+    return state.activeTabIndexDetector;
   },
   getCurrentDetTypeGroupKey(state) {
     return state.settings.getCurrentDetTypeGroupKey();
+  },
+  activeTabIndexStitcher(state) {
+    return state.activeTabIndexStitcher;
+  },
+  stitcherSettingsOn(state) {
+    return state.stitcherSettingsOn;
+  },
+  multiStitcherSettingsOn(state) {
+    return state.multiStitcherSettingsOn;
+  },
+  activeTabIndexMultiStitcher(state) {
+    return state.activeTabIndexMultiStitcher;
   }
 }
 
@@ -42,8 +61,20 @@ const mutations = {
   defaultSettings(state, defaultSettings) {
     state.defaultSettings = Object.freeze(defaultSettings);
   },
-  activeTabIndex(state, value) {
-    state.activeTabIndex = value;
+  activeTabIndexDetector(state, value) {
+    state.activeTabIndexDetector = value;
+  },
+  activeTabIndexStitcher(state, value) {
+    state.activeTabIndexStitcher = value;
+  },
+  stitcherSettingsOn(state, value) {
+    state.stitcherSettingsOn = value;
+  },
+  multiStitcherSettingsOn(state, value) {
+    state.multiStitcherSettingsOn = value;
+  },
+  activeTabIndexMultiStitcher(state, value) {
+    state.activeTabIndexMultiStitcher = value;
   }
 }
 
@@ -75,8 +106,20 @@ const actions = {
     const arr = getters['settings'].getIdValueDefaultArr();
     LocalStorageUtils.saveIdValueArr(arr);
   },
-  activeTabIndex({ commit }, value) {
-    commit('activeTabIndex', value);
+  activeTabIndexDetector({ commit }, value) {
+    commit('activeTabIndexDetector', value);
+  },
+  activeTabIndexStitcher({ commit }, value) {
+    commit('activeTabIndexStitcher', value);
+  },
+  stitcherSettingsOn({ commit }, value) {
+    commit('stitcherSettingsOn', value);
+  },
+  multiStitcherSettingsOn({ commit }, value) {
+    commit('multiStitcherSettingsOn', value);
+  },
+  activeTabIndexMultiStitcher({ commit }, value) {
+    commit('activeTabIndexMultiStitcher', value);
   }
 }
 

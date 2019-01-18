@@ -24,7 +24,7 @@
 
     <app-basic-settings
       :params="params(groupKeyBasicSettings)"
-      @change="obj => $store.dispatch('settings/param', obj)"
+      @change="paramChanged"
     />
     <app-view-spacer
       :show-line="true"
@@ -40,19 +40,19 @@
     />
 
     <v-tabs
-      :value="$store.getters['settings/activeTabIndex'] || 0"
+      :value="$store.getters['settings/activeTabIndexDetector'] || 0"
       
       show-arrows
       light
       color="warning"
-      @change="index => $store.dispatch('settings/activeTabIndex', index)"
+      @change="index => $store.dispatch('settings/activeTabIndexDetector', index)"
     >
       <v-tab
         v-for="(groupKey, index) of groupKeysDetectorSettings"
         :key="index"
         ripple
       >
-        {{ groupKey }}
+        {{ paramGroupName(groupKey) }}
       </v-tab>
       <v-tab-item
         v-for="(groupKey, index) of groupKeysDetectorSettings"
@@ -61,7 +61,7 @@
       >
         <app-detector-settings
           :params="params(groupKey)"
-          @changed="obj => $store.dispatch('settings/param', obj)"
+          @changed="paramChanged"
         />
       </v-tab-item>
     </v-tabs>
@@ -69,40 +69,34 @@
     <app-view-spacer
       :show-line="false"
     />
+    <app-view-title
+      title="Image and other settings"
+    />
+    <app-other-settings
+      :params="params(groupKeyOtherSettings)"
+      @changed="paramChanged"
+    />
 
+    <app-view-spacer
+      :show-line="false"
+    />
     <app-view-title
       title="Advanced match filter"
     />
-
     <app-match-filter
       :params="params(groupKeyMatchFilter)"
-      @changed="obj => $store.dispatch('settings/param', obj)"
+      @changed="paramChanged"
     />
 
     <app-view-spacer
       :show-line="false"
     />
-    
-    <app-view-title
-      title="Various other settings"
-    />
-
-    <app-other-settings
-      :params="params(groupKeyOtherSettings)"
-      @changed="obj => $store.dispatch('settings/param', obj)"
-    />
-
-    <app-view-spacer
-      :show-line="false"
-    />
-
     <app-view-title
       title="Logging settings"
     />
-
     <app-log-settings
       :params="params(groupKeyLogSettings)"
-      @changed="obj => $store.dispatch('settings/param', obj)"
+      @changed="logParamChanged"
     />
 
 
@@ -119,6 +113,8 @@ import DetectorSettings from '@/components/settings/DetectorSettings';
 import MatchFilter from '@/components/settings/MatchFilter';
 import OtherSettings from '@/components/settings/OtherSettings';
 import LogSettings from '@/components/settings/LogSettings';
+//import StitchSettings from '@/components/settings/StitchSettings';
+import { paramTypes, paramGroups } from '@/models/constants/params';
 
 export default {
   components: {
@@ -129,7 +125,8 @@ export default {
     'AppDetectorSettings': DetectorSettings,
     'AppMatchFilter': MatchFilter,
     'AppOtherSettings': OtherSettings,
-    'AppLogSettings': LogSettings
+    'AppLogSettings': LogSettings,
+    //'AppStitchSettings': StitchSettings
   },
   data() {
     return {
@@ -138,7 +135,8 @@ export default {
       groupKeyBasicSettings: 'basic',
       groupKeyMatchFilter: 'matchFilter',
       groupKeyLogSettings: 'logging',
-      activeTabIndex: 0
+      groupKeyStitchSettings: 'stitching',
+      activeTabIndexDetector: 0
     }
   },
   created() {
@@ -154,18 +152,32 @@ export default {
       return this.settings.paramsByGroupKey(groupKey);
     },
     tabChanged(index) {
-      this.activeTabIndex = index;
+      this.activeTabIndexDetector = index;
     },
     setInitialTabIndex() {
       
-      if(this.$store.getters['settings/activeTabIndex'] !== null) return; 
+      if(this.$store.getters['settings/activeTabIndexDetector'] !== null) return; 
       
       const activeDetGroupKey = this.$store.getters['settings/getCurrentDetTypeGroupKey'];
       const groupIndex = this.groupKeysDetectorSettings.findIndex(groupKey => groupKey == activeDetGroupKey);
       
       if(groupIndex >= 0) {
-        this.$store.dispatch('settings/activeTabIndex', groupIndex)
+        this.$store.dispatch('settings/activeTabIndexDetector', groupIndex)
       }
+    },
+    paramChanged(obj) {
+      this.$store.dispatch('settings/param', obj);
+      if(obj.id == paramTypes.alignSelectionOverlay.id) {
+
+        this.$store.dispatch('worker/requestImage');
+      }
+      this.$store.dispatch('worker/multiStitchResetWorkerData');
+    },
+    logParamChanged(obj) {
+      this.$store.dispatch('settings/param', obj);
+    },
+    paramGroupName(key) {
+      return paramGroups[key].name;
     }
   }
 }

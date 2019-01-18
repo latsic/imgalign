@@ -1,6 +1,7 @@
 #include "../precomp.hpp"
 #include "Matcher.h"
 #include "ImageUtils.h"
+#include "WarperHelper.h"
 #include "Display.h"
 #include "LogUtils.h"
 #include "Settings.h"
@@ -15,6 +16,8 @@
 #include <ostream>
 #include <iostream>
 #include <memory>
+#include <limits>
+#include <iomanip>
 
 
 namespace cv
@@ -67,7 +70,8 @@ void ImgAlign::getImageAligned(
 
 void ImgAlign::getImageBlended(
   InputArray /*transMatrix*/,
-  float /*weight*/,
+  double /*weight*/,
+	int /*doOverlay*/,
   OutputArray /*blendImage*/)
 {
   CV_Error(Error::StsNotImplemented, "");
@@ -75,7 +79,7 @@ void ImgAlign::getImageBlended(
 
 void ImgAlign::getImageBlendedPolygonFixedImage(
 	InputArray /*transMatrix*/,
-	float /*weight*/,
+	double /*weight*/,
 	int /*doOverlay*/,
 	CV_IN_OUT std::vector<Point> &/*polygon*/,
 	OutputArray /*blendImage*/)
@@ -85,7 +89,7 @@ void ImgAlign::getImageBlendedPolygonFixedImage(
         
 void ImgAlign::getImageBlendedPolygonMovingImage(
 	InputArray /*transMatrix*/,
-	float /*weight*/,
+	double /*weight*/,
 	int /*doOverlay*/,
 	CV_IN_OUT std::vector<Point> &/*polygon*/,
 	OutputArray /*blendImage*/)
@@ -97,7 +101,7 @@ void ImgAlign::getImageFloodFillFixedImage(
 	cv::InputArray /*transMatrix*/,
 	CV_IN_OUT std::vector<cv::Point> &/*seedPts*/,
 	CV_IN_OUT std::vector<int> &/*floodFillTolerances*/,
-	float /*weight*/,
+	double /*weight*/,
 	int /*doOverlay*/,
 	cv::OutputArray /*blendImage*/)
 {
@@ -108,8 +112,17 @@ void ImgAlign::getImageFloodFillMovingImage(
 	cv::InputArray /*transMatrix*/,
 	CV_IN_OUT std::vector<cv::Point> &/*seedPts*/,
 	CV_IN_OUT std::vector<int> &/*floodFillTolerances*/,
-	float /*weight*/,
+	double /*weight*/,
 	int /*doOverlay*/,
+	cv::OutputArray /*blendImage*/)
+{
+	CV_Error(Error::StsNotImplemented, "");
+}
+
+void ImgAlign::getStitchedImage(
+	cv::InputArray /*transMatrix*/,
+	CV_IN_OUT std::vector<Point> &/*goodMatchesFixedImage*/,
+	double /*weight*/,
 	cv::OutputArray /*blendImage*/)
 {
 	CV_Error(Error::StsNotImplemented, "");
@@ -145,6 +158,23 @@ void ImgAlign::compare(
 	CV_IN_OUT std::vector<int> &/*keyPointsN*/,
 	CV_IN_OUT std::vector<Point> &/*fixedImageMaskPolygon*/,
 	CV_IN_OUT std::vector<Point> &/*movingImageMaskPolygon*/)
+{
+	CV_Error(Error::StsNotImplemented, "");
+}
+
+double ImgAlign::stitch(
+	InputArray /*transMatrix*/,
+	int /*projectionType1*/,
+	int /*projectionType2*/,
+	int /*blend*/,
+	int /*transferColors*/,
+	double /*fieldOfViewFixedImage*/,
+	double /*fieldOfViewMovingImage*/,
+	int /*calcYaw2*/,
+  int /*calcPitch2*/,
+	double /*yaw1*/, double /*pitch1*/,
+	double /*yaw2*/, double /*pitch2*/,
+	OutputArray /*stitchedImage*/)
 {
 	CV_Error(Error::StsNotImplemented, "");
 }
@@ -189,19 +219,20 @@ class ImgAlign_Impl : public cv::ImgAlign
 
     void getImageBlended(
       cv::InputArray transMatrix,
-      float weight,
+      double weight,
+			int doOverlay,
       cv::OutputArray blendImage) CV_OVERRIDE;
 
 		void getImageBlendedPolygonFixedImage(
 			cv::InputArray transMatrix,
-			float weight,
+			double weight,
 			int doOverlay,
 			CV_IN_OUT std::vector<cv::Point> &polygon,
 			cv::OutputArray blendImage) CV_OVERRIDE;
         
     void getImageBlendedPolygonMovingImage(
 			cv::InputArray transMatrix,
-			float weight,
+			double weight,
 			int doOverlay,
 			CV_IN_OUT std::vector<cv::Point> &polygon,
 			cv::OutputArray blendImage) CV_OVERRIDE;
@@ -210,7 +241,7 @@ class ImgAlign_Impl : public cv::ImgAlign
 			cv::InputArray transMatrix,
 			CV_IN_OUT std::vector<cv::Point> &seedPts,
 			CV_IN_OUT std::vector<int> &floodFillTolerances,
-			float weight,
+			double weight,
 			int doOverlay,
 			cv::OutputArray blendImage) CV_OVERRIDE;
 
@@ -218,8 +249,14 @@ class ImgAlign_Impl : public cv::ImgAlign
 			cv::InputArray transMatrix,
 			CV_IN_OUT std::vector<cv::Point> &seedPts,
 			CV_IN_OUT std::vector<int> &floodFillTolerances,
-			float weight,
+			double weight,
 			int doOverlay,
+			cv::OutputArray blendImage) CV_OVERRIDE;
+
+		void getStitchedImage(
+			cv::InputArray transMatrix,
+			CV_IN_OUT std::vector<cv::Point> &goodMatchesFixedImage,
+			double weight,
 			cv::OutputArray blendImage) CV_OVERRIDE;
 
     void getFixedImageWithMatchedPoints(
@@ -244,6 +281,20 @@ class ImgAlign_Impl : public cv::ImgAlign
 			CV_IN_OUT std::vector<cv::Point> &fixedImageMaskPolygon,
 			CV_IN_OUT std::vector<cv::Point> &movingImageMaskPolygon) CV_OVERRIDE;
 
+		double stitch(
+			cv::InputArray transMatrix,
+			int projectionType1,
+			int projectionType2,
+			int blend,
+			int transferColors,
+			double fieldOfViewFixedImage,
+			double fieldOfViewMovingImage,
+			int calcYaw2,
+      int calcPitch2,
+			double yaw1, double pitch1,
+			double yaw2, double pitch2,
+			cv::OutputArray stitchedImage) CV_OVERRIDE;
+
 	private:
 		void createMatcher();
 		std::vector<cv::Mat> m_transformedImages;
@@ -252,6 +303,8 @@ class ImgAlign_Impl : public cv::ImgAlign
 		std::vector<cv::Point> _movingImageMaskPolygon;
     cv::Mat fixedImageIn;
     cv::Mat movingImageIn;
+    //cv::Mat fixedImageInOrig;
+    //cv::Mat movingImageInOrig;
 		cv::Mat fixedImage;
 		cv::Mat movingImage;
 		int matchSuccess = 0;
@@ -285,6 +338,9 @@ ImgAlign_Impl::ImgAlign_Impl(
 {
 	FUNCLOGTIMEL("ImgAlign_Impl::ImgAlign_Impl");
 	try {
+		
+		LogUtils::getLog() << std::setprecision(8);
+
 		fixedImage.copyTo(fixedImageIn);
 		movingImage.copyTo(movingImageIn);
 	}
@@ -302,6 +358,11 @@ void ImgAlign_Impl::set(
 
 	try {
 		settings.setValues(valueTypes, values);
+
+		LogUtils::isDebug = false;
+    if(settings.getValue(eLogInfoEnabled) > 0.0) {
+      LogUtils::isDebug = true;
+    }
 	}
 	catch(std::exception &e) {
 		LogUtils::getLog() << e.what() << std::endl;
@@ -314,13 +375,18 @@ void ImgAlign_Impl::createMatcher()
 	FUNCLOGTIMEL("ImgAlign_Impl::createMatcher");
 
 	try {
-
+		
 		CV_Assert(!fixedImageIn.empty());
 		CV_Assert(!movingImageIn.empty());
 
 		int maxPixelsN = (int)settings.getValue(eImageCap);
-		scaleFixedImage = ImageUtils::resize(fixedImageIn, fixedImage, maxPixelsN);
-		scaleMovingImage = ImageUtils::resize(movingImageIn, movingImage, maxPixelsN);
+
+		TMat fixedImageTemp, movingImageTemp;
+		cvtColor(fixedImageIn, fixedImageTemp, CV_RGBA2GRAY);
+		cvtColor(movingImageIn, movingImageTemp, CV_RGBA2GRAY);
+
+		scaleFixedImage = ImageUtils::resize(fixedImageTemp, fixedImage, maxPixelsN);
+		scaleMovingImage = ImageUtils::resize(movingImageTemp, movingImage, maxPixelsN);
 
 		TPoints maskFixed;
 		for(auto pt : _fixedImageMaskPolygon) {
@@ -372,15 +438,14 @@ int ImgAlign_Impl::match_getAlignedImage(
 	try {
 
 		createMatcher();
-		LogUtils::getLog() << "createMatcher done" << "std::endl";
-		LogUtils::getLog() << (spMatcher == nullptr ? "spMatcher is null" : "spMatcher ok")  << "std::endl";
 		matchSuccess = spMatcher->match();
-		LogUtils::doLog(*spMatcher);
 
 		if(matchSuccess == 0) return 0;
 
-		alignedImage.create(fixedImageIn.size(), movingImageIn.type());
-		warpPerspective(movingImageIn, alignedImage, spMatcher->getTransform(), fixedImageIn.size());
+		WarperHelper::warpPerspective(movingImageIn, spMatcher->getTransform(), fixedImageIn.size(), alignedImage.getMatRef());
+
+		//alignedImage.create(fixedImageIn.size(), movingImageIn.type());
+		//warpPerspective(movingImageIn, alignedImage, spMatcher->getTransform(), fixedImageIn.size());
 		
 		return matchSuccess;
 	}
@@ -400,7 +465,7 @@ int ImgAlign_Impl::match_getTransMatrix(
 
 		createMatcher();
 		matchSuccess = spMatcher->match();
-		LogUtils::doLog(*spMatcher);
+		//LogUtils::doLog(*spMatcher);
 
 		if(matchSuccess == 0) return 0;
 
@@ -468,8 +533,11 @@ void ImgAlign_Impl::getImageAligned(
 
 	try {
 
-		alignedImage.create(fixedImageIn.size(), movingImageIn.type());
-		warpPerspective(movingImageIn, alignedImage, transMatrix, fixedImageIn.size());
+		//alignedImage.create(fixedImageIn.size(), movingImageIn.type());
+		WarperHelper::warpPerspective(movingImageIn, transMatrix.getMat(), fixedImageIn.size(), alignedImage.getMatRef());
+
+		//alignedImage.create(fixedImageIn.size(), movingImageIn.type());
+		//warpPerspective(movingImageIn, alignedImage, transMatrix, fixedImageIn.size());
 	}
 	catch(std::exception &e) {
 		LogUtils::getLog() << e.what() << std::endl;
@@ -479,18 +547,22 @@ void ImgAlign_Impl::getImageAligned(
 
 void ImgAlign_Impl::getImageBlended(
   InputArray transMatrix,
-  float weight,
+  double weight,
+	int doOverlay,
   OutputArray blendImage)
 {
 	FUNCLOGTIMEL("ImgAlign_Impl::getImageBlended");
 
 	try {
 
-		Mat alignedImage(fixedImageIn.size(), movingImageIn.type());
-		warpPerspective(movingImageIn, alignedImage, transMatrix, fixedImageIn.size());
+		Mat alignedImage;
+		WarperHelper::warpPerspective(movingImageIn, transMatrix.getMat(), fixedImageIn.size(), alignedImage);
+
+		//Mat alignedImage(fixedImageIn.size(), movingImageIn.type());
+		//warpPerspective(movingImageIn, alignedImage, transMatrix, fixedImageIn.size());
 
 		blendImage.create(fixedImageIn.size(), fixedImageIn.type());
-		addWeighted(fixedImageIn, 1.0 - weight, alignedImage, weight, 0.0, blendImage);
+		ImageUtils::blendImages(alignedImage, fixedImageIn, weight, doOverlay, blendImage.getMatRef());
 	}
 	catch(std::exception &e) {
 		LogUtils::getLog() << e.what() << std::endl;
@@ -500,7 +572,7 @@ void ImgAlign_Impl::getImageBlended(
 
 void ImgAlign_Impl::getImageBlendedPolygonFixedImage(
 	InputArray transMatrix,
-	float weight,
+	double weight,
 	int doOverlay,
 	CV_IN_OUT std::vector<Point> &polygon,
 	OutputArray blendImage)
@@ -510,7 +582,14 @@ void ImgAlign_Impl::getImageBlendedPolygonFixedImage(
 	try {
 
 		if(polygon.empty()) {
-			return getImageBlended(transMatrix, weight, blendImage);
+			if(doOverlay) {
+				fixedImageIn.copyTo(blendImage);
+			}
+			else {
+				blendImage.create(fixedImageIn.size(), fixedImageIn.type());
+				ImageUtils::dimImage(fixedImageIn, weight, blendImage.getMatRef());
+			}
+			return;
 		}
 
 		std::vector<Point> polygonScaled;
@@ -518,8 +597,11 @@ void ImgAlign_Impl::getImageBlendedPolygonFixedImage(
 			polygonScaled.push_back(Point((int)(pt.x * 1.0), (int)(pt.y * 1.0)));
 		}
 
-		Mat alignedImage(fixedImageIn.size(), movingImageIn.type());
-		warpPerspective(movingImageIn, alignedImage, transMatrix, fixedImageIn.size());
+		Mat alignedImage;
+		WarperHelper::warpPerspective(movingImageIn, transMatrix.getMat(), fixedImageIn.size(), alignedImage);
+
+		//Mat alignedImage(fixedImageIn.size(), movingImageIn.type());
+		//warpPerspective(movingImageIn, alignedImage, transMatrix, fixedImageIn.size());
 
 		blendImage.create(fixedImageIn.size(), fixedImageIn.type());
 
@@ -533,7 +615,7 @@ void ImgAlign_Impl::getImageBlendedPolygonFixedImage(
         
 void ImgAlign_Impl::getImageBlendedPolygonMovingImage(
 	InputArray transMatrix,
-	float weight,
+	double weight,
 	int doOverlay,
 	CV_IN_OUT std::vector<Point> &polygon,
 	OutputArray blendImage)
@@ -543,7 +625,14 @@ void ImgAlign_Impl::getImageBlendedPolygonMovingImage(
 	try {
 
 		if(polygon.empty()) {
-			return getImageBlended(transMatrix, weight, blendImage);
+			if(doOverlay) {
+				fixedImageIn.copyTo(blendImage);
+			}
+			else {
+				blendImage.create(fixedImageIn.size(), fixedImageIn.type());
+				ImageUtils::dimImage(fixedImageIn, weight, blendImage.getMatRef());
+			}
+			return;
 		}
 
 		std::vector<Point> polygonScaled;
@@ -554,11 +643,17 @@ void ImgAlign_Impl::getImageBlendedPolygonMovingImage(
 		cv::Mat polygonImage, polygonMask;
 		ImageUtils::clearPolygonInvFromImage(movingImageIn, polygonScaled, polygonImage, polygonMask);
 
-		Mat polygonImageAligned(fixedImageIn.size(), movingImageIn.type());
-		warpPerspective(movingImageIn, polygonImageAligned, transMatrix, fixedImageIn.size());
+		Mat polygonImageAligned;
+		WarperHelper::warpPerspective(movingImageIn, transMatrix.getMat(), fixedImageIn.size(), polygonImageAligned);
 
-		Mat polygonMaskAligned(fixedImageIn.size(), polygonMask.type());
-		warpPerspective(polygonMask, polygonMaskAligned, transMatrix, fixedImageIn.size());
+		//Mat polygonImageAligned(fixedImageIn.size(), movingImageIn.type());
+		//warpPerspective(movingImageIn, polygonImageAligned, transMatrix, fixedImageIn.size());
+
+		Mat polygonMaskAligned;
+		WarperHelper::warpPerspective(polygonMask, transMatrix.getMat(), fixedImageIn.size(), polygonMaskAligned);
+
+		//Mat polygonMaskAligned(fixedImageIn.size(), polygonMask.type());
+		//warpPerspective(polygonMask, polygonMaskAligned, transMatrix, fixedImageIn.size());
 
 		blendImage.create(fixedImageIn.size(), fixedImageIn.type());
 		ImageUtils::blendImages(polygonImageAligned, fixedImageIn, weight, doOverlay, polygonMaskAligned, blendImage.getMatRef());
@@ -573,7 +668,7 @@ void ImgAlign_Impl::getImageFloodFillFixedImage(
 	InputArray transMatrix,
 	CV_IN_OUT std::vector<Point> &seedPts,
 	CV_IN_OUT std::vector<int> &floodFillTolerances,
-	float weight,
+	double weight,
 	int doOverlay,
 	cv::OutputArray blendImage)
 {
@@ -584,7 +679,14 @@ void ImgAlign_Impl::getImageFloodFillFixedImage(
 		CV_Assert(seedPts.size() == floodFillTolerances.size());
 
 		if(seedPts.empty()) {
-			return getImageBlended(transMatrix, weight, blendImage);
+			if(doOverlay) {
+				fixedImageIn.copyTo(blendImage);
+			}
+			else {
+				blendImage.create(fixedImageIn.size(), fixedImageIn.type());
+				ImageUtils::dimImage(fixedImageIn, weight, blendImage.getMatRef());
+			}
+			return;
 		}
 
 		std::vector<Point> ptsScaled;
@@ -595,8 +697,11 @@ void ImgAlign_Impl::getImageFloodFillFixedImage(
 		TMat mask;
 		ImageUtils::floodFillMask(fixedImageIn, ptsScaled, floodFillTolerances, mask);
 
-		Mat alignedImage(fixedImageIn.size(), movingImageIn.type());
-		warpPerspective(movingImageIn, alignedImage, transMatrix, fixedImageIn.size());
+		Mat alignedImage;
+		WarperHelper::warpPerspective(movingImageIn, transMatrix.getMat(), fixedImageIn.size(), alignedImage);
+
+		//Mat alignedImage(fixedImageIn.size(), movingImageIn.type());
+		//warpPerspective(movingImageIn, alignedImage, transMatrix, fixedImageIn.size());
 
 		blendImage.create(fixedImageIn.size(), fixedImageIn.type());
 		ImageUtils::blendImages(alignedImage, fixedImageIn, weight, doOverlay, mask, blendImage.getMatRef());
@@ -611,7 +716,7 @@ void ImgAlign_Impl::getImageFloodFillMovingImage(
 	InputArray transMatrix,
 	CV_IN_OUT std::vector<Point> &seedPts,
 	CV_IN_OUT std::vector<int> &floodFillTolerances,
-	float weight,
+	double weight,
 	int doOverlay,
 	OutputArray blendImage)
 {
@@ -622,7 +727,14 @@ void ImgAlign_Impl::getImageFloodFillMovingImage(
 		CV_Assert(seedPts.size() == floodFillTolerances.size());
 
 		if(seedPts.empty()) {
-			return getImageBlended(transMatrix, weight, blendImage);
+			if(doOverlay) {
+				fixedImageIn.copyTo(blendImage);
+			}
+			else {
+				blendImage.create(fixedImageIn.size(), fixedImageIn.type());
+				ImageUtils::dimImage(fixedImageIn, weight, blendImage.getMatRef());
+			}
+			return;
 		}
 
 		std::vector<Point> ptsScaled;
@@ -630,16 +742,264 @@ void ImgAlign_Impl::getImageFloodFillMovingImage(
 			ptsScaled.push_back(Point((int)(pt.x * 1.0), (int)(pt.y * 1.0)));
 		}
 
-		std::vector<Point> ptsWarped = ImageUtils::transformPts(ptsScaled, transMatrix.getMat());
+		std::vector<Point> ptsWarped = WarperHelper::transformPts(ptsScaled, transMatrix.getMat());
 
-		Mat alignedImage(fixedImageIn.size(), movingImageIn.type());
-		warpPerspective(movingImageIn, alignedImage, transMatrix, fixedImageIn.size());
+		Mat alignedImage;
+		WarperHelper::warpPerspective(movingImageIn, transMatrix.getMat(), fixedImageIn.size(), alignedImage);
+
+		//Mat alignedImage(fixedImageIn.size(), movingImageIn.type());
+		//warpPerspective(movingImageIn, alignedImage, transMatrix, fixedImageIn.size());
 
 		TMat mask;
 		ImageUtils::floodFillMask(alignedImage, ptsWarped, floodFillTolerances, mask);
 
 		blendImage.create(fixedImageIn.size(), fixedImageIn.type());
 		ImageUtils::blendImages(alignedImage, fixedImageIn, weight, doOverlay, mask, blendImage.getMatRef());
+	}
+	catch(std::exception &e) {
+		LogUtils::getLog() << e.what() << std::endl;
+		throw e;
+	}
+}
+
+void ImgAlign_Impl::getStitchedImage(
+	InputArray transMatrix,
+	CV_IN_OUT std::vector<Point> &goodMatchesFixedImage,
+	double weight,
+	OutputArray blendImage)
+{
+	FUNCLOGTIMEL("ImgAlign_Impl::getStitchedImage");
+
+	try {
+
+		std::vector<Point> bBoxPtsMovingImage{
+			Point(0, 0),
+			Point(movingImageIn.size().width, 0),
+			Point(movingImageIn.size().width, movingImageIn.size().height),
+			Point(0, movingImageIn.size().height)
+		};
+		std::vector<Point> bBoxPtsWarpedMovingImage =
+			WarperHelper::transformPts(bBoxPtsMovingImage, transMatrix.getMat());
+
+		std::vector<Point> bBoxPtsFixedImage{
+			Point(0, 0),
+			Point(fixedImageIn.size().width, 0),
+			Point(fixedImageIn.size().width, fixedImageIn.size().height),
+			Point(0, fixedImageIn.size().height)
+		};
+		
+		const auto iList = {
+			bBoxPtsWarpedMovingImage[0], bBoxPtsWarpedMovingImage[1],
+			bBoxPtsWarpedMovingImage[2], bBoxPtsWarpedMovingImage[3],
+			bBoxPtsFixedImage[0], bBoxPtsFixedImage[1],
+			bBoxPtsFixedImage[2], bBoxPtsFixedImage[3]
+		};
+
+		auto xMin = std::min(iList,
+			[](const Point &pt1, const Point &pt2) {
+				return pt1.x < pt2.x;
+			});
+
+		auto xMax = std::max(iList,
+			[](const Point &pt1, const Point &pt2) {
+				return pt1.x < pt2.x;
+			});
+
+		auto yMin = std::min(iList,
+			[](const Point &pt1, const Point &pt2) {
+				return pt1.y < pt2.y;
+			});
+
+		auto yMax = std::max(iList,
+			[](const Point &pt1, const Point &pt2) {
+				return pt1.y < pt2.y;
+			});	
+	
+		auto tx = -std::min(0, xMin.x);
+		auto ty = -std::min(0, yMin.y);
+
+		Mat tTransMat;
+		transMatrix.getMat().copyTo(tTransMat);
+		if(xMin.x < 0 || yMin.y < 0) {
+
+			Mat tM = Mat::eye(3,3,CV_64F);
+			tM.at<double>(0,2) = tx;
+			tM.at<double>(1,2)= ty;
+			tTransMat = tM * transMatrix.getMat();
+		}
+
+		Mat fixedImageExpanded = Mat::zeros(Size(xMax.x - xMin.x, yMax.y - yMin.y), fixedImageIn.type());
+		Mat fixedImageExpandedRoi = fixedImageExpanded(Rect(tx, ty, fixedImageIn.size().width, fixedImageIn.size().height));
+		fixedImageIn.copyTo(fixedImageExpandedRoi);
+		
+		Mat alignedImage;
+		WarperHelper::warpPerspective(movingImageIn, tTransMat, fixedImageExpanded.size(), alignedImage);
+
+		//Mat alignedImage(fixedImageExpanded.size(), fixedImageExpanded.type());
+		//warpPerspective(movingImageIn, alignedImage, tTransMat, fixedImageExpanded.size());
+
+		if(goodMatchesFixedImage.empty()) {
+
+			blendImage.create(fixedImageExpanded.size(), fixedImageExpanded.type());
+			//ImageUtils::blendImagesCenterDistance(fixedImageExpanded, alignedImage, blendDistPx, blendImage.getMatRef());
+			ImageUtils::blendImagesAlphaWhereOverlap(alignedImage, fixedImageExpanded, weight, blendImage.getMatRef());
+		}
+		else {
+			Mat tempBlendImage(fixedImageExpanded.size(), fixedImageExpanded.type());
+			ImageUtils::blendImagesAlphaWhereOverlap(alignedImage, fixedImageExpanded, weight, tempBlendImage);
+
+			std::vector<TConstMat> images;
+			images.push_back(tempBlendImage);
+
+			auto display = std::unique_ptr<Display>(new Display(images, fixedImageExpanded.size(), 0, 0, fixedImageExpanded.type()));
+			display->generateSideBySideImage();
+			
+			std::vector<Point> pts;
+			for(auto it = goodMatchesFixedImage.begin(); it != goodMatchesFixedImage.end(); ++it) {
+				pts.push_back(Point(it->x + tx, it->y + ty));
+			}
+			display->drawPoints(pts, 0);
+
+			blendImage.create(display->getDestImage().size(), display->getDestImage().type());
+			display->getDestImage().copyTo(blendImage);
+		}
+	}
+	catch(std::exception &e) {
+		LogUtils::getLog() << e.what() << std::endl;
+		throw e;
+	}
+}
+
+double ImgAlign_Impl::stitch(
+	cv::InputArray /*transMatrix*/,
+	int projectionType1,
+	int projectionType2,
+	int blend,
+	int transferColors,
+	double fieldOfViewFixedImage,
+	double fieldOfViewMovingImage,
+	int calcYaw2,
+  int calcPitch2,
+	double yaw1, double pitch1,
+	double yaw2, double pitch2,
+	OutputArray stitchedImage)
+{
+	FUNCLOGTIMEL("ImgAlign_Impl::stitch");
+
+	LogUtils::getLog() << "blend: " << blend << std::endl;
+	LogUtils::getLog() << "projectionType1: " << projectionType1 << std::endl;
+	LogUtils::getLog() << "projectionType2: " << projectionType2 << std::endl;
+	LogUtils::getLog() << "fieldOfViewFixedImage: " << fieldOfViewFixedImage << std::endl;
+	LogUtils::getLog() << "fieldOfViewMovingImage: " << fieldOfViewMovingImage << std::endl;
+	LogUtils::getLog() << "calcYaw2: " << calcYaw2 << std::endl;
+	LogUtils::getLog() << "calcPitch2: " << calcPitch2 << std::endl;
+	LogUtils::getLog() << "yaw1: " << yaw1 << std::endl;
+	LogUtils::getLog() << "pitch1: " << pitch1 << std::endl;
+	LogUtils::getLog() << "yaw2: " << yaw2 << std::endl;
+	LogUtils::getLog() << "pitch2: " << pitch2 << std::endl;
+	
+
+	try {
+		if(spMatcher == nullptr) {
+			throw std::logic_error("Matcher instance is null");
+		}
+		
+		if(fieldOfViewFixedImage <= 0) {
+			throw std::logic_error("Field of view of template image must be a positive value");
+		}
+		if(fieldOfViewMovingImage <= 0) {
+			throw std::logic_error("Field of view of moving image must be a positive value");
+		}
+
+		TMat movingImageIn1 = movingImageIn;
+		if(transferColors) {
+			movingImageIn1 = ImageUtils::colorTransfer(fixedImageIn, movingImageIn1);
+		}
+
+		TMat homography;
+		spMatcher->getHomography(
+			fieldOfViewFixedImage,
+			fieldOfViewMovingImage,
+			calcYaw2,
+  		calcPitch2,
+			yaw1, pitch1,
+			yaw2, pitch2,
+			projectionType1,
+			projectionType2,
+			homography);
+
+		// LogUtils::logMat("original Transform", spMatcher->getTransform());
+		// LogUtils::logMat("other Transform", homography);
+
+
+		// spMatcher->getTransform().copyTo(homography);
+
+		TMat fixedImageProjected;
+		if((ParamType)projectionType1 != eStitch_projectionTypeNone) {
+			
+			TMat rotMat1;
+			WarperHelper::getMatR(yaw1, pitch1, 0, rotMat1);
+
+			WarperHelper::warpImage(
+				projectionType1, fixedImageIn, fixedImageProjected, fieldOfViewFixedImage, rotMat1);
+
+			// WarperHelper::warpImage(
+			// 	projectionType1, fixedImageIn, fixedImageProjected, fieldOfViewFixedImage, yaw1, pitch1, 0);
+		}
+		else { 
+			fixedImageProjected = fixedImageIn;
+		}
+	
+		TMat movingImageProjected;
+		if((ParamType)projectionType2 != eStitch_projectionTypeNone || (yaw1 + yaw2) != 0 || (pitch1 + pitch2) != 0) {
+
+			TMat rotMat2;
+			WarperHelper::getMatR(yaw1 + yaw2, pitch1 + pitch2, 0, rotMat2);
+
+			WarperHelper::warpImage(
+				projectionType2, movingImageIn1, movingImageProjected, fieldOfViewMovingImage, rotMat2);
+
+			// WarperHelper::warpImage(
+			// 	projectionType2, movingImageIn1, movingImageProjected, fieldOfViewMovingImage, yaw1 + yaw2, pitch1 + pitch2, 0);
+		}
+		else { 
+			movingImageProjected = movingImageIn1;
+		}
+
+
+		int fw = fixedImageProjected.size().width;
+		int fh = fixedImageProjected.size().height;
+		int mw = movingImageProjected.size().width;
+		int mh = movingImageProjected.size().height;
+
+		double tx, ty, t, r, b, l;
+		WarperHelper::getBox(
+			fw, fh, mw, mh,
+			homography,
+			tx, ty, t, r, b, l);
+
+		Mat fixedImageExpanded = Mat::zeros(Size((int)(r - l), (int)(b - t)), fixedImageProjected.type());
+		Mat fixedImageExpandedRoi = fixedImageExpanded(Rect((int)tx, (int)ty, fw, fh));
+		fixedImageProjected.copyTo(fixedImageExpandedRoi);
+
+		Mat alignedImage;
+		WarperHelper::warpPerspective(movingImageProjected, homography, fixedImageExpanded.size(), alignedImage);
+
+		//Mat alignedImage(fixedImageExpanded.size(), fixedImageExpanded.type());
+		//warpPerspective(movingImageProjected, alignedImage, homography, fixedImageExpanded.size());
+
+		double outFieldOfViewStichedImage = WarperHelper::fieldOfView(fieldOfViewFixedImage, fieldOfViewMovingImage, yaw2);
+		LogUtils::getLog() << "outFieldOfViewStichedImage: " << outFieldOfViewStichedImage << std::endl;
+		
+		TMat stitchedImageTemp;
+		ImageUtils::stitch(fixedImageExpanded, alignedImage, blend, false, stitchedImageTemp);
+		//stitchedImage.create(fixedImageExpanded.size(), fixedImageExpanded.type());
+		ImageUtils::crop(stitchedImageTemp, stitchedImage.getMatRef());
+
+		//stitchedImage.create(fixedImageExpanded.size(), fixedImageExpanded.type());
+		//ImageUtils::stitch(fixedImageExpanded, alignedImage, blend, stitchedImage.getMatRef());
+
+		return outFieldOfViewStichedImage;
 	}
 	catch(std::exception &e) {
 		LogUtils::getLog() << e.what() << std::endl;
@@ -762,7 +1122,7 @@ void ImgAlign_Impl::compare(
 		}
 
 		Mat srcImageGray;
-		cvtColor(srcImageStretched, srcImageGray, CV_RGB2GRAY);
+		cvtColor(srcImageStretched, srcImageGray, CV_RGBA2GRAY);
 		
 		std::vector<TKeyPoints> keyPointsArray;
 		std::vector<TConstMat> images;

@@ -4,9 +4,19 @@
       justify-space-between
       align-center
     >
-      <h3 class="text-xs-left">
-        {{ title }}
-      </h3>
+      <v-layout
+        align-center
+        justify-start
+      >
+        <h3 class="text-xs-left">
+          {{ title }}
+        </h3>
+     
+        <div>
+          <slot name="leftElem" />
+        </div>
+      </v-layout>
+          
       <div
         :style="{position:'relative'}"
       >
@@ -20,6 +30,7 @@
         >
           <slot name="rightElem" />
         </div>
+          
       </div>
     </v-layout>
 

@@ -20,6 +20,11 @@ public:
 	static void doLogMatches(TConstMatchInfos& matchInfos, int maxMatches);
 	// static void logMatchesDistance(TConstMatchInfos& matchInfos);
 	static std::ostream& getLog();
+	static std::ostream& getLogUserInfo();
+
+	static void logMat(std::string name, TConstMat &mat);
+
+	static bool isDebug;
 };
 
 

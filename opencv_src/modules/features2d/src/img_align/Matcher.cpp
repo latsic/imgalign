@@ -7,10 +7,17 @@
 #include <opencv2/calib3d.hpp>
 #include "opencv2/imgproc/types_c.h"
 
+#include "warpers/warpers.hpp"
+
 #include "TimeUtils.h"
 #include "LogUtils.h"
 #include "Display.h"
 #include "Settings.h"
+#include "WarperHelper.h"
+#include "ImageUtils.h"
+#include "FeatureFactory.h"
+#include "DesMatcher.h"
+#include "Homography.h"
 
 using namespace cv;
 
@@ -23,23 +30,7 @@ Ptr<Feature2D> featureDesMoving;
 
 namespace imgalign
 {
-
-void CreateFeatureDetector(Ptr<Feature2D>& featureDet, DetType inDetType);
-void CreateDescriptorComputer(Ptr<Feature2D>& featureDes, DesType inDesType);
-
-Ptr<Feature2D> createSift(const Settings &settings);
-Ptr<Feature2D> createSurf(const Settings &settings);
-Ptr<Feature2D> createOrb(const Settings &settings);
-Ptr<Feature2D> createBrisk(const Settings &settings);
-Ptr<Feature2D> createKaze(const Settings &settings);
-Ptr<Feature2D> createAkaze(const Settings &settings);
-
-void CreateFeatureDetector(Ptr<Feature2D>& featureDet, const Settings &settings);
-void CreateDescriptorComputer(Ptr<Feature2D>& featureDes, const Settings &settings);
-
-void sortMatchInfos(TMatchInfos& matchInfos);
-
-Ptr<DescriptorMatcher> matcher;
+DesMatcher desMatcher;
 
 Matcher::Type::Type(DetType inDetType, DesType inDesType, TransformFinderType inTransformFinderType, MatcherType inMatcherType)
 	: detType(inDetType)
@@ -49,173 +40,6 @@ Matcher::Type::Type(DetType inDetType, DesType inDesType, TransformFinderType in
 {
 }
 
-
-
-void
-CreateFeatureDetector(Ptr<Feature2D>& featureDet, DetType inDetType)
-{
-	switch(inDetType){
-		case DetType::DET_BRISK:	featureDet = BRISK::create(30, 3, 1.0); break;
-		case DetType::DET_SURF:		featureDet = SURF::create(100, 4, 3, true, false); break;
-		case DetType::DET_SIFT:		featureDet = SIFT::create(0, 3, 0.04, 10.0, 1.6); break;
-		case DetType::DET_ORB:		featureDet = ORB::create(3000, 1.2f, 8, 21, 0, 2, ORB::HARRIS_SCORE, 61, 20); break;
-		case DetType::DET_ORB2:		featureDet = ORB::create(3000, 1.2f, 8, 31, 0, 2, ORB::HARRIS_SCORE, 41, 20); break;
-		case DetType::DET_KAZE:   featureDet = KAZE::create(false, false, 0.001f, 4, 4, KAZE::DIFF_PM_G2);
-		case DetType::DET_AKAZE:  featureDet = AKAZE::create(AKAZE::DESCRIPTOR_MLDB, 0, 3, 0.001f, 4, 4, KAZE::DIFF_PM_G2);
-		case DetType::DET_GFTT:   break;
-		case DetType::DET_HARRIS:	
-		default:{
-			throw std::logic_error("not implemented");
-		}
-	}
-}
-
-void
-CreateDescriptorComputer(Ptr<Feature2D>& featureDes, DesType inDesType)
-{
-	switch(inDesType){
-		case DesType::DES_BRISK: 	featureDes = BRISK::create(30, 3, 1.0); break;
-		case DesType::DES_SURF:		featureDes = SURF::create(100, 4, 3, true, false); break;
-		case DesType::DES_SIFT:		featureDes = SIFT::create(0, 3, 0.04, 10.0, 1.6); break;
-		case DesType::DES_FREAK:	featureDes = FREAK::create(); break;
-		case DesType::DES_ORB:		featureDes = ORB::create(3000, 1.2f, 8, 21, 0, 2, ORB::HARRIS_SCORE, 61, 20); break;
-		case DesType::DES_ORB2:		featureDes = ORB::create(3000, 1.2f, 8, 31, 0, 2, ORB::HARRIS_SCORE, 41, 20); break;
-		case DesType::DES_KAZE:   featureDes = KAZE::create(false, false, 0.001f, 4, 4, KAZE::DIFF_PM_G2);
-		case DesType::DES_AKAZE:  featureDes = AKAZE::create(AKAZE::DESCRIPTOR_MLDB, 0, 3, 0.001f, 4, 4, KAZE::DIFF_PM_G2);
-		default:{
-			throw std::logic_error("not implemented");
-		}
-	}
-}
-
-Ptr<Feature2D> createSift(const Settings &settings)
-{
-	return	SIFT::create(
-						(int)settings.getValue(eSift_featuresN),
-						(int)settings.getValue(eSift_octaveLayersN),
-						settings.getValue(eSift_contrastThresh),
-						settings.getValue(eSift_edgeThresh),
-						settings.getValue(eSift_sigma));
-}
-Ptr<Feature2D> createSurf(const Settings &settings)
-{
-	return	SURF::create(
-						settings.getValue(eSurf_hessianThresh),
-						(int)settings.getValue(eSurf_octavesN),
-						(int)settings.getValue(eSurf_octaveLayersN),
-						settings.getValue(eSurf_extended) > 0.0f,
-						false);
-}
-Ptr<Feature2D> createOrb(const Settings &settings)
-{
-	return	ORB::create(
-						(int)settings.getValue(eOrb_featuresN),
-						settings.getValue(eOrb_scale),
-						(int)settings.getValue(eOrb_levelsN),
-						settings.getValue(eOrb_edgeThresh),
-						0, 2, ORB::HARRIS_SCORE,
-						settings.getValue(eOrb_patchSize),
-						20);
-}
-Ptr<Feature2D> createBrisk(const Settings &settings)
-{
-	return	BRISK::create(
-						settings.getValue(eBrisk_thresh),
-						(int)settings.getValue(eBrisk_octavesN),
-						settings.getValue(eBrisk_patternScale));
-}
-
-Ptr<Feature2D> createKaze(const Settings &settings)
-{
-	return KAZE::create(false, false,
-		settings.getValue(eKaze_thresh),
-		settings.getValue(eKaze_octavesN),
-    settings.getValue(eKaze_octaveLayersN),
-	  KAZE::DIFF_PM_G2);
-}
-
-Ptr<Feature2D> createAkaze(const Settings &settings)
-{
-	return AKAZE::create(AKAZE::DESCRIPTOR_MLDB, 0, 3,
-                       settings.getValue(eAkaze_thresh),
-											 settings.getValue(eAkaze_octavesN),
-                       settings.getValue(eAkaze_octaveLayersN),
-											 KAZE::DIFF_PM_G2);
-}
-
-void
-CreateFeatureDetector(Ptr<Feature2D>& featureDet, const Settings &settings)
-{
-	switch(settings.getDetType()){
-		case DetType::DET_BRISK: featureDet = createBrisk(settings); break;
-		case DetType::DET_SURF: featureDet = createSurf(settings); break;
-		case DetType::DET_SIFT: featureDet = createSift(settings); break;
-		case DetType::DET_ORB: featureDet = createOrb(settings); break;
-		case DetType::DET_KAZE: featureDet = createKaze(settings); break;
-		case DetType::DET_AKAZE: featureDet = createAkaze(settings); break;
-		case DetType::DET_ORB2: featureDet = ORB::create(3000, 1.2f, 8, 31, 0, 2, ORB::HARRIS_SCORE, 41, 20); break;
-		case DetType::DET_GFTT: break;
-		case DetType::DET_HARRIS:	
-		default:{
-			throw std::logic_error("not implemented");
-		}
-	}
-}
-
-void
-CreateDescriptorComputer(Ptr<Feature2D>& featureDes, const Settings &settings)
-{
-	switch(settings.getDesType()){
-		case DesType::DES_BRISK: featureDes = createBrisk(settings); break;
-		case DesType::DES_SURF:	featureDes = createSurf(settings); break;
-		case DesType::DES_SIFT:	featureDes = createSift(settings); break;
-		case DesType::DES_FREAK:	featureDes = FREAK::create(); break;
-		case DesType::DES_ORB:		featureDes = createOrb(settings); break;
-		case DesType::DES_KAZE: featureDes = createKaze(settings); break;
-		case DesType::DES_AKAZE: featureDes = createAkaze(settings); break;
-		case DesType::DES_ORB2:	featureDes = ORB::create(3000, 1.2f, 8, 31, 0, 2, ORB::HARRIS_SCORE, 41, 20); break;
-		default:{
-			throw std::logic_error("not implemented");
-		}
-	}
-}
-
-Matcher::Matcher(
-	const cv::Mat& inFixedImage,
-	const cv::Mat& inMovingImage,
-	double scaleFactorFixedImage,
-	double scaleFactorMovingImage,
-	DetType inDetType,
-	DesType inDesType,
-	TransformFinderType inTransformFinderType,
-	MatcherType inMatcherType)
-
-	: type(inDetType, inDesType, inTransformFinderType, inMatcherType)
-	, ransacThresh(13.0)
-	, ransacConfidence(0.995)
-	, _scaleFactorFixedImage(scaleFactorFixedImage)
-	, _scaleFactorMovingImage(scaleFactorMovingImage)
-{
-FUNCLOG("Matcher");
-	
-	cvtColor(inFixedImage, fixedImage, CV_RGB2GRAY);
-	cvtColor(inMovingImage, movingImage, CV_RGB2GRAY);
-
-	CreateFeatureDetector(featureDetFixed, inDetType);
-	CreateDescriptorComputer(featureDesFixed, inDesType);
-	CreateFeatureDetector(featureDetMoving, inDetType);
-	CreateDescriptorComputer(featureDesMoving, inDesType);
-
-	switch(getMatcherType()){
-
-		case MatcherType::BF:    matcher = DescriptorMatcher::create("BruteForce-Hamming");  break;
-		case MatcherType::BF2:   matcher = DescriptorMatcher::create("BruteForce-Hamming(2)");  break;
-		case MatcherType::FLANN: matcher = DescriptorMatcher::create("FlannBased");  break;
-		default:{
-			throw std::logic_error("not implemented");
-		}
-	}
-}
 Matcher::Matcher(
 	const cv::Mat& inFixedImage,
 	const cv::Mat& inMovingImage,
@@ -241,28 +65,15 @@ FUNCLOG("Matcher");
 	_fixedImageMaskPolygon.assign(fixedImageMaskPolygon.begin(), fixedImageMaskPolygon.end());
 	_movingImageMaskPolygon.assign(movingImageMaskPolygon.begin(), movingImageMaskPolygon.end());
 
-	cvtColor(inFixedImage, fixedImage, CV_RGB2GRAY);
-	cvtColor(inMovingImage, movingImage, CV_RGB2GRAY);
+	inFixedImage.copyTo(fixedImage);
+	inMovingImage.copyTo(movingImage);
 
-	CreateFeatureDetector(featureDetFixed, settings);
-	CreateDescriptorComputer(featureDesFixed, settings);
-	CreateFeatureDetector(featureDetMoving, settings);
-	CreateDescriptorComputer(featureDesMoving, settings);
+	FeatureFactory::CreateFeatureDetector(featureDetFixed, settings);
+	FeatureFactory::CreateDescriptorComputer(featureDesFixed, settings);
+	FeatureFactory::CreateFeatureDetector(featureDetMoving, settings);
+	FeatureFactory::CreateDescriptorComputer(featureDesMoving, settings);
 
-	switch(getMatcherType()){
-
-		case MatcherType::BF:    matcher = DescriptorMatcher::create("BruteForce-Hamming");  break;
-		case MatcherType::BF2:   matcher = DescriptorMatcher::create("BruteForce-Hamming(2)");  break;
-		case MatcherType::FLANN: matcher = DescriptorMatcher::create("FlannBased");  break;
-		default:{
-			throw std::logic_error("not implemented");
-		}
-	}
-
-	matchFilterSpreadAuto = (bool)settings.getValue(eMatchFilterSpreadAuto);
-	matchFilterSpreadFactor = settings.getValue(eMatchFilterSpreadFactor);
-	matchFilterMinMatchesToRetain = (int)settings.getValue(eMatchFilterMinMatchesToRetain);
-	matchFilterMaxMatchesToRetain = (int)settings.getValue(eMatchFilterMaxMatchesToRetain);
+	desMatcher = FeatureFactory::CreateMatcher(settings);
 }
 
 MatcherType
@@ -343,114 +154,7 @@ Matcher::match(TConstMat& inDescriptors1, TConstMat& inDecsriptors2, TMatches& o
 {
 FUNCLOGTIME("match", outTimeMs);
 	
-	matcher->match(inDescriptors1, inDecsriptors2, outMatches);
-}
-
-void
-Matcher::filterLowestOctave(TConstKeyPoints& inKeyPoints, TKeyPoints& outKeyPoints) const
-{
-FUNCLOGTIMEL("filterLowestOctave");
-
-	int maxOctave = 0;
-	int minOcatve = 100000;
-
-	for(TConstKeyPoints::const_iterator it = inKeyPoints.begin(); it != inKeyPoints.end(); ++it){
-
-		if(it->octave < minOcatve) minOcatve = it->octave;
-		if(it->octave > maxOctave) maxOctave = it->octave;
-	}
-
-
-	LogUtils::getLog() << "minOcatve/maxOctave/: " << minOcatve << "/" << maxOctave << std::endl;;
-	
-	for(TConstKeyPoints::const_iterator it = inKeyPoints.begin(); it != inKeyPoints.end(); ++it){
-
-		if(it->octave == maxOctave){
-			outKeyPoints.push_back(*it);
-		}
-	}
-
-}
-
-void
-Matcher::filterSort(TConstMatches& inMatches, TMatches& outMatches, size_t matchesN)
-{
-FUNCLOGTIMEL("filterSort");
-	
-	struct Sort{
-
-		bool operator()(const DMatch& m1, const DMatch& m2){
-
-			return m1.distance < m2.distance;
-		}
-	} mySort;
-
-	outMatches.assign(inMatches.begin(), inMatches.end());
-
-
-	std::sort(outMatches.begin(), outMatches.end(), mySort);
-	if(outMatches.size() > matchesN) outMatches.resize(matchesN);
-}
-
-void
-Matcher::filter(TConstMatches& inMatches, TMatches& outMatches)
-{
-FUNCLOGTIMEL("filter");
-
-	maxDist = 0;
-	minDist = 100000;
-
-	for(TConstMatches::const_iterator it = inMatches.begin(); it != inMatches.end(); ++it){
-
-		if(it->distance < minDist) minDist = it->distance;
-		if(it->distance > maxDist) maxDist = it->distance;
-	}
-
-	double factor = 1.0;
-
-	if(minDist == 0.0){
-		//filterSort(inMatches, outMatches, 200);
-		minDist = maxDist / 10.0;
-		LogUtils::getLog() << "minDist = maxDist / 10.0" << std::endl;
-	}
-	else{
-		switch(getMatcherType()){
-			case MatcherType::FLANN: factor = 2.2; break;
-			case MatcherType::BF:    factor = 6.0; break;
-			case MatcherType::BF2:   factor = 6.0; break;
-			default: {}
-		}
-	}
-
-	if(!matchFilterSpreadAuto) {
-		factor = matchFilterSpreadFactor;
-	}
-
-	for(TConstMatches::const_iterator it = inMatches.begin(); it != inMatches.end(); ++it){
-
-		if(it->distance < max(factor * minDist, factor * minDist)){
-			outMatches.push_back(*it);
-		}
-	}
-
-	if((int)outMatches.size() < matchFilterMinMatchesToRetain){
-		filterSort(inMatches, outMatches, matchFilterMinMatchesToRetain);
-		LogUtils::getLog() << "Match count smaller " << matchFilterMinMatchesToRetain << ", not applying another filter " << std::endl;
-	}
-	else if((int)outMatches.size() > matchFilterMaxMatchesToRetain){
-		filterSort(inMatches, outMatches, matchFilterMaxMatchesToRetain);
-		LogUtils::getLog() << "Match count larger " << matchFilterMaxMatchesToRetain << ", reducing matches to " << matchFilterMaxMatchesToRetain  << std::endl;
-	}
-	else{
-		TMatches outMatches2;
-		filterSort(outMatches, outMatches2, outMatches.size());
-		outMatches.clear();
-		outMatches.assign(outMatches2.begin(), outMatches2.end());
-	}
-
-	maxDistUsed = outMatches.back().distance;
-	maxDistFactorUsed = minDist > 0 ? maxDistUsed / minDist : 0;
-
+	desMatcher.matcher->match(inDescriptors1, inDecsriptors2, outMatches);
 }
 
 bool
@@ -458,61 +162,7 @@ Matcher::getHomography(TConstPoints2f& inSrcPoints, TConstPoints2f& inDstPoints,
 {
 FUNCLOGTIME("getHomography", outTimeMs);
 
-	Mat mask(1, inSrcPoints.size(), CV_8UC1);
-	mask = Mat::zeros(mask.size(), CV_8UC1);
-	
-	switch(type.transformFinderType){
-
-		case TransformFinderType::TFT_RANSAC: outTransform = cv::findHomography(inSrcPoints, inDstPoints, RANSAC, ransacThresh, mask, 2000, ransacConfidence); break;
-		case TransformFinderType::TFT_RHO:    outTransform = cv::findHomography(inSrcPoints, inDstPoints, RHO, ransacThresh, mask, 2000, ransacConfidence); break;
-		case TransformFinderType::TFT_LMEDS:  outTransform = cv::findHomography(inSrcPoints, inDstPoints, LMEDS, ransacThresh, mask); break;
-	}
-
-	for(size_t matchIndex = 0; matchIndex < inSrcPoints.size(); ++ matchIndex){
-
-		if(mask.at<uchar>(matchIndex) == 1) outBools.push_back(true);
-		else                                outBools.push_back(false);
-	}
-
-	return !outTransform.empty() && outTransform.size().width != 0;
-}
-
-void
-Matcher::getMatchingPoints(TConstMatches& inMatches, TConstKeyPoints inKeyPtsQ, TConstKeyPoints inKeyPtsT, TPoints2f& outPtsQ, TPoints2f& outPtsT) const
-{
-FUNCLOG("getMatchingPoints");
-
-	for(size_t i = 0; i < inMatches.size(); i++){
-
-		outPtsQ.push_back(inKeyPtsQ[inMatches[i].queryIdx].pt);
-		outPtsT.push_back(inKeyPtsT[inMatches[i].trainIdx].pt);
-	}
-}
-
-void
-Matcher::getMatchingPoints(TMatchInfos& inMatchesInfos, TPoints2f& outPtsF, TPoints2f& outPtsM) const
-{
-FUNCLOG("getMatchingPoints");
-
-	for(const auto &rMatchInfo : inMatchesInfos) {
-
-		TConstKeyPoint& kPtF = std::get<0>(rMatchInfo.first);
-		TConstKeyPoint& kPtM = std::get<1>(rMatchInfo.first);
-
-		outPtsF.push_back(kPtF.pt);
-		outPtsM.push_back(kPtM.pt);
-	}
-}
-
-void sortMatchInfos(TMatchInfos& matchInfos)
-{
-	struct Sort{
-		bool operator()(const TMatchInfo& matchInfo1, const TMatchInfo& matchInfo2){
-			return matchInfo1.second.distance < matchInfo2.second.distance;
-		}
-	} mySort;
-
-	std::sort(matchInfos.begin(), matchInfos.end(), mySort);
+	return Homography::getHomography(type.transformFinderType, inDstPoints, inSrcPoints, outBools, outTransform, ransacThresh, ransacConfidence);
 }
 
 void
@@ -522,7 +172,6 @@ Matcher::detectAndCompute(cv::Feature2D* feature2dDet, cv::Feature2D* feature2dD
 	detect(feature2dDet, inImage, outKeyPoints, maskPolygon, outTimeDMs);
 	compute(feature2dDes, inImage, outKeyPoints, outMat, outTimeCMs);
 }
-
 
 int
 Matcher::match()
@@ -549,54 +198,38 @@ FUNCLOGTIME("match", msTotal);
 		return 0;
 	}
 
-	match(descriptors1, descriptors2, matchesAll, msMatching);
-	filter(matchesAll, matchesGood);
+	scaleKeyPoints();
 
-	scaleKeyPoints();	
+	MatchInfo matchInfo = desMatcher.match(
+		type.transformFinderType,
+		descriptors1,
+		descriptors2,
+		fixedKeyPoints,
+		movingKeyPoints);
 
-	getMatchingPoints(
-		matchesGood, fixedKeyPoints, movingKeyPoints,
-		goodMatchesFixedImagePtsOrdered, goodMatchesMovingImagePtsOrdered);
+	goodMatchesFixedImagePtsOrdered = matchInfo.filteredPts1;
+	goodMatchesMovingImagePtsOrdered = matchInfo.filteredPts2;
+	allMatches = matchInfo.allMatchInfos;
+	filteredMatches = matchInfo.filteredMatchInfos;
 
-	const bool homographyFound = getHomography(
-		goodMatchesMovingImagePtsOrdered, goodMatchesFixedImagePtsOrdered, bools, transform, msFindTransform);
+	maxDist = matchInfo.filterInfo.maxDist;
+	minDist = matchInfo.filterInfo.minDist;
+	maxDistUsed = matchInfo.filterInfo.maxDistUsed;
+	maxDistFactorUsed = matchInfo.filterInfo.maxDistFactorUsed;
 
-	for(TMatches::const_iterator it = matchesAll.begin(); it != matchesAll.end(); ++it){
-		allMatches.push_back(TMatchInfo(
-			TKeyPointPair(fixedKeyPoints[it->queryIdx], movingKeyPoints[it->trainIdx]), *it));
-	}
-	sortMatchInfos(allMatches);
-
-
-	for(TMatches::const_iterator it = matchesGood.begin(); it != matchesGood.end(); ++it){
-		filteredMatches.push_back(TMatchInfo(
-			TKeyPointPair(fixedKeyPoints[it->queryIdx], movingKeyPoints[it->trainIdx]), *it));
-	}
-
-	if(homographyFound){
-
-		TBools::const_iterator itBools = bools.begin();
-		for(TMatches::const_iterator it = matchesGood.begin(); it != matchesGood.end(); ++it, ++itBools){
-			
-			if(*itBools) {
-				matchesInliers.push_back(TMatchInfo(
-					TKeyPointPair(fixedKeyPoints[it->queryIdx], movingKeyPoints[it->trainIdx]), *it));
-			}
-			else {
-				matchesOutliers.push_back(TMatchInfo(
-					TKeyPointPair(fixedKeyPoints[it->queryIdx], movingKeyPoints[it->trainIdx]), *it));
-			}
-		}
-
-		sortMatchInfos(matchesInliers);
-		sortMatchInfos(matchesOutliers);
-
-		getMatchingPoints(matchesInliers, goodInlierMatchesFixedImagePtsOrdered, goodInlierMatchesMovingImagePtsOrdered);
+	if(!matchInfo.success) {
+		return 0;
 	}
 
-	if(!homographyFound) return 0;
-	else if(getMatchesInliers().size() * 5 < getMatchesOutliers().size()) return 2;
-	return 1;
+	transform = matchInfo.homography;
+	matchesInliers = matchInfo.inlierMatchInfos;
+	matchesOutliers = matchInfo.outlierMatchInfos;
+	goodInlierMatchesFixedImagePtsOrdered = matchInfo.inlierPts1;
+	goodInlierMatchesMovingImagePtsOrdered = matchInfo.inlierPts2;
+	
+	return matchInfo.confidence > 0.2
+		? 1
+		: 2;
 }
 
 void
@@ -1041,12 +674,12 @@ Matcher::compare(
 	Ptr<Feature2D> featureDet2d;
 
 	switch(detType){
-		case DetType::DET_BRISK: featureDet2d = createBrisk(settings); break;
-		case DetType::DET_SURF: featureDet2d = createSurf(settings); break;
-		case DetType::DET_SIFT: featureDet2d = createSift(settings); break;
-		case DetType::DET_ORB: featureDet2d = createOrb(settings); break;
-		case DetType::DET_KAZE: featureDet2d = createKaze(settings); break;
-		case DetType::DET_AKAZE: featureDet2d = createAkaze(settings); break;
+		case DetType::DET_BRISK: featureDet2d = FeatureFactory::createBrisk(settings); break;
+		case DetType::DET_SURF: featureDet2d = FeatureFactory::createSurf(settings); break;
+		case DetType::DET_SIFT: featureDet2d = FeatureFactory::createSift(settings); break;
+		case DetType::DET_ORB: featureDet2d = FeatureFactory::createOrb(settings); break;
+		case DetType::DET_KAZE: featureDet2d = FeatureFactory::createKaze(settings); break;
+		case DetType::DET_AKAZE: featureDet2d = FeatureFactory::createAkaze(settings); break;
 		case DetType::DET_ORB2: featureDet2d = ORB::create(3000, 1.2f, 8, 31, 0, 2, ORB::HARRIS_SCORE, 41, 20); break;
 		case DetType::DET_GFTT: break;
 		case DetType::DET_HARRIS:	
@@ -1068,6 +701,69 @@ Matcher::compare(
 		featureDet2d->detect(image, outKeyPoints);
 	}
 }
+
+
+void
+Matcher::getHomography(
+	double fieldOfViewFixedImage,
+	double fieldOfViewMovingImage,
+	bool calcYaw2,
+  bool calcPitch2,
+	double yaw1, double pitch1,
+	double &yaw2, double &pitch2,
+	int projectionType1,
+	int projectionType2,
+	TMat &outHomography)
+{
+	FUNCLOGTIMEL("Matcher::getHomography");
+
+	if(goodMatchesFixedImagePtsOrdered.size() == 0) {
+		throw std::logic_error("Template image has no keypoints"); 
+	}
+	if(goodMatchesMovingImagePtsOrdered.size() == 0) {
+		throw std::logic_error("Moving image has no keypoints");
+	}
+	if(transform.empty() && (calcYaw2 || calcPitch2)) {
+		throw std::logic_error("Can not calculate relative rotation without an existing homography matrix");
+	}
+
+	double fw = fixedImage.size().width * _scaleFactorFixedImage;
+	double fh = fixedImage.size().height * _scaleFactorFixedImage;
+	double mw = movingImage.size().width * _scaleFactorMovingImage;
+	double mh = movingImage.size().height * _scaleFactorMovingImage;
+
+	std::vector<Point2f> ptsFixedImage(
+		goodMatchesFixedImagePtsOrdered.begin(),
+		goodMatchesFixedImagePtsOrdered.end());
+
+	std::vector<Point2f> ptsMovingImage(
+		goodMatchesMovingImagePtsOrdered.begin(),
+		goodMatchesMovingImagePtsOrdered.end());
+	
+	
+	if(calcYaw2 || calcPitch2) {
+		double yaw_ = yaw2;
+		double pitch_ = pitch2;
+		WarperHelper::getRelativeRotation(fw, fh, mw, mh, fieldOfViewFixedImage, transform, yaw2, pitch2);
+		if(!calcYaw2) yaw2 = yaw_;
+		if(!calcPitch2) pitch2 = pitch_;
+	}
+
+	TMat rotMat1, rotMat2;
+	WarperHelper::getMatR(yaw1, pitch1, 0, rotMat1);
+	WarperHelper::getMatR(yaw1 + yaw2, pitch1 + pitch2, 0, rotMat2);
+
+	Homography::getHomography(
+		ptsFixedImage, ptsMovingImage,
+		cv::Size(fw, fh), cv::Size(mw, mh),
+		nullptr, nullptr,
+		fieldOfViewFixedImage, fieldOfViewMovingImage,
+		rotMat1, rotMat2,
+		//yaw1, pitch1, yaw2, pitch2,
+		projectionType1, projectionType2,
+		type.transformFinderType, outHomography);
+}
+
 
 
 } // imgalign

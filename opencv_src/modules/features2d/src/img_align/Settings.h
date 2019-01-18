@@ -90,6 +90,62 @@ namespace imgalign
     eCompareDetType = 301,
     eCompareImageType = 302,
 
+    eStitch_projection = 303,
+    eStitch_projection2 = 304,
+    eStitch_seamBlend = 501,
+    eStitch_colorTransfer = 502,
+    eStitch_viewAngle1 = 511,
+    eStitch_yaw1 = 513,
+    eStitch_pitch1 = 514,
+    eStitch_viewAngle2 = 521,
+    eStitch_yaw2 = 523,
+    eStitch_pitch2 = 524,
+
+    eStitch_yaw2Auto = 525,
+    eStitch_pitch2Auto = 526,
+
+    eStitch_projectionTypePlane = 550,
+    eStitch_projectionTypeAffine = 551,
+    eStitch_projectionTypeCylindrical = 552,
+    eStitch_projectionTypeSpherical = 553,
+    eStitch_projectionTypeFisheye = 554,
+    eStitch_projectionTypeStereographic = 555,
+    eStitch_projectionTypeRectilinear = 556,
+    eStitch_projectionTypeRectilinearPortrait = 557,
+    eStitch_projectionTypePanini = 558,
+    eStitch_projectionTypeMercator = 559,
+    eStitch_projectionTypeTransverseMercator = 560,
+    eStitch_projectionTypeNone = 561,
+
+    eBundleAdjustType_none = 570,
+    eBundleAdjustType_ray = 571,
+    eBundleAdjustType_reproj = 572,
+
+    eMultiStitch_projection = 305,
+    eMultiStitch_rectify = 581,
+    eMultiStitch_camEstimate = 582,
+    eMultiStitch_bundleAdjustType = 583,
+    eMultiStitch_waveCorrection = 584,
+    eMultiStitch_seamBlend = 585,
+    eMultiStitch_colorTransfer = 586,
+    eMultiStitch_calcImageOrder = 587,
+    eMultiStitch_calcCenterImage = 588,
+    eMultiStitch_confidenceThresh = 589,
+    eMultiStitch_exposureCompensator = 590
+
+
+    // eStitch_projectionTypePlane2 = 570,
+    // eStitch_projectionTypeAffine2 = 571,
+    // eStitch_projectionTypeCylindrical2 = 572,
+    // eStitch_projectionTypeSpherical2 = 573,
+    // eStitch_projectionTypeFisheye2 = 574,
+    // eStitch_projectionTypeStereographic2 = 575,
+    // eStitch_projectionTypeRectilinear2 = 576,
+    // eStitch_projectionTypeRectilinearPortrait2 = 577,
+    // eStitch_projectionTypePanini2 = 578,
+    // eStitch_projectionTypeMercator2 = 579,
+    // eStitch_projectionTypeTransverseMercator2 = 580,
+    // eStitch_projectionTypeNone2 = 581
   };
 
   class Settings {
@@ -106,7 +162,9 @@ namespace imgalign
       DesType getDesType() const;
       MatcherType getMatcherType() const;
       TransformFinderType getTransformFinderType() const;
+      BundleAdjustType getBundleAdjustType() const;
       
+      void init();
       float getValue(ParamType paramType) const;
       void setValues(
         const std::vector<int> &paramTypes,

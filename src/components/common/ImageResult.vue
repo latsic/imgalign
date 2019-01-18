@@ -2,20 +2,33 @@
   <div
     ref="mainDiv"
   >
-    <img
+    <div
       :style="{
-        'padding': '0.3rem',
         border: `1px solid ${$vuetify.theme.primary}`,
-        cursor: canShowDialog ? 'zoom-in' : null,
-        width: 'auto',
-        'max-width': '100%'
-      }" 
-      :id="imageName"
-      :ref="imageName"
-      :src="imageUrl"
-      @click.stop="showUnscaledIf"
-      @load="canShowDialog = isImageScaled()"
+        'padding': '0.3rem',
+      }"
     >
+      <img
+        :style="{
+          width: 'auto',
+          'max-width': '100%',
+          'margin': 'auto',
+          'padding': '0',
+          display: 'block'
+        }"
+        :class="{'cursor-drag-zoom': canShowDialog, 'cursor-drag': !canShowDialog}"
+        class="transparent-pattern"
+        :id="imageName"
+        :ref="imageName"
+        :src="imageUrl"
+        draggable="true"
+        @click.stop="showUnscaledIf"
+        @load="canShowDialog = isImageScaled()"
+        @dragstart="dragStart"
+        @dragover.prevent="() => {}"
+        @dragend.prevent="() => {}"
+      >
+    </div>
     <v-dialog
       :attach="$refs.mainDiv"
       :ref="dialog.name"
@@ -25,8 +38,10 @@
       :stlye="{
         cursor: 'move',
       }"
+      content-class="transparent-pattern"
     >
       <img
+        class="transparent-pattern"
         :id="dialog.imageName"
         :ref="dialog.imageName"
         :src="imageUrl"
@@ -54,6 +69,14 @@ export default {
         return true;
       },
       required: true
+    },
+    projected: {
+      type: Boolean,
+      default: false
+    },
+    fieldOfView: {
+      type: Number,
+      default: 0
     }
   },
   data() {
@@ -61,6 +84,7 @@ export default {
       showDialog: false,
       canShowDialog: false,
       htmlStyleOverflowY: null,
+      clickPos: {x: null, y: null },
 
       dialog: {
         name: 'dialog_000a',
@@ -109,7 +133,9 @@ export default {
         move: function(clientX, clientY, refs) {
           if(!this.dragMode()) return;
 
-          if(clientX != this.startPos.x || clientY != this.startPos.y) {
+          if(  Math.abs(this.startPos.x - clientX) > 2
+            || Math.abs(this.startPos.y - clientY) > 2) {
+
             this.moved = true;
           }
 
@@ -122,14 +148,43 @@ export default {
           if(sT < this.scrollInfo.tMax) {
             this.innerDialog(refs).scrollTop = sT;
           }
+        },
+        init: function(x, y, refs) {
+
+          const dimW = this.innerDialog(refs).clientWidth;
+          const dimH = this.innerDialog(refs).clientHeight;
+
+          const scrollInfoW = refs[this.imageName].scrollWidth;
+          const scrollInfoH = refs[this.imageName].scrollHeight;
+          
+          const scrollInfoLMax = scrollInfoW - dimW;
+          const scrollInfoTMax = scrollInfoH - dimH;
+
+          const sL = x - dimW / 2;
+          const sT = y - dimH / 2;
+
+          this.innerDialog(refs).scrollLeft = sL < scrollInfoLMax
+            ? sL
+            : scrollInfoLMax;
+
+          this.innerDialog(refs).scrollTop = sT < scrollInfoTMax
+            ? sT
+            : scrollInfoTMax;
+
         }
       }
     }
   },
   methods: {
-    showUnscaledIf() {
+    showUnscaledIf(event) {
       if(this.canShowDialog) {
         this.showDialog = true;
+        
+        const scaleFactor = this.scaleFactor();
+        if(scaleFactor > 1) {
+          this.clickPos.x = scaleFactor * (event.layerX - event.target.offsetLeft);
+          this.clickPos.y = scaleFactor * (event.layerY - event.target.offsetTop);
+        }
       }
     },
     isImageScaled() {
@@ -137,6 +192,12 @@ export default {
           && this.$refs[this.imageName]
           && (   this.$refs[this.imageName].naturalWidth > this.$refs[this.imageName].width
               || this.$refs[this.imageName].naturalHeight > this.$refs[this.imageName].height);
+    },
+    scaleFactor() {
+      if(!this.isImageScaled()) {
+        return 1.0;
+      }
+      return this.$refs[this.imageName].naturalWidth / this.$refs[this.imageName].width;
     },
     startDrag(event) {
       event.preventDefault();
@@ -193,6 +254,11 @@ export default {
       else {
         return [event.clientX, event.clientY];
       }
+    },
+    dragStart(event) {
+      event.dataTransfer.setData('text/plain', this.imageUrl);
+      event.dataTransfer.setData('number/projected', this.projected ? 1 : 0);
+      event.dataTransfer.setData('number/fieldOfView', this.fieldOfView);
     }
   },
   mounted() {
@@ -226,6 +292,12 @@ export default {
     if(this.showDialog) {
       this.dialog.hideScrollbars(this.$refs);
       this.dialog.setMoveCursor(this.$refs);
+
+      if(this.clickPos.x != null && this.clickPos.y != null) {
+        this.dialog.init(this.clickPos.x, this.clickPos.y, this.$refs);
+        this.clickPos.x = null;
+        this.clickPos.y = null;
+      }
     }
   },
   beforeDestroy() {
@@ -244,5 +316,29 @@ export default {
   }
   #app {
     overflow-y: auto !important;
+  }
+  .cursor-drag-zoom {
+    cursor: url(../../assets/zoom-drag-24.png) 2 2, auto;
+  }
+  .cursor-drag {
+    cursor: move;
+  }
+  .transparent-pattern {
+    background: 
+      repeating-linear-gradient(
+        to right,
+        #ccccff99,
+        #ccccff99 5px,
+        #eeeeff99 5px,
+        #eeeeff99 10px
+      ),
+      repeating-linear-gradient(
+        to bottom,
+        #cccc88ff,
+        #cccc88ff 5px,
+        #999966ff 5px,
+        #999966ff 10px
+      );
+
   }
 </style>

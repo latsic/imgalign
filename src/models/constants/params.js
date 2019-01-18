@@ -1,16 +1,24 @@
 
 export const paramGroups = Object.freeze({
-  other:            { id: 1001, name: 'Other' },
-  sift:             { id: 1002, name: 'Sift' },
-  surf:             { id: 1003, name: 'Surf' },
-  orb:              { id: 1004, name: 'Orb' },
-  brisk:            { id: 1005, name: 'Brisk' },
-  kaze:             { id: 1006, name: 'Kaze' },
-  akaze:            { id: 1007, name: 'Akaze' },
-  basic:            { id: 1008, name: 'Basic' },
-  compare:          { id: 1009, name: 'Compare' },
-  matchFilter:      { id: 1010, name: 'Match Filter' },
-  logging:          { id: 1011, name: 'Logging' }
+  other:                  { id: 1001, name: 'Other' },
+  sift:                   { id: 1002, name: 'Sift' },
+  surf:                   { id: 1003, name: 'Surf' },
+  orb:                    { id: 1004, name: 'Orb' },
+  brisk:                  { id: 1005, name: 'Brisk' },
+  kaze:                   { id: 1006, name: 'Kaze' },
+  akaze:                  { id: 1007, name: 'Akaze' },
+  basic:                  { id: 1008, name: 'Basic' },
+  compare:                { id: 1009, name: 'Compare' },
+  matchFilter:            { id: 1010, name: 'Match Filter' },
+  logging:                { id: 1011, name: 'Logging' },
+  stitching:              { id: 1012, name: 'Stitching' },
+  stitcherCommon:         { id: 1013, name: 'Common' },
+  stitcherOrientation:    { id: 1014, name: 'Orientation' },
+  stitcherProjection:     { id: 1015, name: 'Projection' },
+  multiStitcher:          { id: 1016, name: 'Multi Stitcher'},
+  multiStitcherCamera:    { id: 1017, name: 'Camera'},
+  multiStitcherImage:     { id: 1018, name: 'Image'},
+  multiStitcherStitcher:  { id: 1019, name: 'Stitching'}
 });
 
 const detTypeId = 200;
@@ -19,6 +27,10 @@ const matcherTypeId = 202;
 const tftTypeId = 203;
 const compareDetTypesId = 301;
 const compareImageTypeId = 302;
+const projectionId = 303;
+const projection2Id = 304;
+const projection3Id = 305;
+const bundleAdjustTypeId = 583;
 
 export const paramTypes = Object.freeze({
 
@@ -90,7 +102,7 @@ export const paramTypes = Object.freeze({
   imageMoving: { id: 131, name: 'Moving Image', groupId: compareImageTypeId },
 
   matchFilterSpreadAuto: { id: 140, name: 'Spread factor automatic', groupId: paramGroups.matchFilter.id },
-  matchFilterSpreadFactor: { id: 141, name: 'Spread factor', groupId: paramGroups.matchFilter.id, enabledIfId: 140},
+  matchFilterSpreadFactor: { id: 141, name: 'Spread factor', groupId: paramGroups.matchFilter.id, disabledIfId: 140},
   matchFilterMinMatchesToRetain: { id: 142, name: 'Min match count', groupId: paramGroups.matchFilter.id },
   matchFilterMaxMatchesToRetain: { id: 143, name: 'Max match count', groupId: paramGroups.matchFilter.id },
 
@@ -99,7 +111,54 @@ export const paramTypes = Object.freeze({
   logInfoEnabled: { id: 152, name: 'Verbose logging', groupId: paramGroups.logging.id },
   logErrorEnabled: { id: 153, name: 'Log errors', groupId: paramGroups.logging.id },
   logAssertEnabled: { id: 154, name: 'Log assertions', groupId: paramGroups.logging.id },
-  logExternEnabled: { id: 155, name: 'Log extern messages', groupId: paramGroups.logging.id }
+  logExternEnabled: { id: 155, name: 'Log extern messages', groupId: paramGroups.logging.id },
+
+  stitch_projection: { id: projectionId, name: 'Surface projection 1', groupId: paramGroups.stitcherProjection.id },
+  stitch_projection2: { id: projection2Id, name: 'Surface projection 2', groupId: paramGroups.stitcherProjection.id },
+  stitch_seamBlend: { id: 501, name: 'Seam blend', groupId: paramGroups.stitcherCommon.id },
+  stitch_colorTransfer: { id: 502, name: 'Color transfer', groupId: paramGroups.stitcherCommon.id },
+  
+  stitch_fieldOfView1: { id: 511, name: 'Field of view 1', groupId: paramGroups.stitcherOrientation.id },
+  stitch_yaw1: { id: 513, name: 'Yaw 1', groupId: paramGroups.stitcherOrientation.id },
+  stitch_pitch1: { id: 514, name: 'Pitch 1', groupId: paramGroups.stitcherOrientation.id },
+  
+  stitch_fieldOfView2: { id: 521, name: 'Field of view 2', groupId: paramGroups.stitcherOrientation.id },
+  stitch_yaw2: { id: 523, name: 'Yaw 2', groupId: paramGroups.stitcherOrientation.id },
+  stitch_pitch2: { id: 524, name: 'Pitch 2', groupId: paramGroups.stitcherOrientation.id },
+  
+  stitch_yaw2Auto: { id: 525, name: 'Yaw 2 auto', groupId: null },
+  stitch_pitch2Auto: { id: 526, name: 'Pitch 2 auto', groupId: null },
+
+  stitch_projectionTypeNone: { id: 561, name: 'None', groupId: projectionId, groupId2: projection2Id, groupId3: projection3Id },
+  stitch_projectionTypePlane: { id: 550, name: 'Plane', groupId: projectionId, groupId2: projection2Id, groupId3: projection3Id },
+  stitch_projectionTypeAffine: { id: 551, name: 'Affine', groupId: projectionId, groupId2: projection2Id, groupId3: projection3Id },
+  stitch_projectionTypeCylindrical: { id: 552, name: 'Cylindrical', groupId: projectionId, groupId2: projection2Id, groupId3: projection3Id },
+  stitch_projectionTypeSpherical: { id: 553, name: 'Spherical', groupId: projectionId, groupId2: projection2Id, groupId3: projection3Id},
+  stitch_projectionTypeFisheye: { id: 554, name: 'Fisheye', groupId: projectionId, groupId2: projection2Id, groupId3: projection3Id },
+  stitch_projectionTypeStereographic: { id: 555, name: 'Stereographic', groupId: projectionId, groupId2: projection2Id, groupId3: projection3Id },
+  stitch_projectionTypeRectilinear: { id: 556, name: 'Rectilinear', groupId: projectionId, groupId2: projection2Id, groupId3: projection3Id },
+  stitch_projectionTypeRectilinearPortrait: { id: 557, name: 'Rectilinear portrait', groupId: projectionId, groupId2: projection2Id, groupId3: projection3Id },
+  stitch_projectionTypePanini: { id: 558, name: 'Panini', groupId: projectionId, groupId2: projection2Id, groupId3: projection3Id },
+  stitch_projectionTypeMercator: { id: 559, name: 'Mercator ', groupId: projectionId, groupId2: projection2Id, groupId3: projection3Id },
+  stitch_projectionTypeTransverseMercator: { id: 560, name: 'Transverse Mercator', groupId: projectionId, groupId2: projection2Id, groupId3: projection3Id },
+
+  bundleAdjustType_none: { id: 570, name: 'None', groupId: bundleAdjustTypeId },
+  bundleAdjustType_ray: { id: 571, name: 'Ray', groupId: bundleAdjustTypeId },
+  bundleAdjustType_reproj: { id: 572, name: 'Reprojection', groupId: bundleAdjustTypeId },
+
+  multiStitch_projectionType: { id: projection3Id, name: 'Surface projection', groupId: paramGroups.multiStitcherCamera.id },
+  multiStitch_bundleAdjust: { id: bundleAdjustTypeId, name: 'Bundle adjustement type', groupId: paramGroups.multiStitcherCamera.id },
+  multiStitch_camEstimate: { id: 582, name: 'Cam estimation', groupId: paramGroups.multiStitcherCamera.id },
+  multiStitch_waveCorrection: { id: 584, name: 'Wave correction', groupId: paramGroups.multiStitcherCamera.id },
+  
+  multiStitch_rectify: { id: 581, name: 'Rectify result', groupId: paramGroups.multiStitcherImage.id },
+  multiStitch_seamBlend: { id: 585, name: 'Seam blend', groupId: paramGroups.multiStitcherImage.id },
+  multiStitch_colorTransfer: { id: 586, name: 'Color transfer', groupId: paramGroups.multiStitcherImage.id },
+  multiStitch_exposureCompensator: { id: 590, name: 'Compensate exposure', groupId: paramGroups.multiStitcherImage.id },
+
+  multiStitch_calcImageOrder: { id: 587, name: 'Calc stitch order', groupId: paramGroups.multiStitcherStitcher.id },
+  multiStitch_calcCenterImage: { id: 588, name: 'Estimate start image', groupId: paramGroups.multiStitcherStitcher.id },
+  multiStitch_confidenceThresh: { id: 589, name: 'Confidence thresh', groupId: paramGroups.multiStitcherStitcher.id }
 });
 
 export const paramTexts = Object.freeze([
@@ -194,7 +253,7 @@ export const paramTexts = Object.freeze([
     text: 'If enabled, the spread factor will be chosen automatically.'
   },
   { id: paramTypes.matchFilterSpreadFactor.id,
-    text: 'When to detected features are compared a match distance is calculated. '
+    text: 'When two detected features are compared, a match distance is calculated. '
         + 'The larger this distance, the less similar the features are. The spread factor '
         + 'is a value to influence how large the distance between two features can be, while '
         + 'the features are still considered to be a good match.'
@@ -236,9 +295,86 @@ export const paramTexts = Object.freeze([
   },
   { id: paramTypes.imageCapInput.id,
     text: 'The maxium size of input images in pixels'
+  },
+
+  { id: paramTypes.stitch_projection.id,
+    text: 'Surface projection for template image.'
+  },
+  { id: paramTypes.stitch_projection2.id,
+    text: 'Surface projection for image to align.'
+  },
+  { id: paramTypes.stitch_seamBlend.id,
+    text: 'Blend seam between images.'
+  },
+  { id: paramTypes.stitch_colorTransfer.id,
+    text: 'Try to adjust the colors of the image to align '
+        + 'to the colors of the templte image. Does not work for black and white images.'
+  },
+  { id: paramTypes.stitch_fieldOfView1.id,
+    text: 'Field of view in the degrees of the template image. '
+        + 'Leave empty to use default value or data from image meta data if available.'
+  },
+  { id: paramTypes.stitch_yaw1.id,
+    text: 'Horizontal orientation of template image in degrees. '
+        + 'Leave empty to use default value.'
+  },
+  { id: paramTypes.stitch_pitch1.id,
+    text: 'Vertical orientation of template image in degrees. '
+        + 'Leave empty to use default value.'
+  },
+  { id: paramTypes.stitch_fieldOfView2.id,
+    text: 'Field of view in the degrees of the image to align. '
+        + 'Leave empty to use default value or data from image meta data if available.'
+  },
+  { id: paramTypes.stitch_yaw2.id,
+    text: 'Horizontal orientation of the image to align in degrees. '
+        + 'Leave empty to use default value.'
+  },
+  { id: paramTypes.stitch_pitch2.id,
+    text: 'Vertical orientation of the image to align in degrees. '
+        + 'Leave empty to use default value.'
+  },
+  { id: paramTypes.stitch_yaw2Auto.id,
+    text: 'Unused.'
+  },
+  { id: paramTypes.stitch_pitch2Auto.id,
+    text: 'Unused.'
+  },
+
+  { id: paramTypes.multiStitch_projectionType.id,
+    text: 'Surface projection.'
+  },
+  { id: paramTypes.multiStitch_bundleAdjust.id,
+    text: 'Bundle adjustement type. Automatically refines initial camera parameters.'
+  },
+  { id: paramTypes.multiStitch_camEstimate.id,
+    text: 'Tries to guess camera paramters (focal length and rotation)'
+      + 'Rotation parameters are only used if bundle adjustement is enabled.'
+  },
+  { id: paramTypes.multiStitch_waveCorrection.id,
+    text: 'Tries to straighten a curved panorama/horizon.'
+  },
+  { id: paramTypes.multiStitch_seamBlend.id,
+    text: 'Blend seam between stitched images.'
+  },
+  { id: paramTypes.multiStitch_colorTransfer.id,
+    text: 'Tries to adjust the colors of the images with the purpose that '
+        + 'all images have the same color tone. The first image in the '
+        + 'stitching pipeline is used as template. This usually does not work with '
+        + 'with black and white images.'
+  },
+  { id: paramTypes.multiStitch_calcImageOrder.id,
+    text: 'Calculate the best stitching order instead of stitching the images in the same order as the '
+        + 'input images are displayed.' 
+  },
+  { id: paramTypes.multiStitch_calcCenterImage.id,
+    text: 'Calculate a center image and start stitching from there.'
+  },
+  { id: paramTypes.multiStitch_confidenceThresh.id,
+    text: 'When calculating a mapping between two images, a confidence value '
+        + 'indicates how good the mapping is. Mappings with a confidence value lower '
+        + 'than this value are dismissed.' 
   }
-
-
 
 ]);
 
@@ -277,6 +413,13 @@ export class ParamUtils {
       ? param.enabledIfId
       : null;
   }
+
+  static getParamDisabledIfId(id) {
+    const param = this._getParam(id);
+    return param && param.disabledIfId
+      ? param.disabledIfId
+      : null;
+  }
 }
 
 export const valueTypes = Object.freeze({
@@ -285,6 +428,7 @@ export const valueTypes = Object.freeze({
   range: 3,
   rangeSquareRoot: 4,
   number: 5,
-  bool: 6
+  bool: 6,
+  numberAuto: 7
 });
 

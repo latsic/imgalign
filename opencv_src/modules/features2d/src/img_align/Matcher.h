@@ -42,15 +42,15 @@ class Matcher
 			TKeyPoints &outKeyPoints,
 			TConstPoints &maskPolygon);
 
-		Matcher(
-			TConstMat& inFixedImage,
-			TConstMat& inMovingImage,
-			double scaleFactorFixedImage,
-			double scaleFactorMovingImage,
-			DetType inDetType,
-			DesType inDesType,
-			TransformFinderType inTransformFinderType,
-			MatcherType inMatcherType = MatcherType::AUTO);
+		// Matcher(
+		// 	TConstMat& inFixedImage,
+		// 	TConstMat& inMovingImage,
+		// 	double scaleFactorFixedImage,
+		// 	double scaleFactorMovingImage,
+		// 	DetType inDetType,
+		// 	DesType inDesType,
+		// 	TransformFinderType inTransformFinderType,
+		// 	MatcherType inMatcherType = MatcherType::AUTO);
 
 		Matcher(
 			const cv::Mat& inFixedImage,
@@ -69,9 +69,8 @@ class Matcher
 		void        detectAndCompute(cv::Feature2D* feature2dDet, cv::Feature2D* feature2dDes, TConstMat& inImage, TKeyPoints& outKeyPoints, TConstPoints &maskPolygon, TMat& outMat, long& outTimeDMs, long& outTimeCMs, bool isFixedImage) const;
 
 		void				match(TConstMat& inDescriptors1, TConstMat& inDecsriptors2, TMatches& outMatches, long& outTimeMs) const;
-		void				filter(TConstMatches& inMatches, TMatches& outMatches);
-		void				filterSort(TConstMatches& inMatches, TMatches& outMatches, size_t matchesN);
-		void				filterLowestOctave(TConstKeyPoints& inKeyPoints, TKeyPoints& outKeyPoints) const;
+		// void				filter(TConstMatches& inMatches, TMatches& outMatches);
+		// void				filterSort(TConstMatches& inMatches, TMatches& outMatches, size_t matchesN);
 		bool				getHomography(TConstPoints2f& inSrcPoints, TConstPoints2f& inDstPoints, TBools& outBools, TMat& outTransform, long& outTimeMs) const;
 
 
@@ -156,10 +155,21 @@ class Matcher
 		TConstPoints2f			getGoodInlierMatchesFixedImagePtsOrdered() const;
 		TConstPoints2f			getGoodInlierMatchesMovingImagePtsOrdered() const;
 
+		void getHomography(
+			double fieldOfViewFixedImage,
+			double fieldOfViewMovingImage,
+			bool calcYaw2,
+  		bool calcPitch2,
+			double yaw1, double pitch1,
+			double &yaw2, double &pitch2,
+			int projectionType1,
+			int projectionType2,
+			TMat &outHomography);
+
 	private:
 
-		void						getMatchingPoints(TConstMatches& inMatches, TConstKeyPoints inKeyPtsQ, TConstKeyPoints inKeyPtsT, TPoints2f& outPtsQ, TPoints2f& outPtsT) const;
-		void						getMatchingPoints(TMatchInfos& inMatchesInfos, TPoints2f& outPtsF, TPoints2f& outPtsM) const;
+		// void						getMatchingPoints(TConstMatches& inMatches, TConstKeyPoints inKeyPtsQ, TConstKeyPoints inKeyPtsT, TPoints2f& outPtsQ, TPoints2f& outPtsT) const;
+		// void						getMatchingPoints(TMatchInfos& inMatchesInfos, TPoints2f& outPtsF, TPoints2f& outPtsM) const;
 		void            detectGFTT(TConstMat& inImage, TKeyPoints& outKeyPoints) const;
 
 		void						scaleKeyPoints();
@@ -194,10 +204,10 @@ class Matcher
 		std::vector<cv::Point> _fixedImageMaskPolygon;
 		std::vector<cv::Point> _movingImageMaskPolygon;
 
-		bool						matchFilterSpreadAuto = true;
-		float						matchFilterSpreadFactor = 2.2;
-		int							matchFilterMinMatchesToRetain = 70;
-		int							matchFilterMaxMatchesToRetain = 400;
+		// bool						matchFilterSpreadAuto = true;
+		// float						matchFilterSpreadFactor = 2.2;
+		// int							matchFilterMinMatchesToRetain = 70;
+		// int							matchFilterMaxMatchesToRetain = 400;
 
 		double					_scaleFactorFixedImage = 1.0;
 		double					_scaleFactorMovingImage = 1.0;

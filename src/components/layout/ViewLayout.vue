@@ -13,7 +13,13 @@
       <app-view-title
         v-if="title"
         :title="title"
-      >
+      > 
+        <template
+          slot="leftElem"
+        >
+          <slot name="leftElem" />
+        </template>
+        
         <template
           slot="rightElem"
         >

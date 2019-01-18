@@ -8,8 +8,12 @@
 namespace imgalign
 {
   Settings::Settings()
+  {
+    init();
+  }
 
-    : paramValuesExt{
+  void Settings::init() {
+    paramValuesExt = {
 
       { eImageCap, { 250000.0f, "imageCap" } },
       { eImageCapInput, { 1000000.0f, "imageCapInput" } },
@@ -45,10 +49,10 @@ namespace imgalign
 
       { eMatchFilterSpreadAuto, { 1.0f, "MatchFilterSpreadAuto" } },
       { eMatchFilterSpreadFactor, { 2.2f, "MatchFilterSpreadFactor" } },
-      { eMatchFilterMinMatchesToRetain, { 70.0f, "MatchFilterMinMatchesToRetain" } },
-      { eMatchFilterMaxMatchesToRetain, { 400.0f, "MatchFilterMaxMatchesToRetain" } },
+      { eMatchFilterMinMatchesToRetain, { 30.0f, "MatchFilterMinMatchesToRetain" } },
+      { eMatchFilterMaxMatchesToRetain, { 300.0f, "MatchFilterMaxMatchesToRetain" } },
 
-      { eFloodFillTolerance, { 10.0f, "MatchFilterMaxMatchesToRetain" } },
+      { eFloodFillTolerance, { 10.0f, "FloodFillTolerance" } },
       { eAlignSelectionOverlay, { (float)0.0f, "AlignSelectionOverlay" } },
       { eLogInfoEnabled, { (float)0.0f, "LogInfoEnabled" } },
       { eLogErrorEnabled, { (float)1.0f, "LogErrorEnabled" } },
@@ -58,10 +62,36 @@ namespace imgalign
       { eDetType, { (float)eDetType_sift, "DetType" } },
       { eDesType, { (float)eDesType_sift, "DesType" } },
       { eMatcherType, { (float)eMatcherType_auto, "MatcherType" } },
-      { eTransformFinderType, { (float)eTransformFinderType_ransac, "TransformFinderType" } }
+      { eTransformFinderType, { (float)eTransformFinderType_ransac, "TransformFinderType" } },
+
+      { eStitch_projection, { (float)eStitch_projectionTypeSpherical, "Stitch_projection" } },
+      { eStitch_projection2, { (float)eStitch_projectionTypeSpherical, "Stitch_projection2" } },
+      { eStitch_seamBlend, { 1.0f, "Stitch_seamBlend" } },
+      { eStitch_colorTransfer, { 1.0f, "Stitch_colorTransfer" } },
       
-    }
-  {
+      { eStitch_viewAngle1, { 45.0f, "Stitch_viewAngle1" } },
+      { eStitch_yaw1, { 0.0f, "Stitch_yaw1" } },
+      { eStitch_pitch1, { 0.0f, "Stitch_pitch1" } },
+      
+      { eStitch_viewAngle2, { 45.0f, "viewAngle2" } },
+      { eStitch_yaw2, { 0.0f, "Stitch_yaw2" } },
+      { eStitch_pitch2, { 0.0f, "Stitch_pitch2" } },
+
+      { eStitch_yaw2Auto, { 1.0f, "Yaw 2 auto" } },
+      { eStitch_pitch2Auto, { 1.0f, "Pitch 2 auto" } },
+
+      { eMultiStitch_projection, { (float)eStitch_projectionTypeSpherical, "MultiStitch_projection" } },
+      { eMultiStitch_rectify, { 1.0f, "MultiStitch_rectify" } },
+      { eMultiStitch_camEstimate, { 1.0, "eMultiStitch_camEstimate" } },
+      { eMultiStitch_bundleAdjustType, { (float)eBundleAdjustType_reproj, "MultiStitch_bundleAdjustType" } },
+      { eMultiStitch_waveCorrection, { 0.0f, "MultiStitch_waveCorrection" } },
+      { eMultiStitch_seamBlend, { 1.0f, "MultiStitch_seamBlend" } },
+      { eMultiStitch_colorTransfer, { 0.0f, "MultiStitch_colorTransfer" } },
+      { eMultiStitch_calcImageOrder, { 1.0f, "MultiStitch_calcImageOrder" } },
+      { eMultiStitch_calcCenterImage, { 1.0f, "MultiStitch_calcCenterImage" } },
+      { eMultiStitch_confidenceThresh, { 0.2f, "MultiStitch_confidenceThresh" } },
+      { eMultiStitch_exposureCompensator, { 0.0f, "MultiStitch_exposureCompensator"} }
+    };
   }
 
   DetType Settings::getDetType(ParamType eDetType)
@@ -114,6 +144,16 @@ namespace imgalign
     }
   }
 
+  BundleAdjustType Settings::getBundleAdjustType() const
+  {
+    switch((int)getValue(eMultiStitch_bundleAdjustType)) {
+      case eBundleAdjustType_none: return BundleAdjustType::BAT_NONE;
+      case eBundleAdjustType_ray: return BundleAdjustType::BAT_RAY;
+      case eBundleAdjustType_reproj: return BundleAdjustType::BAT_REPROJ;
+      default: return BundleAdjustType::BAT_REPROJ;
+    }
+  }
+
   float Settings::getValue(ParamType type) const
   {
     auto it = paramValuesExt.find(type);
@@ -133,16 +173,14 @@ namespace imgalign
       throw std::logic_error("Settings::setValues: count of types and values dont match");
     }
 
+    init();
+
     for(size_t i = 0; i < paramTypes.size(); ++i) {
 
       if(  (ParamType)paramTypes[i] == eCompareDetType
         || (ParamType)paramTypes[i] == eCompareImageType
         || (ParamType)paramTypes[i] == eFloodFillTolerance
         || (ParamType)paramTypes[i] == eAlignSelectionOverlay
-        || (ParamType)paramTypes[i] == eLogInfoEnabled
-        || (ParamType)paramTypes[i] == eLogErrorEnabled
-        || (ParamType)paramTypes[i] == eLogAssertEnabled
-        || (ParamType)paramTypes[i] == eLogExternEnabled
         || (ParamType)paramTypes[i] == eImageCapInput)
       {
         continue;

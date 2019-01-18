@@ -12,6 +12,7 @@
     :style="{margin: '0', padding: '0'}"
     :item-text="'text'"
     :item-value="'value'"
+    :outline="outline"
   >
     <template
       slot="selection"
@@ -53,6 +54,10 @@ export default {
     param: {
       type: Object,
       required: true
+    },
+    outline: {
+      type: Boolean,
+      default: false
     }
   },
   computed: {

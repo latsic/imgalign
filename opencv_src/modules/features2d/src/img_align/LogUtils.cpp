@@ -10,8 +10,15 @@ using namespace cv;
 namespace imgalign
 {
 
+bool LogUtils::isDebug = false;
+
 std::ostream&
 LogUtils::getLog(){
+	return std::cout;
+}
+std::ostream&
+LogUtils::getLogUserInfo() {
+	std::cout << "user-info ";
 	return std::cout;
 }
 
@@ -21,6 +28,7 @@ FuncLogTime::FuncLogTime(std::string inStr, long& outTime)
 	: str(inStr)
 	, time(outTime)
 {
+	if(!LogUtils::isDebug) return;
 	LogUtils::getLog() << "s: " << inStr << std::endl;
 	sTime = milliseconds();
 }
@@ -28,11 +36,13 @@ FuncLogTime::FuncLogTime(std::string inStr)
 	: str(inStr)
 	, time(locTime)
 {
+	if(!LogUtils::isDebug) return;
 	LogUtils::getLog() << "s: " << inStr << std::endl;
 	sTime = milliseconds();
 }
 
 FuncLogTime::~FuncLogTime(){
+	if(!LogUtils::isDebug) return;
 	time = milliseconds() - sTime;
 	LogUtils::getLog() << "e: " << str << " time [ms]: " << time << std::endl;
 }
@@ -41,15 +51,16 @@ FuncLogTime::~FuncLogTime(){
 FuncLog::FuncLog(std::string inStr)
 	:str(inStr)
 {
+	if(!LogUtils::isDebug) return;
 	LogUtils::getLog() << "s: " << inStr << std::endl;
 }
 
 FuncLog::~FuncLog()
 {
+	if(!LogUtils::isDebug) return;
 	LogUtils::getLog() << "e: " << str << std::endl;
 	LogUtils::getLog() << "----------" << std::endl;
 }
-
 
 
 void
@@ -83,6 +94,22 @@ LogUtils::doLogMatches(TConstMatchInfos& matchInfos, int maxMatches)
 	}
 
 	getLog() << "-------------------------------" << std::endl;
+}
+
+void LogUtils::logMat(std::string name, TConstMat &mat)
+{
+	TMat a;
+	mat.convertTo(a, CV_64F);
+
+	getLog() << name << ": ";
+	for(int y = 0; y < a.cols; ++y) {
+		for(int x = 0; x < a.rows; ++x) {
+			
+
+			LogUtils::getLog() << " " << a.at<double>(y, x);
+		}
+	}
+	LogUtils::getLog() << std::endl;
 }
 
 void

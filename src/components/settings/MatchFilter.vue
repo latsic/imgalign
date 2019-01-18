@@ -61,11 +61,11 @@ export default {
   methods: {
     isDisabled(param) {
 
-      const enabledIfId = ParamUtils.getParamEnabledIfId(param.id);
-      if(!enabledIfId) return false;
+      const disabledIfId = ParamUtils.getParamDisabledIfId(param.id);
+      if(!disabledIfId) return false;
 
       for(const p of this.params) {
-        if(p.id == enabledIfId) {
+        if(p.id == disabledIfId) {
           return p.value > 0;
         }
       }

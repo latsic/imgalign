@@ -12,8 +12,12 @@ export class Settings {
 
       function getDiscreteParams(paramTypeId) {
         return Object.keys(paramTypes)
-          .filter(key => paramTypes[key].groupId ==  paramTypeId)
-          .map(key => paramTypes[key])
+          .filter(key => {
+            return paramTypes[key].groupId ==  paramTypeId
+                || (paramTypes[key].groupId2 && paramTypes[key].groupId2 ==  paramTypeId)
+                || (paramTypes[key].groupId3 && paramTypes[key].groupId3 ==  paramTypeId)
+          })
+          .map(key => paramTypes[key]);
       }
 
       this.params = [
@@ -59,8 +63,8 @@ export class Settings {
 
       { id: paramTypes.imageCap.id,
         type: valueTypes.rangeSquareRoot,
-        defaultValue: 250000,
-        value: 250000,
+        defaultValue: 600000,
+        value: 600000,
         range: { min: 10000, max: 9000000 }
       },
       { id: paramTypes.imageCapInput.id,
@@ -79,8 +83,8 @@ export class Settings {
 
       { id: paramTypes.alignSelectionOverlay.id,
         type: valueTypes.bool,
-        defaultValue: 0,
-        value: 0
+        defaultValue: 1,
+        value: 1
       },
 
       { id: paramTypes.logInfoEnabled.id,
@@ -240,15 +244,164 @@ export class Settings {
       {
         id: paramTypes.matchFilterMinMatchesToRetain.id,
         type: valueTypes.number,
-        value: 20,
-        defaultValue: 20
+        value: 30,
+        defaultValue: 30
       },
       {
         id: paramTypes.matchFilterMaxMatchesToRetain.id,
         type: valueTypes.number,
-        value: 200,
-        defaultValue: 200
+        value: 300,
+        defaultValue: 300
+      },
+
+      { id: paramTypes.stitch_projection.id,
+        type: valueTypes.discrete,
+        defaultValue: paramTypes.stitch_projectionTypeSpherical.id,
+        value: paramTypes.stitch_projectionTypeSpherical.id,
+        values: getDiscreteParams(paramTypes.stitch_projection.id)
+      },
+      { id: paramTypes.stitch_projection2.id,
+        type: valueTypes.discrete,
+        defaultValue: paramTypes.stitch_projectionTypeSpherical.id,
+        value: paramTypes.stitch_projectionTypeSpherical.id,
+        values: getDiscreteParams(paramTypes.stitch_projection2.id)
+      },
+
+      {
+        id: paramTypes.stitch_seamBlend.id,
+        type: valueTypes.bool,
+        value: 1,
+        defaultValue: 1,
+      },
+      {
+        id: paramTypes.stitch_colorTransfer.id,
+        type: valueTypes.bool,
+        value: 1,
+        defaultValue: 1,
+      },
+      
+      {
+        id: paramTypes.stitch_fieldOfView1.id,
+        type: valueTypes.numberAuto,
+        value: 45,
+        defaultValue: 45,
+      },
+      {
+        id: paramTypes.stitch_yaw1.id,
+        type: valueTypes.numberAuto,
+        value: 0,
+        defaultValue: 0,
+      },
+      {
+        id: paramTypes.stitch_pitch1.id,
+        type: valueTypes.numberAuto,
+        value: 0,
+        defaultValue: 0
+      },
+      {
+        id: paramTypes.stitch_fieldOfView2.id,
+        type: valueTypes.numberAuto,
+        value: 45,
+        defaultValue: 45
+      },
+      {
+        id: paramTypes.stitch_yaw2.id,
+        type: valueTypes.numberAuto,
+        value: 0,
+        defaultValue: 0,
+        flagId: paramTypes.stitch_yaw2Auto.id
+      },
+      {
+        id: paramTypes.stitch_pitch2.id,
+        type: valueTypes.numberAuto,
+        value: 0,
+        defaultValue: 0,
+        flagId: paramTypes.stitch_pitch2Auto.id
+      },
+
+      {
+        id: paramTypes.stitch_yaw2Auto.id,
+        type: valueTypes.bool,
+        value: 1,
+        defaultValue: 1
+      },
+      {
+        id: paramTypes.stitch_pitch2Auto.id,
+        type: valueTypes.bool,
+        value: 1,
+        defaultValue: 1
+      },
+
+      {
+        id: paramTypes.multiStitch_projectionType.id,
+        type: valueTypes.discrete,
+        value: paramTypes.stitch_projectionTypeSpherical.id,
+        defaultValue: paramTypes.stitch_projectionTypeSpherical.id,
+        values: getDiscreteParams(paramTypes.multiStitch_projectionType.id)
+      },
+      {
+        id: paramTypes.multiStitch_rectify.id,
+        type: valueTypes.bool,
+        value: 1,
+        defaultValue: 1,
+      },
+      {
+        id: paramTypes.multiStitch_camEstimate.id,
+        type: valueTypes.bool,
+        value: 1,
+        defaultValue: 1,
+      },
+      {
+        id: paramTypes.multiStitch_bundleAdjust.id,
+        type: valueTypes.discrete,
+        value: paramTypes.bundleAdjustType_reproj.id,
+        defaultValue: paramTypes.bundleAdjustType_reproj.id,
+        values: getDiscreteParams(paramTypes.multiStitch_bundleAdjust.id)
+      },
+      {
+        id: paramTypes.multiStitch_waveCorrection.id,
+        type: valueTypes.bool,
+        value: 0,
+        defaultValue: 0,
+      },
+      {
+        id: paramTypes.multiStitch_seamBlend.id,
+        type: valueTypes.bool,
+        value: 1,
+        defaultValue: 1,
+      },
+      {
+        id: paramTypes.multiStitch_colorTransfer.id,
+        type: valueTypes.bool,
+        value: 0,
+        defaultValue: 0
+      },
+      {
+        id: paramTypes.multiStitch_exposureCompensator.id,
+        type: valueTypes.bool,
+        value: 0,
+        defaultValue: 0
+      },
+      {
+        id: paramTypes.multiStitch_calcImageOrder.id,
+        type: valueTypes.bool,
+        value: 1,
+        defaultValue: 1
+      },
+      {
+        id: paramTypes.multiStitch_calcCenterImage.id,
+        type: valueTypes.bool,
+        value: 1,
+        defaultValue: 1
+      },
+      { id: paramTypes.multiStitch_confidenceThresh.id,
+        type: valueTypes.range,
+        defaultValue: 0.2,
+        value: 0.2,
+        range: { min: 0, max: 1 }
       }
+      
+      
     ];
   }
 
@@ -331,6 +484,7 @@ export class Settings {
           case paramTypes.detType_brisk.id: return { id: paramTypes.desType.id, value: paramTypes.desType_brisk.id };
           case paramTypes.detType_kaze.id: return { id: paramTypes.desType.id, value: paramTypes.desType_kaze.id };
           case paramTypes.detType_akaze.id: return { id: paramTypes.desType.id, value: paramTypes.desType_akaze.id };
+
           default: return null;
         }
       }
@@ -348,7 +502,7 @@ export class Settings {
 
   paramsByGroupKey(groupKey) {
     return Object.keys(paramTypes)
-      .filter(key => paramTypes[key].groupId == paramGroups[groupKey].id)
+      .filter(key => paramTypes[key].groupId == paramGroups[groupKey].id || (paramTypes[key].groupId && paramTypes[key].groupId == paramGroups[groupKey].id))
       .map(key => this.params.find(param => param.id == paramTypes[key].id));
   }
 
@@ -362,6 +516,10 @@ export class Settings {
         target.params[i].value = this.params[i].value;
       }
     }
+  }
+
+  getParamById(id) {
+    return this._getParamById(id);
   }
 
   _getParamById(id) {

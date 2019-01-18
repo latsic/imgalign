@@ -31,6 +31,12 @@ namespace imgalign
   enum class TransformFinderType{
     TFT_RANSAC = 0, TFT_RHO = 1, TFT_LMEDS = 2
   };
+  enum class WaveCorrectType{
+    WCT_NONE = 0, WCT_H = 1, WCT_V = 2, WCT_AUTO = 3
+  };
+  enum class BundleAdjustType{
+    BAT_NONE = 0, BAT_RAY = 1, BAT_REPROJ = 2
+  };
 }
 
 #endif

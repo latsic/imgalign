@@ -5,7 +5,9 @@
 
 #include <stdint.h>
 
-uint64_t nanoseconds();
-uint32_t milliseconds();
-
+namespace imgalign
+{
+  uint64_t nanoseconds();
+  uint32_t milliseconds();
+}
 #endif
