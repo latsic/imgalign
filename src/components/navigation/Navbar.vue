@@ -214,7 +214,13 @@ export default {
           componentName: "settings",
           func: null,
           icon: "settings"
-        }
+        },
+        {
+          title: "Log",
+          componentName: "logoutput",
+          func: null,
+          icon: "border_all"
+        },
       ];
     },
     itemsRight() {
@@ -228,12 +234,7 @@ export default {
     },
     itemsXsOnly() {
       return [
-        {
-          title: "Log output",
-          componentName: "logoutput",
-          func: null,
-          icon: "border_all"
-        },
+        
       ];
     },
     allItems() {
