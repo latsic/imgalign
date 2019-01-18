@@ -1,6 +1,6 @@
 # ImgAlign
 
-An spa to align an image to a template image. It uses a custom opencv version (compiled to wasm) to do so.
+An spa to align an image to a template image or to stitch multiple images. It uses a custom opencv version (compiled to wasm) to do so.
 To align the image 2d-feature detection is used (orb, sift, kaze, etc).
 
 ## Built With
