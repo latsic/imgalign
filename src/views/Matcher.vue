@@ -26,6 +26,7 @@
         :worker-busy-compute="$store.getters['worker/busyCompute']"
         :worker-busy-image="$store.getters['worker/busyImage']"
         :worker-action-info="$store.getters['worker/currentActionInfo']"
+        :worker-action-info-error="$store.getters['logs/currentErrorMessage']"
         :input-busy-image="$store.getters['input/busyFixedImage'] || $store.getters['input/busyMovingImage']"
         :fail-text="errorText"
         :action-text="'Match!'"

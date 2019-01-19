@@ -48,6 +48,7 @@
         :worker-busy-compute="$store.getters['worker/busyCompute']"
         :worker-busy-image="$store.getters['worker/busyImage']"
         :worker-action-info="$store.getters['worker/currentActionInfo']"
+        :worker-action-info-error="$store.getters['logs/currentErrorMessage']"
         :input-busy-image="$store.getters['multiInput/busy']"
         :fail-text="errorText"
         :action-text="'Stitch!'"

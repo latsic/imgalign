@@ -104,8 +104,8 @@ export class Settings {
       },
       { id: paramTypes.logExternEnabled.id,
         type: valueTypes.bool,
-        defaultValue: 0,
-        value: 0
+        defaultValue: 1,
+        value: 1
       },
     
       { id: paramTypes.sift_featuresN.id,

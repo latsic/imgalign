@@ -5,6 +5,8 @@
       v-model="drawer"
       app
       disable-resize-watcher
+      temporary
+
     >
       <v-list dense>
         <template
@@ -36,7 +38,7 @@
       dense
     >
       <v-toolbar-side-icon
-        v-if="$vuetify.breakpoint.xsOnly"
+        v-if="$vuetify.breakpoint.xsOnly || $vuetify.breakpoint.smAndUp"
         @click.stop="drawer = !drawer"
       />
     
@@ -179,12 +181,7 @@ export default {
   computed: {
     itemsLeft() {
       return [
-        {
-          title: "Info",
-          componentName: "info",
-          func: null,
-          icon: "device_hub"
-        },
+        
         {
           title: "Matcher",
           componentName: "matcher",
@@ -209,18 +206,8 @@ export default {
           func: null,
           icon: "border_all"
         },
-        {
-          title: "Settings",
-          componentName: "settings",
-          func: null,
-          icon: "settings"
-        },
-        {
-          title: "Log",
-          componentName: "logoutput",
-          func: null,
-          icon: "border_all"
-        },
+        
+        
       ];
     },
     itemsRight() {
@@ -234,11 +221,28 @@ export default {
     },
     itemsXsOnly() {
       return [
-        
+        {
+          title: "Info",
+          componentName: "info",
+          func: null,
+          icon: "device_hub"
+        },
+        {
+          title: "Settings",
+          componentName: "settings",
+          func: null,
+          icon: "settings"
+        },
+        {
+          title: "Log",
+          componentName: "logoutput",
+          func: null,
+          icon: "border_all"
+        }
       ];
     },
     allItems() {
-      return [...this.itemsLeft, ...this.itemsRight, ...this.nonNavItems, ...this.itemsXsOnly];
+      return [...this.itemsXsOnly, ...this.itemsLeft, ...this.itemsRight, ...this.nonNavItems];
     },
     routeTitle() {
       for (const item of this.allItems) {

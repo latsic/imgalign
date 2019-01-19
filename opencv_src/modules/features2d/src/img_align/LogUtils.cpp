@@ -22,6 +22,12 @@ LogUtils::getLogUserInfo() {
 	return std::cout;
 }
 
+std::ostream&
+LogUtils::getLogUserError() {
+	std::cout << "user-error ";
+	return std::cout;
+}
+
 long locTime = 0;
 
 FuncLogTime::FuncLogTime(std::string inStr, long& outTime)

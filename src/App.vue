@@ -46,6 +46,7 @@ export default {
       () => this.$store.getters['settings/param'](paramTypes.logAssertEnabled.id),
       () => this.$store.getters['settings/param'](paramTypes.logExternEnabled.id),
       (msg) => this.$store.commit('logs/addMessage', msg),
+      (msg) => this.$store.commit('logs/addErrorMessage', msg),
       (msg) => this.$store.commit('worker/currentActionInfo', msg));
   }
 }

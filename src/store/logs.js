@@ -1,9 +1,14 @@
+let errorTimeoutId = null;
 
 const state = {
-  maxMessagesCount: 20,
+  maxMessagesCount: 50,
   messages: [],
   totalCount: 0,
-  infoMessafe: ''
+  infoMessafe: '',
+
+  maxErrorMessagesCount: 5,
+  errorMessages: [],
+  currentErrorMessage: ''
 }
 
 const getters = {
@@ -12,6 +17,12 @@ const getters = {
   },
   totalCount(state) {
     return state.totalCount;
+  },
+  errorMessages(state) {
+    return state.errorMessages;
+  },
+  currentErrorMessage(state) {
+    return state.currentErrorMessage;
   }
 }
 
@@ -25,6 +36,22 @@ const mutations = {
   },
   setInfoMessage(state, message) {
     state.infoMessafe = message;
+  },
+  addErrorMessage(state, message) {
+    if(state.maxErrorMessagesCount == state.errorMessages.length) {
+      state.errorMessages.shift();
+    }
+    state.errorMessages.push(new Date().toLocaleTimeString() + ': ' + message);
+
+    if(errorTimeoutId) {
+      clearTimeout(errorTimeoutId);
+      errorTimeoutId = null;
+    }
+
+    state.currentErrorMessage = message;
+    errorTimeoutId = setTimeout(() => {
+      state.currentErrorMessage = '';
+    }, 3000);
   }
 }
 

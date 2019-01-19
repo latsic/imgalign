@@ -24,15 +24,15 @@
         </span>
         <span
           v-else-if="workerBusyCompute || workerBusyImage && !showStatusInfo && currentComputeTime"
-          :style="{'color': $vuetify.theme.primary}"
+          :style="{'color': !workerActionInfoError ? $vuetify.theme.primary : $vuetify.theme.error}"
         >
-          {{ timeStr(currentComputeTime) + ', ' + workerActionInfo }}
+          {{ timeStr(currentComputeTime) + ', ' + workerActionInfoMessage }}
         </span>
         <span
           v-else-if="(inputBusyImage || resultValid) && !showStatusInfo && transitionDone && workerActionInfo"
-          :style="{'color': $vuetify.theme.primary}"
+          :style="{'color': !workerActionInfoError ? $vuetify.theme.primary : $vuetify.theme.error}"
           >
-          {{ workerActionInfo }} ...
+          {{ workerActionInfoMessage }} ...
         </span>
         <span
           v-else-if="resultValid && !showStatusInfo && transitionDone"
@@ -52,7 +52,13 @@
           @after-leave="afterLeave"
         >
           <span
-            v-if="showStatusInfo && computeSuccess === 1"
+            v-if="showStatusInfo && workerActionInfoError && computeSuccess === 1"
+            :style="{'color': $vuetify.theme.error}"
+          >
+            <strong>{{ workerActionInfoError }}, time {{ timeStr(computeTimeTotal) }}</strong>
+          </span>
+          <span
+            v-else-if="showStatusInfo && computeSuccess === 1"
             :style="{'color': $vuetify.theme.success}"
           >
             <strong>Success, time {{ timeStr(computeTimeTotal) }}</strong>
@@ -202,6 +208,10 @@ export default {
       type: String,
       default: ''
     },
+    workerActionInfoError: {
+      type: String,
+      required: true
+    },
     workerlastCompletedActionTime: {
       type: Number,
       default: 0 
@@ -240,10 +250,8 @@ export default {
   },
   data() {
     return {
-      currentComputeTime: 0,
       showStatusInfo: false,
       transitionDone: true,
-      currentLoadingTime: 0,
       computeTimeTotal: 0,
       killCalled: false
     }
@@ -253,6 +261,16 @@ export default {
       const error = this.$store.getters['worker/error'];
       if(!error) return null;
       return error.message || 'Error!'
+    },
+    workerActionInfoMessage() {
+
+      const msg = this.workerActionInfoError
+        ? this.workerActionInfoError
+        : this.workerActionInfo;
+
+      return msg && msg.length > 50
+        ? msg.substring(0, 50)
+        : msg;
     },
     workerBusy() {
       return this.workerBusyCompute || this.workerBusyImage;
@@ -266,6 +284,12 @@ export default {
       //|| this.workerBusy
       || (this.workerBusyCompute && this.kill == null)
       || (this.multiple && this.inputBusyImage);
+    },
+    currentComputeTime() {
+      return this.$store.getters['worker/currentComputeTime'];
+    },
+    currentLoadingTime() {
+      return this.$store.getters['worker/currentLoadingTime'];
     }
   },
   methods: {
@@ -281,7 +305,7 @@ export default {
     },
     afterLeave() {
       this.transitionDone = true;
-      this.currentComputeTime = null;
+      this.setCurrentComputeTime(null);
     },
     runKill() {
       this.killCalled = true;
@@ -307,11 +331,11 @@ export default {
     startIntervalCurrentComputeTime() {
 
       const startTime = new Date();
-      this.currentComputeTime = 0;
+      this.setCurrentComputeTime(0);
 
       if(!this.showStatusInfo) {
         const intervalId = setInterval(() => {
-          this.currentComputeTime = new Date() - startTime;
+          this.setCurrentComputeTime(new Date() - startTime);
           if(this.showStatusInfo || this.killCalled) {
             clearInterval(intervalId);
             if(this.killCalled) this.killCalled = false;
@@ -322,14 +346,14 @@ export default {
     startIntervalCurrentLoadingTime() {
 
       const startTime = new Date();
-      this.currentLoadingTime = 0;
+      this.setCurrentLoadingTime(0);
 
       if(!this.workerReady) {
         const intervalId = setInterval(() => {
-          this.currentLoadingTime = new Date() - startTime;
+          this.setCurrentLoadingTime(new Date() - startTime);
           if(this.workerReady) {
             clearInterval(intervalId);
-            this.currentLoadingTime = 0;
+            this.setCurrentLoadingTime(null);
           }
         }, 150);
       }
@@ -349,6 +373,12 @@ export default {
         return (timeMs / 1000.0).toFixed(1) + ' s';
       }
       return `${(timeMs / 600000).toFixed(0)} m, ${(timeMs % 600000)} s`;
+    },
+    setCurrentComputeTime(value) {
+      this.$store.commit('worker/currentComputeTime', value);
+    },
+    setCurrentLoadingTime(value) {
+      this.$store.commit('worker/currentLoadingTime', value);
     }
   }
 }

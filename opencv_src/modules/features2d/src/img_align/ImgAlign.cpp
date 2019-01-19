@@ -345,7 +345,7 @@ ImgAlign_Impl::ImgAlign_Impl(
 		movingImage.copyTo(movingImageIn);
 	}
 	catch(std::exception &e) {
-		LogUtils::getLog() << e.what() << std::endl;
+		LogUtils::getLogUserError() << e.what() << std::endl;
 		throw e;
 	}
 }
@@ -365,7 +365,7 @@ void ImgAlign_Impl::set(
     }
 	}
 	catch(std::exception &e) {
-		LogUtils::getLog() << e.what() << std::endl;
+		LogUtils::getLogUserError() << e.what() << std::endl;
 		throw e;
 	}
 }
@@ -409,7 +409,7 @@ void ImgAlign_Impl::createMatcher()
 		));
 	}
 	catch(std::exception &e) {
-		LogUtils::getLog() << e.what() << std::endl;
+		LogUtils::getLogUserError() << e.what() << std::endl;
 		throw e;
 	}
 }
@@ -425,7 +425,7 @@ int ImgAlign_Impl::match()
 		return matchSuccess;
 	}
 	catch(std::exception &e) {
-		LogUtils::getLog() << e.what() << std::endl;
+		LogUtils::getLogUserError() << e.what() << std::endl;
 		throw e;
 	}
 }
@@ -450,7 +450,7 @@ int ImgAlign_Impl::match_getAlignedImage(
 		return matchSuccess;
 	}
 	catch(std::exception &e) {
-		LogUtils::getLog() << e.what() << std::endl;
+		LogUtils::getLogUserError() << e.what() << std::endl;
 		throw e;
 	}
 }
@@ -473,7 +473,7 @@ int ImgAlign_Impl::match_getTransMatrix(
 		return matchSuccess;
 	}
 	catch(std::exception &e) {
-		LogUtils::getLog() << e.what() << std::endl;
+		LogUtils::getLogUserError() << e.what() << std::endl;
 		throw e;
 	}
 }
@@ -520,7 +520,7 @@ int ImgAlign_Impl::match_getExtData(
 		return matchSuccess;
 	}
 	catch(std::exception &e) {
-		LogUtils::getLog() << e.what() << std::endl;
+		LogUtils::getLogUserError() << e.what() << std::endl;
 		throw e;
 	}
 }
@@ -540,7 +540,7 @@ void ImgAlign_Impl::getImageAligned(
 		//warpPerspective(movingImageIn, alignedImage, transMatrix, fixedImageIn.size());
 	}
 	catch(std::exception &e) {
-		LogUtils::getLog() << e.what() << std::endl;
+		LogUtils::getLogUserError() << e.what() << std::endl;
 		throw e;
 	}
 }
@@ -565,7 +565,7 @@ void ImgAlign_Impl::getImageBlended(
 		ImageUtils::blendImages(alignedImage, fixedImageIn, weight, doOverlay, blendImage.getMatRef());
 	}
 	catch(std::exception &e) {
-		LogUtils::getLog() << e.what() << std::endl;
+		LogUtils::getLogUserError() << e.what() << std::endl;
 		throw e;
 	}
 }
@@ -608,7 +608,7 @@ void ImgAlign_Impl::getImageBlendedPolygonFixedImage(
 		ImageUtils::blendImages(alignedImage, fixedImageIn, weight, doOverlay, polygonScaled, blendImage.getMatRef());
 	}
 	catch(std::exception &e) {
-		LogUtils::getLog() << e.what() << std::endl;
+		LogUtils::getLogUserError() << e.what() << std::endl;
 		throw e;
 	}
 }
@@ -659,7 +659,7 @@ void ImgAlign_Impl::getImageBlendedPolygonMovingImage(
 		ImageUtils::blendImages(polygonImageAligned, fixedImageIn, weight, doOverlay, polygonMaskAligned, blendImage.getMatRef());
 	}
 	catch(std::exception &e) {
-		LogUtils::getLog() << e.what() << std::endl;
+		LogUtils::getLogUserError() << e.what() << std::endl;
 		throw e;
 	}
 }
@@ -707,7 +707,7 @@ void ImgAlign_Impl::getImageFloodFillFixedImage(
 		ImageUtils::blendImages(alignedImage, fixedImageIn, weight, doOverlay, mask, blendImage.getMatRef());
 	}
 	catch(std::exception &e) {
-		LogUtils::getLog() << e.what() << std::endl;
+		LogUtils::getLogUserError() << e.what() << std::endl;
 		throw e;
 	}
 }
@@ -757,7 +757,7 @@ void ImgAlign_Impl::getImageFloodFillMovingImage(
 		ImageUtils::blendImages(alignedImage, fixedImageIn, weight, doOverlay, mask, blendImage.getMatRef());
 	}
 	catch(std::exception &e) {
-		LogUtils::getLog() << e.what() << std::endl;
+		LogUtils::getLogUserError() << e.what() << std::endl;
 		throw e;
 	}
 }
@@ -865,7 +865,7 @@ void ImgAlign_Impl::getStitchedImage(
 		}
 	}
 	catch(std::exception &e) {
-		LogUtils::getLog() << e.what() << std::endl;
+		LogUtils::getLogUserError() << e.what() << std::endl;
 		throw e;
 	}
 }
@@ -1002,7 +1002,7 @@ double ImgAlign_Impl::stitch(
 		return outFieldOfViewStichedImage;
 	}
 	catch(std::exception &e) {
-		LogUtils::getLog() << e.what() << std::endl;
+		LogUtils::getLogUserError() << e.what() << std::endl;
 		throw e;
 	}
 }
@@ -1027,7 +1027,7 @@ void ImgAlign_Impl::getFixedImageWithMatchedPoints(
 		display->getDestImage().copyTo(fixedImageWithMatchedPoints);
 	}
 	catch(std::exception &e) {
-		LogUtils::getLog() << e.what() << std::endl;
+		LogUtils::getLogUserError() << e.what() << std::endl;
 		throw e;
 	}
 }
@@ -1052,7 +1052,7 @@ void ImgAlign_Impl::getMovingImageWithMatchedPoints(
 		display->getDestImage().copyTo(movingImageWithMatchedPoints);
 	}
 	catch(std::exception &e) {
-		LogUtils::getLog() << e.what() << std::endl;
+		LogUtils::getLogUserError() << e.what() << std::endl;
 		throw e;
 	}
 }
@@ -1080,7 +1080,7 @@ void ImgAlign_Impl::getSideBySideImage(
 		display->getDestImage().copyTo(sideBySideImage);
 	}
 	catch(std::exception &e) {
-		LogUtils::getLog() << e.what() << std::endl;
+		LogUtils::getLogUserError() << e.what() << std::endl;
 		throw e;
 	}
 }
@@ -1159,7 +1159,7 @@ void ImgAlign_Impl::compare(
 		display->getDestImage().copyTo(sideBySideImage);
 	}
 	catch(std::exception &e) {
-		LogUtils::getLog() << e.what() << std::endl;
+		LogUtils::getLogUserError() << e.what() << std::endl;
 		throw e;
 	}
 

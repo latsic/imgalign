@@ -79,12 +79,11 @@ namespace
       return true;
     }
     
-    LogUtils::getLog()
-      << "applied homography for image with index " << imageIndex
-      << " produces unreasonable image of size "
-      << warpedW << "x" << WarpedH << ", "
-      << "original size is: " << w << "x" << h
-      << ", aborting" << std::endl;
+    LogUtils::getLogUserError()
+      << "warped image, unreasonable size: "
+      <<  w << "x" << h << " => " << warpedW << "x" << WarpedH
+      << ", aborting. "
+      << "Advice: Try different bundle adjustment type." << std::endl;
 
     return false;
   }

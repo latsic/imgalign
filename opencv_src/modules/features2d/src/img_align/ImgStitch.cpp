@@ -123,7 +123,7 @@ ImgStitch_Impl::ImgStitch_Impl(InputArrayOfArrays images)
 	
   }
 	catch(std::exception &e) {
-		LogUtils::getLog() << e.what() << std::endl;
+		LogUtils::getLogUserError() << e.what() << std::endl;
 		throw e;
 	}
 }
@@ -143,7 +143,7 @@ void ImgStitch_Impl::set(
     }
 	}
 	catch(std::exception &e) {
-		LogUtils::getLog() << e.what() << std::endl;
+		LogUtils::getLogUserError() << e.what() << std::endl;
 		throw e;
 	}
 }
@@ -168,7 +168,7 @@ int ImgStitch_Impl::stitch(
     return stitchCount;
   }
   catch(std::exception &e) {
-		LogUtils::getLog() << e.what() << std::endl;
+		LogUtils::getLogUserError() << e.what() << std::endl;
 		throw e;
 	}
 }
@@ -193,7 +193,7 @@ void ImgStitch_Impl::stitchStart(
     }
   }
   catch(std::exception &e) {
-		LogUtils::getLog() << e.what() << std::endl;
+		LogUtils::getLogUserError() << e.what() << std::endl;
 		throw e;
 	}
 }
@@ -241,7 +241,7 @@ int ImgStitch_Impl::stitchNext(OutputArray stitchedImage)
     return currentStitchIndex + 1;
   }
   catch(std::exception &e) {
-		LogUtils::getLog() << e.what() << std::endl;
+		LogUtils::getLogUserError() << e.what() << std::endl;
 		throw e;
 	}
 }

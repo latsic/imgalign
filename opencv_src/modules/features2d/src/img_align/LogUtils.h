@@ -21,6 +21,7 @@ public:
 	// static void logMatchesDistance(TConstMatchInfos& matchInfos);
 	static std::ostream& getLog();
 	static std::ostream& getLogUserInfo();
+	static std::ostream& getLogUserError();
 
 	static void logMat(std::string name, TConstMat &mat);
 

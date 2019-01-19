@@ -38,6 +38,7 @@ export class Logger {
     isAssertLogEnabledFn,
     isExternLogEnabled,
     otherLogFn,
+    otherLogErrorFn,
     userInfoFn) {
 
     if(!this[singleton]) {
@@ -48,6 +49,7 @@ export class Logger {
     this[singleton]._assertOn = isAssertLogEnabledFn;
     this[singleton]._externOn = isExternLogEnabled;
     this[singleton]._otherLogFn = otherLogFn;
+    this[singleton]._otherLogErrorFn = otherLogErrorFn;
     this[singleton]._userInfoFn = userInfoFn;
   }
 
@@ -57,6 +59,13 @@ export class Logger {
       const userInfoMsg = this.userInfo(...arguments);
       if(userInfoMsg) {
         this._userInfoFn(userInfoMsg);
+      }
+    }
+    if(this._otherLogErrorFn && this._errorOn()) {
+      const errorMessage = this.externErrorMessage(...arguments);
+      if(errorMessage) {
+        this.logOtherError(errorMessage);
+        //this._userInfoFn(userInfoMsg);
       }
     }
 
@@ -74,7 +83,7 @@ export class Logger {
     if(!this._externOn() && this.isExtern(...arguments)) return;
     
     this._consoleStdError(...arguments);
-    this.logOther(...arguments);
+    this.logOtherError(...arguments);
   }
   assert() {
     if(!this._assertOn()) return;
@@ -114,6 +123,21 @@ export class Logger {
     return userInfoStr;
   }
 
+  externErrorMessage() {
+    if(arguments.length == 0) return null;
+
+    let errorMessage = ''
+    for(let i = 0; i < arguments.length; ++i) {
+      if(errorMessage) {
+        errorMessage += ' ' + arguments[i];
+      }
+      else if(typeof arguments[i] == 'string' && arguments[i].startsWith('user-error ')) {
+        errorMessage = arguments[i].replace('user-error ', '');
+      }
+    }
+    return errorMessage;
+  }
+
   logOther() {
     if(!this._otherLogFn) return;
     let messageLine = '';
@@ -121,6 +145,15 @@ export class Logger {
       messageLine += arg + ' ';
     }
     this._otherLogFn(messageLine);
+  }
+
+  logOtherError() {
+    if(!this._otherLogErrorFn) return;
+    let messageLine = '';
+    for(const arg of arguments) {
+      messageLine += arg + ' ';
+    }
+    this._otherLogErrorFn(messageLine);
   }
 
 }

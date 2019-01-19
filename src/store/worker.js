@@ -16,7 +16,10 @@ const state = {
   busyLoad: false,
   currentActionInfo: '',
   lastCompletedActionTime: 0,
-  currentActionStartTime: null
+  currentActionStartTime: null,
+
+  currentComputeTime: null,
+  currentLoadingTime: null
 }
 
 const getters = {
@@ -52,6 +55,12 @@ const getters = {
   },
   lastCompletedActionTime(state) {
     return state.lastCompletedActionTime;
+  },
+  currentComputeTime(state) {
+    return state.currentComputeTime;
+  },
+  currentLoadingTime(state) {
+    return state.currentLoadingTime;
   }
 }
 
@@ -92,6 +101,13 @@ const mutations = {
       state.lastCompletedActionTime = new Date() - state.currentActionStartTime;
       state.currentActionStartTime = null;
     }
+  },
+
+  currentComputeTime(state, value) {
+    state.currentComputeTime = value;
+  },
+  currentLoadingTime(state, value) {
+    state.currentLoadingTime = value;
   }
 }
 
@@ -223,12 +239,20 @@ const actions = {
       const { imageData, stitchIndices } = await WorkerClient.instance.multiStitchStart(
         images, fieldsOfView, settings.getIdValueArrExcludingDefaults());
       
+      const noMatches = [];
       for(let i = 0; i < images.length; ++i) {
         if(!stitchIndices.some(imageIndex => imageIndex == i)) {
-          // eslint-disable-next-line no-console
-          console.warn('[store][worker][computeMultiStitchImageInSteps]',
-            `No match found for image with index ${i}`);
+          noMatches.push(i);
         }
+      }
+      if(noMatches.length > 0) {
+        // eslint-disable-next-line no-console
+        console.warn('[store][worker][computeMultiStitchImageInSteps]',
+            `No match found for image/s with index ${noMatches.map(i => ' ' + i)}`);
+        
+        context.commit(
+          'logs/addErrorMessage',
+          `No match found for image/s with index ${noMatches.map(i => ' ' + i)}`, { root: true });
       }
 
       context.commit('results/imageData', { name: multiStitchName, imageData });
@@ -622,6 +646,7 @@ const actions = {
       context.commit('currentActionInfo', 'Resizing image');
 
       const imageData = await WorkerClient.instance.requestResizedImageAsync(imageDataSrc, width, height);
+      context.commit('_busyImage', false);
       context.dispatch('multiInput/imageData', imageData, { root: true });
     }
     catch(error) {
