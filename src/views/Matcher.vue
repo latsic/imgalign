@@ -31,7 +31,7 @@
         :fail-text="errorText"
         :action-text="'Match!'"
         :result-valid="$store.getters['worker/results/imageDataValid'](matchName)"
-        @deleteResult="deleteResult"
+        @delete-result="deleteResult"
       />
 
       <v-layout

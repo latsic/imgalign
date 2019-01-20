@@ -10,6 +10,7 @@ const state = {
   imageFieldOfViewArray: [],
   imageFieldOfViewInitialArray: [],
   busy: false,
+  busyLoading: false,
   indicesSelected: []
 }
 
@@ -25,6 +26,9 @@ const getters = {
   },
   busy(state) {
     return state.busy;
+  },
+  busyLoading(state) {
+    return state.busyLoading;
   },
   indicesSelected(state) {
     return state.indicesSelected;
@@ -83,6 +87,9 @@ const mutations = {
   },
   busy(state, value) {
     state.busy = value;
+  },
+  busyLoading(state, value) {
+    state.busyLoading = value;
   },
   swap(state, { indexFrom, indexTo} ) {
     const tempImageData = state.imageDataArray[indexTo];

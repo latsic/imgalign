@@ -25,7 +25,7 @@ namespace
 {
   void logStitchOrder(
     double globalScale,
-    const std::vector<TConstMat> &srcImages,
+    const std::vector<TMat> &srcImages,
     const MultiStitcher::TStitchOrder &stitchOrder,
     const StitchInfo *stitchInfoFirstLast) {
     
@@ -80,7 +80,7 @@ namespace
     }
     
     LogUtils::getLogUserError()
-      << "warped image, unreasonable size: "
+      << "warped image " << imageIndex << ",  unreasonable size: "
       <<  w << "x" << h << " => " << warpedW << "x" << WarpedH
       << ", aborting. "
       << "Advice: Try different bundle adjustment type." << std::endl;
@@ -107,7 +107,7 @@ namespace
 }
 
 MultiStitcher::MultiStitcher(
-  const std::vector<TConstMat> &inSrcImages,
+  const std::vector<TMat> &inSrcImages,
   const Settings &inSettings)
 
   : srcImages(inSrcImages)
@@ -141,6 +141,21 @@ MultiStitcher::getStitchedImage()
   FUNCLOGTIMEL("MultiStitcher::getStitchedImage");
   stitchedImage.stitch(false, seamBlend, compensateExposure, rectify);
   return stitchedImage.image;
+}
+
+void
+MultiStitcher::releaseStitchedImage()
+{
+  FUNCLOGTIMEL("MultiStitcher::releaseStitchedImage");
+  stitchedImage.image.release();
+}
+
+void
+MultiStitcher::releaseStitchedData()
+{
+  FUNCLOGTIMEL("MultiStitcher::releaseStitchedData");
+
+  stitchedImage.stitchedInfos.clear();
 }
 
 TConstMat &

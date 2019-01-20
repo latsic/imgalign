@@ -84,7 +84,7 @@ class ImgStitch_Impl : public cv::ImgStitch
     void createStitcher();
 
     std::unique_ptr<MultiStitcher> spMultiStitcher;
-    std::vector<TConstMat> srcImages;
+    std::vector<TMat> srcImages;
     Settings settings;
 
     int currentStitchIndex = 0;
@@ -120,7 +120,15 @@ ImgStitch_Impl::ImgStitch_Impl(InputArrayOfArrays images)
       images.getMat(i).copyTo(image);
       srcImages.push_back(image);
     }
-	
+
+    // size_t imagesN = images.total();
+    // std::vector<TMat> _images(imagesN);
+    // for(size_t i = 0; i < imagesN; ++i) {
+    //   _images[i] = images.getMat((int)i);
+    // }
+    // spMultiStitcher = std::unique_ptr<MultiStitcher>(
+    //   new MultiStitcher(_images, settings));
+
   }
 	catch(std::exception &e) {
 		LogUtils::getLogUserError() << e.what() << std::endl;
@@ -222,6 +230,10 @@ int ImgStitch_Impl::stitchNext(OutputArray stitchedImage)
       ? spMultiStitcher->getStitchedImage()
       : spMultiStitcher->getStitchedImageCurrent();
 
+    if(allStitchesDone) {
+      spMultiStitcher->releaseStitchedData();
+    }
+
     if(!stitchedImageRef.empty()) {
       stitchedImageRef.copyTo(stitchedImage.getMatRef());
     }
@@ -237,6 +249,8 @@ int ImgStitch_Impl::stitchNext(OutputArray stitchedImage)
       << stitchedImage.getMatRef().size().width << "/" << stitchedImage.getMatRef().size().height
       << std::endl;
     }
+
+    spMultiStitcher->releaseStitchedImage();
 
     return currentStitchIndex + 1;
   }

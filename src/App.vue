@@ -14,7 +14,7 @@
               <div id="nav">
                 <app-navbar
                   :busyWorker="$store.getters['worker/busy']"
-                  :busyInput="$store.getters['input/busyAny'] || $store.getters['multiInput/busy']"
+                  :busyInput="busyInput"
                   :workerReady="$store.getters['worker/ready']"
                 />
               </div>
@@ -48,6 +48,13 @@ export default {
       (msg) => this.$store.commit('logs/addMessage', msg),
       (msg) => this.$store.commit('logs/addErrorMessage', msg),
       (msg) => this.$store.commit('worker/currentActionInfo', msg));
+  },
+  computed: {
+    busyInput() {
+      return this.$store.getters['input/busyAny']
+          || this.$store.getters['multiInput/busy']
+          || this.$store.getters['multiInput/busyLoading'];
+    }
   }
 }
 </script>

@@ -23,13 +23,13 @@
           Loading OpenCV {{ timeStr(currentLoadingTime) }}
         </span>
         <span
-          v-else-if="workerBusyCompute || workerBusyImage && !showStatusInfo && currentComputeTime"
+          v-else-if="workerBusyCompute || workerBusyImage && !showStatusInfo && currentComputeTime && workerActionInfoMessage"
           :style="{'color': !workerActionInfoError ? $vuetify.theme.primary : $vuetify.theme.error}"
         >
           {{ timeStr(currentComputeTime) + ', ' + workerActionInfoMessage }}
         </span>
         <span
-          v-else-if="(inputBusyImage || resultValid) && !showStatusInfo && transitionDone && workerActionInfo"
+          v-else-if="(inputBusyImage || resultValid) && !showStatusInfo && transitionDone && workerActionInfoMessage"
           :style="{'color': !workerActionInfoError ? $vuetify.theme.primary : $vuetify.theme.error}"
           >
           {{ workerActionInfoMessage }} ...
@@ -41,7 +41,7 @@
             cursor: 'pointer',
             'padding-right': '0.2rem'
           }"
-          @click="$emit('deleteResult')"
+          @click="$emit('delete-result')"
         >
           <strong>▶ Clear image</strong>
         </span>
@@ -108,6 +108,8 @@
               :multiple="multiple"
               small
               :file-changed-callback="file => onFileChanged(imageName, file)"
+              @file-selection-started="$store.commit('input/busy', { name: imageName, value: true })"
+              @file-selection-ended="$store.commit('input/busy', { name: imageName, value: false })"
             />
           </v-layout>
           <v-layout v-else>
@@ -121,6 +123,8 @@
               :multiple="multiple"
               small
               :file-changed-callback="files => onMultiFileChanged(files)"
+              @file-selection-started="$store.commit('multiInput/busyLoading', true)"
+              @file-selection-ended="$store.commit('multiInput/busyLoading', false)"
             />
             <v-btn
               :style="{
@@ -131,7 +135,7 @@
               small
               color="primary"
               :disabled="deleteDisabled"
-              @click="$emit('deleteClick');"
+              @click="$emit('delete-click');"
             >
               Delete
             </v-btn>
@@ -267,6 +271,10 @@ export default {
       const msg = this.workerActionInfoError
         ? this.workerActionInfoError
         : this.workerActionInfo;
+
+      if(!msg && this.inputBusyImage) {
+        return 'Loading image/s'
+      }
 
       return msg && msg.length > 50
         ? msg.substring(0, 50)

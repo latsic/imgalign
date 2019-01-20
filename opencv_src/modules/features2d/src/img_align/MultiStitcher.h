@@ -36,6 +36,7 @@ namespace imgalign
 
     struct StitchedInfo {
       StitchedInfo();
+      void release();
       TMat homography;
       double tx, ty;
       TMat rMat, kMat;
@@ -84,7 +85,7 @@ namespace imgalign
       using TIndices = std::vector<size_t>;
 
       MultiStitcher(
-        const std::vector<TConstMat> &inSrcImages,
+        const std::vector<TMat> &inSrcImages,
         const Settings &inSettings);
       
       bool initStiching(
@@ -93,6 +94,8 @@ namespace imgalign
       int stitchAll();      
       TConstMat &getStitchedImage();
       TConstMat &getStitchedImageCurrent();
+      void releaseStitchedImage();
+      void releaseStitchedData();
 
       const TStitchOrder &getStitchOrder() const;
       
@@ -116,7 +119,7 @@ namespace imgalign
       void setCamMatrices(TStitchOrder &rStitchOrder);
       void waveCorrection(TStitchOrder &rStitchOrder);
 
-      const std::vector<TConstMat> &srcImages;
+      const std::vector<TMat> &srcImages;
       std::vector<TMat> srcImagesScaled;
       std::vector<double> scaleFactors;
       std::vector<TKeyPoints> keyPoints;

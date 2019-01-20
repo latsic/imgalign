@@ -15,7 +15,7 @@
       :action-text="'Compare!'"
       :action-button-disabled-condition="detTypeValues.length == 0"
       :result-valid="$store.getters['worker/results/imageDataValid'](compareName)"
-      @deleteResult="deleteResult"
+      @delete-result="deleteResult"
     />
 
     <app-compare

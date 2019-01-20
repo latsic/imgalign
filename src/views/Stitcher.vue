@@ -52,7 +52,7 @@
         :fail-text="errorText"
         :action-text="'Stitch!'"
         :result-valid="$store.getters['worker/results/imageDataValid'](stitchName)"
-        @deleteResult="deleteResult"
+        @delete-result="deleteResult"
       />
       
       <div

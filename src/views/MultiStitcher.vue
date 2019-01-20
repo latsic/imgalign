@@ -49,14 +49,14 @@
         :worker-busy-image="$store.getters['worker/busyImage']"
         :worker-action-info="$store.getters['worker/currentActionInfo']"
         :worker-action-info-error="$store.getters['logs/currentErrorMessage']"
-        :input-busy-image="$store.getters['multiInput/busy']"
+        :input-busy-image="$store.getters['multiInput/busy'] || $store.getters['multiInput/busyLoading']"
         :fail-text="errorText"
         :action-text="'Stitch!'"
         :result-valid="$store.getters['worker/results/imageDataValid'](multiStitchName)"
         :multiple="true"
-        :deleteDisabled="$store.getters['multiInput/imageCount'] == 0"
-        @deleteResult="deleteResult"
-        @deleteClick="deleteAllOrSelectedInputImages"
+        :delete-disabled="$store.getters['multiInput/imageCount'] == 0"
+        @delete-result="deleteResult"
+        @delete-click="deleteAllOrSelectedInputImages"
       />
     
       <div

@@ -10,6 +10,7 @@
       :accept="accept"
       :multiple="multiple"
       @change="fileChanged"
+      @click="fileSelectionStarted"
     >
     <label 
       :for="id"
@@ -132,11 +133,14 @@
     },
     data() {
       return {
-        value: ''
+        value: '',
+        fileChangedCalled: false
       }
     },
     methods: {
       fileChanged(e) {
+        this.fileChangedCalled = true;
+        this.fileSelectionStarted();
         if(e) {
           if(this.fileChangedCallback) {
             if(e.target.files) {
@@ -156,6 +160,20 @@
             this.value = '';
           }
         }
+        this.fileSelectionEnded();
+      },
+      fileSelectionStarted() {
+        this.$emit('file-selection-started');
+        // a hack, don't know a way to detect if the user canceled the file dialog.
+        setTimeout(() => {
+          if(!this.fileChangedCalled) {
+            this.fileSelectionEnded();
+          }
+        }, 7000);
+      },
+      fileSelectionEnded() {
+        this.$emit('file-selection-ended');
+        this.fileChangedCalled = false;
       }
     }
   }
