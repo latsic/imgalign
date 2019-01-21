@@ -4,6 +4,7 @@
 
 
 #include "CommonTypes.h"
+#include "EnumTypes.h"
 
 namespace imgalign
 {
@@ -75,7 +76,20 @@ class ImageUtils{
 			const std::vector<TMat> &images,
 			const std::vector<TMat> &masks,
 			const std::vector<cv::Point> &tlCorners,
-			bool blend,
+			double blendStrength,
+			TMat &outImage);
+
+		static void featherBlend(
+			const std::vector<TMat> &images,
+			const std::vector<TMat> &masks,
+			const std::vector<cv::Point> &tlCorners,
+			double blendStrength,
+			TMat &outImage);
+
+		static void blendNone(
+			const std::vector<TMat> &images,
+			const std::vector<TMat> &masks,
+			const std::vector<cv::Point> &tlCorners,
 			TMat &outImage);
 
 		static void compensateExposure(
@@ -91,16 +105,20 @@ class ImageUtils{
 		static void stitch(
 			TConstMat &src1,
 			TConstMat &src2,
-			bool blend,
 			bool exposureCompensate,
+			BlendType blendType,
+			double blendStrength,
+			SeamFinderType seamFinderType,
 			TMat &outDst);
 
 		static void stitch(
 			std::vector<TMat> &images,
 			std::vector<TMat> &masks,
 			const std::vector<cv::Point> &tlCorners,
-			bool blend,
 			bool exposureCompensate,
+			BlendType blendType,
+			double blendStrength,
+			SeamFinderType seamFinderType,
 			TMat &outDst);
 
 		static void stitchFast(

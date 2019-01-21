@@ -16,6 +16,35 @@
 namespace imgalign
 {
 
+inline cv::Size getSize(
+  const std::vector<cv::Point> &tlCorners,
+  const std::vector<cv::Size> &sizes)
+{
+  //CV_ASSERT(tlCorners.size() == sizes.size());
+
+  cv::Point tl(std::numeric_limits<int>::max(), std::numeric_limits<int>::max());
+  cv::Point br(std::numeric_limits<int>::min(), std::numeric_limits<int>::min());
+  for (size_t i = 0; i < tlCorners.size(); ++i)
+  {
+    tl.x = std::min(tl.x, tlCorners[i].x);
+    tl.y = std::min(tl.y, tlCorners[i].y);
+    br.x = std::max(br.x, tlCorners[i].x + sizes[i].width);
+    br.y = std::max(br.y, tlCorners[i].y + sizes[i].height);
+  }
+  
+  return cv::Size(br.x - tl.x, br.y - tl.y);
+}
+
+inline double getBlendWidth(
+  double blendStrength,
+  const std::vector<cv::Point> &tlCorners,
+  const std::vector<cv::Size> &sizes)
+{  
+  auto fullSize = getSize(tlCorners, sizes);
+  double area = fullSize.width * fullSize.height;
+  return sqrt(area) * blendStrength / 100.f;
+}
+
 inline uint8_t divideBy255(int value) {
   return (uint8_t)((value + 1 + (value >> 8)) >> 8);
 }
@@ -106,6 +135,63 @@ inline void blendI(const cv::Vec4b &src, int srcW, cv::Vec4b &dst) {
   dst[1] = divideBy255(srcW * src[1]);
   dst[2] = divideBy255(srcW * src[2]);
   dst[3] = divideBy255(srcW * src[3]);
+}
+
+inline void blend(
+  cv::detail::Blender &blender,
+  const std::vector<TMat> &images,
+	const std::vector<TMat> &masks,
+	const std::vector<cv::Point> &tlCorners,
+	TMat &outImage)
+{
+  FUNCLOGTIMEL("ImageUtils::blend");
+
+  auto box = ImageUtils::bbox(images, tlCorners);
+  blender.prepare(cv::Rect(0, 0, box.width, box.height));
+
+  std::vector<TMat> images_16S3C(images.size());
+  for(size_t i = 0; i < images.size(); ++i) {
+    
+    cv::cvtColor(images[i], images_16S3C[i], CV_RGBA2RGB);
+    images_16S3C[i].convertTo(images_16S3C[i], CV_16S);
+
+    blender.feed(images_16S3C[i], masks[i], tlCorners[i]);
+  }
+
+  TMat dst, dstMask;
+  blender.blend(dst, dstMask);
+
+  dst.convertTo(dst, CV_8U);
+  TMat dst_rgba;
+  cv::cvtColor(dst, dst_rgba, CV_RGB2RGBA);
+
+  outImage = TMat::zeros(dst_rgba.size(), dst_rgba.type());
+  dst_rgba.copyTo(outImage, dstMask);
+
+  for(size_t i = 0; i < images.size(); ++i) {
+
+    auto xAdd = tlCorners[i].x;
+    auto yAdd = tlCorners[i].y;
+
+    for(int y = 0; y < images[i].rows; ++y) {
+      for(int x = 0; x < images[i].cols; ++x) {
+
+        int y_ = y + yAdd;
+        int x_ = x + xAdd;
+
+        if(outImage.at<cv::Vec4b>(y_, x_)[3] != 0) {
+          continue;
+        }
+
+        if(images[i].at<cv::Vec4b>(y, x)[3] < 255 && images[i].at<cv::Vec4b>(y, x)[3] > 0) {
+          outImage.at<cv::Vec4b>(y_, x_)[0] = images[i].at<cv::Vec4b>(y, x)[0];
+          outImage.at<cv::Vec4b>(y_, x_)[1] = images[i].at<cv::Vec4b>(y, x)[1];
+          outImage.at<cv::Vec4b>(y_, x_)[2] = images[i].at<cv::Vec4b>(y, x)[2];
+          outImage.at<cv::Vec4b>(y_, x_)[3] = images[i].at<cv::Vec4b>(y, x)[3];
+        }
+      }
+    }
+  }
 }
 
 void ImageUtils::blendImages(
@@ -499,62 +585,101 @@ double ImageUtils::resize(
 	return resizeFactor;
 }
 
+void ImageUtils::blendNone(
+  const std::vector<TMat> &images,
+  const std::vector<TMat> &masks,
+  const std::vector<cv::Point> &tlCorners,
+  TMat &outImage)
+{
+  FUNCLOGTIMEL("ImageUtils::blendNone");
+
+  cv::detail::Blender blender;
+  imgalign::blend(blender, images, masks, tlCorners, outImage);
+}
+
+void ImageUtils::featherBlend(
+  const std::vector<TMat> &images,
+  const std::vector<TMat> &masks,
+  const std::vector<cv::Point> &tlCorners,
+  double blendStrength,
+  TMat &outImage)
+{
+  FUNCLOGTIMEL("ImageUtils::featherBlend");
+
+  std::vector<cv::Size> sizes(images.size());
+  for(size_t i = 0; i < images.size(); ++i) {
+    sizes[i] = images[i].size();
+  }
+  auto blendWidth = getBlendWidth(blendStrength, tlCorners, sizes);
+  cv::detail::FeatherBlender blender((float)(1.0 / blendWidth));
+  imgalign::blend(blender, images, masks, tlCorners, outImage);
+}
+
 void ImageUtils::blendMultiBand(
   const std::vector<TMat> &images,
   const std::vector<TMat> &masks,
   const std::vector<cv::Point> &tlCorners,
-  bool blend,
+  double blendStrength,
   TMat &outImage)
 {
   FUNCLOGTIMEL("ImageUtils::blendMultiBand");
 
-  cv::detail::MultiBandBlender blender(false, blend ? 5 : 0);
-  auto box = bbox(images, tlCorners);
-  blender.prepare(cv::Rect(0, 0, box.width, box.height));
-
-  std::vector<TMat> images_16S3C(images.size());
+  std::vector<cv::Size> sizes(images.size());
   for(size_t i = 0; i < images.size(); ++i) {
+    sizes[i] = images[i].size();
+  }
+  auto blendWidth = getBlendWidth(blendStrength, tlCorners, sizes);
+  int numBands = ceil(log(blendWidth) / log(2.0)) - 1.0;
+
+  cv::detail::MultiBandBlender blender(false, numBands);
+  imgalign::blend(blender, images, masks, tlCorners, outImage);
+
+  // auto box = bbox(images, tlCorners);
+  // blender.prepare(cv::Rect(0, 0, box.width, box.height));
+
+  // std::vector<TMat> images_16S3C(images.size());
+  // for(size_t i = 0; i < images.size(); ++i) {
     
-    cv::cvtColor(images[i], images_16S3C[i], CV_RGBA2RGB);
-    images_16S3C[i].convertTo(images_16S3C[i], CV_16S);
+  //   cv::cvtColor(images[i], images_16S3C[i], CV_RGBA2RGB);
+  //   images_16S3C[i].convertTo(images_16S3C[i], CV_16S);
 
-    blender.feed(images_16S3C[i], masks[i], tlCorners[i]);
-  }
+  //   blender.feed(images_16S3C[i], masks[i], tlCorners[i]);
+  // }
 
-  TMat dst, dstMask;
-  blender.blend(dst, dstMask);
+  // TMat dst, dstMask;
+  // blender.blend(dst, dstMask);
 
-  dst.convertTo(dst, CV_8U);
-  TMat dst_rgba;
-  cv::cvtColor(dst, dst_rgba, CV_RGB2RGBA);
+  // dst.convertTo(dst, CV_8U);
+  // TMat dst_rgba;
+  // cv::cvtColor(dst, dst_rgba, CV_RGB2RGBA);
 
-  outImage = TMat::zeros(dst_rgba.size(), dst_rgba.type());
-  dst_rgba.copyTo(outImage, dstMask);
+  // outImage = TMat::zeros(dst_rgba.size(), dst_rgba.type());
+  // dst_rgba.copyTo(outImage, dstMask);
 
-  for(size_t i = 0; i < images.size(); ++i) {
+  // for(size_t i = 0; i < images.size(); ++i) {
 
-    auto xAdd = tlCorners[i].x;
-    auto yAdd = tlCorners[i].y;
+  //   auto xAdd = tlCorners[i].x;
+  //   auto yAdd = tlCorners[i].y;
 
-    for(int y = 0; y < images[i].rows; ++y) {
-      for(int x = 0; x < images[i].cols; ++x) {
+  //   for(int y = 0; y < images[i].rows; ++y) {
+  //     for(int x = 0; x < images[i].cols; ++x) {
 
-        int y_ = y + yAdd;
-        int x_ = x + xAdd;
+  //       int y_ = y + yAdd;
+  //       int x_ = x + xAdd;
 
-        if(outImage.at<cv::Vec4b>(y_, x_)[3] != 0) {
-          continue;
-        }
+  //       if(outImage.at<cv::Vec4b>(y_, x_)[3] != 0) {
+  //         continue;
+  //       }
 
-        if(images[i].at<cv::Vec4b>(y, x)[3] < 255 && images[i].at<cv::Vec4b>(y, x)[3] > 0) {
-          outImage.at<cv::Vec4b>(y_, x_)[0] = images[i].at<cv::Vec4b>(y, x)[0];
-          outImage.at<cv::Vec4b>(y_, x_)[1] = images[i].at<cv::Vec4b>(y, x)[1];
-          outImage.at<cv::Vec4b>(y_, x_)[2] = images[i].at<cv::Vec4b>(y, x)[2];
-          outImage.at<cv::Vec4b>(y_, x_)[3] = images[i].at<cv::Vec4b>(y, x)[3];
-        }
-      }
-    }
-  }
+  //       if(images[i].at<cv::Vec4b>(y, x)[3] < 255 && images[i].at<cv::Vec4b>(y, x)[3] > 0) {
+  //         outImage.at<cv::Vec4b>(y_, x_)[0] = images[i].at<cv::Vec4b>(y, x)[0];
+  //         outImage.at<cv::Vec4b>(y_, x_)[1] = images[i].at<cv::Vec4b>(y, x)[1];
+  //         outImage.at<cv::Vec4b>(y_, x_)[2] = images[i].at<cv::Vec4b>(y, x)[2];
+  //         outImage.at<cv::Vec4b>(y_, x_)[3] = images[i].at<cv::Vec4b>(y, x)[3];
+  //       }
+  //     }
+  //   }
+  // }
 }
 
 void
@@ -578,11 +703,11 @@ ImageUtils::compensateExposure(
 
   cv::Ptr<cv::detail::ExposureCompensator> compensator =
     cv::detail::ExposureCompensator::createDefault(
-      cv::detail::ExposureCompensator::GAIN_BLOCKS);
+      cv::detail::ExposureCompensator::CHANNELS_BLOCKS);
 
   compensator->feed(corners, imagesU, masks);
   
-  for(auto i = 0; i < imagesN; ++i) {
+  for(size_t i = 0; i < imagesN; ++i) {
 
     TMat imageRgb;
     cv::cvtColor(images[i], imageRgb, CV_RGBA2RGB);
@@ -602,8 +727,10 @@ ImageUtils::compensateExposure(
 void ImageUtils::stitch(
   TConstMat &src1,
   TConstMat &src2,
-  bool blend,
   bool exposureCompensate,
+  BlendType blendType,
+  double blendStrength,
+  SeamFinderType seamFinderType,
   TMat &outDst)
 {
   FUNCLOGTIMEL("ImageUtils::stitch");
@@ -626,15 +753,17 @@ void ImageUtils::stitch(
   std::vector<TMat> images{src1, src2};
   std::vector<TMat> masks{ mask1, mask2};
   std::vector<cv::Point> tlCorners(2, cv::Point(0, 0));
-  stitch(images, masks, tlCorners, blend, exposureCompensate, outDst);
+  stitch(images, masks, tlCorners, exposureCompensate, blendType, blendStrength, seamFinderType, outDst);
 }
 
 void ImageUtils::stitch(
   std::vector<TMat> &images,
   std::vector<TMat> &masks,
   const std::vector<cv::Point> &tlCorners,
-  bool blend,
   bool exposureCompensate,
+  BlendType blendType,
+  double blendStrength,
+  SeamFinderType seamFinderType,
   TMat &outDst)
 {
   FUNCLOGTIMEL("ImageUtils::stitch");
@@ -642,14 +771,34 @@ void ImageUtils::stitch(
   std::vector<cv::UMat> imagesU(images.size());
   std::vector<cv::UMat> masksU(images.size());
 
+  cv::Ptr<cv::detail::SeamFinder> seamFinder;
+  switch(seamFinderType) {
+    case SeamFinderType::SFT_GRAPHCUT:
+      seamFinder = cv::makePtr<cv::detail::GraphCutSeamFinder>(
+        cv::detail::GraphCutSeamFinderBase::COST_COLOR);
+      break;
+    case SeamFinderType::SFT_VORNOI:
+    default: {
+      seamFinder = cv::makePtr<cv::detail::VoronoiSeamFinder>();
+    }
+  }
+
   for(size_t i = 0; i < images.size(); ++i) {
-    images[i].copyTo(imagesU[i]);
+    if(seamFinderType != SeamFinderType::SFT_VORNOI) {
+      cv::UMat t, t2;
+      images[i].copyTo(t);
+      cv::cvtColor(t, t2, CV_RGBA2RGB);
+      t.release();
+      t2.convertTo(imagesU[i], CV_32F);
+    }
+    else {
+      images[i].copyTo(imagesU[i]);
+    }
     masks[i].copyTo(masksU[i]);
   }
 
   LogUtils::getLogUserInfo() << "Finding seams" << std::endl;
-  cv::detail::VoronoiSeamFinder vs;
-  vs.find(imagesU, tlCorners, masksU);
+  seamFinder->find(imagesU, tlCorners, masksU);
 
   if(exposureCompensate) {
     LogUtils::getLogUserInfo() << "Compensating exposure" << std::endl;
@@ -661,7 +810,22 @@ void ImageUtils::stitch(
   }
 
   LogUtils::getLogUserInfo() << "Blending" << std::endl;
-  blendMultiBand(images, masks, tlCorners, blend, outDst);
+
+  switch(blendType) {
+    
+    case BlendType::BT_FEATHER: {
+      featherBlend(images, masks, tlCorners, blendStrength, outDst);
+      break;
+    }
+    case BlendType::BT_NONE: {
+      blendNone(images, masks, tlCorners, outDst);
+      break;
+    }
+    case BlendType::BT_MULTIBAND:
+    default: {
+      blendMultiBand(images, masks, tlCorners, blendStrength, outDst);    
+    }
+  }
 }
 
 void ImageUtils::stitchFast(

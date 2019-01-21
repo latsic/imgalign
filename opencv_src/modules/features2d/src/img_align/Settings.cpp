@@ -80,9 +80,10 @@ namespace imgalign
       { eStitch_yaw2Auto, { 1.0f, "Yaw 2 auto" } },
       { eStitch_pitch2Auto, { 1.0f, "Pitch 2 auto" } },
 
+      { eMultiStitch_seamFinderType, { (float)eSeamFinderType_Vornoi, "MultiStitch_seamFinderType" } },
       { eMultiStitch_projection, { (float)eStitch_projectionTypeSpherical, "MultiStitch_projection" } },
       { eMultiStitch_rectify, { 1.0f, "MultiStitch_rectify" } },
-      { eMultiStitch_camEstimate, { 1.0, "eMultiStitch_camEstimate" } },
+      { eMultiStitch_camEstimate, { 1.0f, "eMultiStitch_camEstimate" } },
       { eMultiStitch_bundleAdjustType, { (float)eBundleAdjustType_reproj, "MultiStitch_bundleAdjustType" } },
       { eMultiStitch_waveCorrection, { 0.0f, "MultiStitch_waveCorrection" } },
       { eMultiStitch_seamBlend, { 1.0f, "MultiStitch_seamBlend" } },
@@ -90,7 +91,9 @@ namespace imgalign
       { eMultiStitch_calcImageOrder, { 1.0f, "MultiStitch_calcImageOrder" } },
       { eMultiStitch_calcCenterImage, { 1.0f, "MultiStitch_calcCenterImage" } },
       { eMultiStitch_confidenceThresh, { 0.2f, "MultiStitch_confidenceThresh" } },
-      { eMultiStitch_exposureCompensator, { 0.0f, "MultiStitch_exposureCompensator"} }
+      { eMultiStitch_exposureCompensator, { 0.0f, "MultiStitch_exposureCompensator"} },
+      //{ eMultiStitch_blendType, { (float)eBlendType_multiBand, "MultiStitch_blendType"}},
+      { eMultiStitch_blendStrength, { 5.0f, "MultiStitch_blendStrength"}}
     };
   }
 
@@ -151,6 +154,32 @@ namespace imgalign
       case eBundleAdjustType_ray: return BundleAdjustType::BAT_RAY;
       case eBundleAdjustType_reproj: return BundleAdjustType::BAT_REPROJ;
       default: return BundleAdjustType::BAT_REPROJ;
+    }
+  }
+
+  // BlendType Settings::getBlendType() const
+  // {
+  //   switch((int)getValue(eMultiStitch_blendType)) {
+  //     case eBlendType_none:
+  //       return BlendType::BT_NONE;
+  //     case eBlendType_multiBand:
+  //       return BlendType::BT_MULTIBAND;
+  //     case eBlendType_feather:
+  //       return BlendType::BT_FEATHER;
+  //     default:
+  //       return BlendType::BT_MULTIBAND;
+  //   }
+  // }
+
+  SeamFinderType Settings::getSeamFinderType() const
+  {
+    switch((int)getValue(eMultiStitch_seamFinderType)) {
+      case eSeamFinderType_Graphcut:
+        return SeamFinderType::SFT_GRAPHCUT;
+      case eSeamFinderType_Vornoi:
+      default: {
+        return SeamFinderType::SFT_VORNOI;
+      }
     }
   }
 

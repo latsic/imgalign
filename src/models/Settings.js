@@ -370,6 +370,30 @@ export class Settings {
         value: 1,
         defaultValue: 1,
       },
+
+      {
+        id: paramTypes.multiStitch_seamFinderType.id,
+        type: valueTypes.discrete,
+        value: paramTypes.seamFinderType_Vornoi.id,
+        defaultValue: paramTypes.seamFinderType_Vornoi.id,
+        values: getDiscreteParams(paramTypes.multiStitch_seamFinderType.id)
+      },
+
+      // {
+      //   id: paramTypes.multiStitch_blendType.id,
+      //   type: valueTypes.discrete,
+      //   value: paramTypes.blendType_multiBand.id,
+      //   defaultValue: paramTypes.blendType_multiBand.id,
+      //   values: getDiscreteParams(paramTypes.multiStitch_blendType.id)
+      // },
+
+      { id: paramTypes.multiStitch_blendStrength.id,
+        type: valueTypes.range,
+        defaultValue: 5,
+        value: 5,
+        range: { min: 0, max: 100 }
+      },
+
       {
         id: paramTypes.multiStitch_colorTransfer.id,
         type: valueTypes.bool,

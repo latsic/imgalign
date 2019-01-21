@@ -37,6 +37,12 @@ namespace imgalign
   enum class BundleAdjustType{
     BAT_NONE = 0, BAT_RAY = 1, BAT_REPROJ = 2
   };
+  enum class BlendType{
+    BT_MULTIBAND = 0, BT_FEATHER = 1, BT_NONE = 3
+  };
+  enum class SeamFinderType{
+    SFT_VORNOI = 0, SFT_GRAPHCUT = 1
+  };
 }
 
 #endif

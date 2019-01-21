@@ -68,7 +68,14 @@ namespace imgalign
       size_t index,
       double *globalScale = nullptr) const;
 
-    void stitch(bool fastAndUgly, bool seamBlend, bool compensateExposure, bool rectify);
+    void stitch(
+      bool compensateExposure,
+      bool rectify,
+      BlendType blendType,
+      double blendStrength,
+      SeamFinderType seamFinderType);
+
+    void stitchFast();
    
     TMat image;
     cv::Size imageSize;
@@ -136,7 +143,10 @@ namespace imgalign
       double globalScale = 0.0;
       bool colorTransfer;
       bool seamBlend;
+      SeamFinderType seamFinderType = SeamFinderType::SFT_VORNOI;
       bool compensateExposure;
+      BlendType blendType = BlendType::BT_MULTIBAND;
+      double blendStrength = 5.0;
       TransformFinderType tfType;
       bool calcCenterImage = true;
       bool calcImageOrder = true;

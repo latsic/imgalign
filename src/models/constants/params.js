@@ -31,6 +31,8 @@ const projectionId = 303;
 const projection2Id = 304;
 const projection3Id = 305;
 const bundleAdjustTypeId = 583;
+const blendTypeId = 591;
+const seamFinderTypeId = 577;
 
 export const paramTypes = Object.freeze({
 
@@ -146,19 +148,37 @@ export const paramTypes = Object.freeze({
   bundleAdjustType_ray: { id: 571, name: 'Ray', groupId: bundleAdjustTypeId },
   bundleAdjustType_reproj: { id: 572, name: 'Reprojection', groupId: bundleAdjustTypeId },
 
+  blendType_none: { id: 574, name: 'None', groupId: blendTypeId },
+  blendType_multiBand: { id: 575, name: 'Multiband', groupId: blendTypeId },
+  blendType_feather: { id: 576, name: 'Feather', groupId: blendTypeId },
+
+  
+  seamFinderType_Vornoi: { id: 578, name: 'Vornoi', groupId: seamFinderTypeId },
+  seamFinderType_Graphcut: { id: 579, name: 'Graphcut', groupId: seamFinderTypeId },
+
   multiStitch_projectionType: { id: projection3Id, name: 'Surface projection', groupId: paramGroups.multiStitcherCamera.id },
   multiStitch_bundleAdjust: { id: bundleAdjustTypeId, name: 'Bundle adjustement type', groupId: paramGroups.multiStitcherCamera.id },
-  multiStitch_camEstimate: { id: 582, name: 'Cam estimation', groupId: paramGroups.multiStitcherCamera.id },
   multiStitch_waveCorrection: { id: 584, name: 'Wave correction', groupId: paramGroups.multiStitcherCamera.id },
+  multiStitch_camEstimate: { id: 582, name: 'Cam estimation', groupId: paramGroups.multiStitcherCamera.id },
   
-  multiStitch_rectify: { id: 581, name: 'Rectify result', groupId: paramGroups.multiStitcherImage.id },
+ 
   multiStitch_seamBlend: { id: 585, name: 'Seam blend', groupId: paramGroups.multiStitcherImage.id },
+  multiStitch_rectify: { id: 581, name: 'Rectify result', groupId: paramGroups.multiStitcherImage.id },
+  
+  
+  //multiStitch_blendType: { id: blendTypeId, name: 'Blend type', groupId: paramGroups.multiStitcherImage.id },
+  multiStitch_blendStrength: { id: 592, name: 'Blend strength', groupId: paramGroups.multiStitcherImage.id, enabledIfId: 585 },
+  multiStitch_seamFinderType: { id: seamFinderTypeId, name: 'Seam finder', groupId: paramGroups.multiStitcherImage.id },
+  
+  
+  multiStitch_exposureCompensator: { id: 590, name: 'Exposure compens.', groupId: paramGroups.multiStitcherImage.id },
   multiStitch_colorTransfer: { id: 586, name: 'Color transfer', groupId: paramGroups.multiStitcherImage.id },
-  multiStitch_exposureCompensator: { id: 590, name: 'Compensate exposure', groupId: paramGroups.multiStitcherImage.id },
 
   multiStitch_calcImageOrder: { id: 587, name: 'Calc stitch order', groupId: paramGroups.multiStitcherStitcher.id },
   multiStitch_calcCenterImage: { id: 588, name: 'Estimate start image', groupId: paramGroups.multiStitcherStitcher.id },
   multiStitch_confidenceThresh: { id: 589, name: 'Confidence thresh', groupId: paramGroups.multiStitcherStitcher.id }
+
+  
 });
 
 export const paramTexts = Object.freeze([
@@ -354,9 +374,9 @@ export const paramTexts = Object.freeze([
   { id: paramTypes.multiStitch_waveCorrection.id,
     text: 'Tries to straighten a curved panorama/horizon.'
   },
-  { id: paramTypes.multiStitch_seamBlend.id,
-    text: 'Blend seam between stitched images.'
-  },
+  // { id: paramTypes.multiStitch_seamBlend.id,
+  //   text: 'Blend seam between stitched images.'
+  // },
   { id: paramTypes.multiStitch_colorTransfer.id,
     text: 'Tries to adjust the colors of the images with the purpose that '
         + 'all images have the same color tone. The first image in the '

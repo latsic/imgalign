@@ -992,7 +992,8 @@ double ImgAlign_Impl::stitch(
 		LogUtils::getLog() << "outFieldOfViewStichedImage: " << outFieldOfViewStichedImage << std::endl;
 		
 		TMat stitchedImageTemp;
-		ImageUtils::stitch(fixedImageExpanded, alignedImage, blend, false, stitchedImageTemp);
+		ImageUtils::stitch(fixedImageExpanded, alignedImage, false,
+			BlendType::BT_MULTIBAND, 5.0, SeamFinderType::SFT_VORNOI, stitchedImageTemp);
 		//stitchedImage.create(fixedImageExpanded.size(), fixedImageExpanded.type());
 		ImageUtils::crop(stitchedImageTemp, stitchedImage.getMatRef());
 

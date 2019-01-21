@@ -83,7 +83,9 @@ namespace
       << "warped image " << imageIndex << ",  unreasonable size: "
       <<  w << "x" << h << " => " << warpedW << "x" << WarpedH
       << ", aborting. "
-      << "Advice: Try different bundle adjustment type." << std::endl;
+      << "Advice: "
+      << "1: Try different bundle adjustment type. "
+      << "2: Try a different surface propjection." << std::endl;
 
     return false;
   }
@@ -139,7 +141,15 @@ TConstMat &
 MultiStitcher::getStitchedImage()
 {
   FUNCLOGTIMEL("MultiStitcher::getStitchedImage");
-  stitchedImage.stitch(false, seamBlend, compensateExposure, rectify);
+  stitchedImage.stitch(compensateExposure, rectify, blendType, blendStrength, seamFinderType);
+  return stitchedImage.image;
+}
+
+TConstMat &
+MultiStitcher::getStitchedImageCurrent()
+{
+  FUNCLOGTIMEL("MultiStitcher::getStitchedImageCurrent");
+  stitchedImage.stitchFast();
   return stitchedImage.image;
 }
 
@@ -156,14 +166,6 @@ MultiStitcher::releaseStitchedData()
   FUNCLOGTIMEL("MultiStitcher::releaseStitchedData");
 
   stitchedImage.stitchedInfos.clear();
-}
-
-TConstMat &
-MultiStitcher::getStitchedImageCurrent()
-{
-  FUNCLOGTIMEL("MultiStitcher::getStitchedImageCurrent");
-  stitchedImage.stitch(true, false, false, false);
-  return stitchedImage.image;
 }
 
 bool
@@ -185,9 +187,12 @@ MultiStitcher::initStiching(
   bundleAdjustType = settings.getBundleAdjustType();
   colorTransfer = settings.getValue(eMultiStitch_colorTransfer);
   seamBlend = settings.getValue(eMultiStitch_seamBlend);
+  seamFinderType = settings.getSeamFinderType();
   compensateExposure = settings.getValue(eMultiStitch_exposureCompensator);
   calcImageOrder = settings.getValue(eMultiStitch_calcImageOrder);
   confidenceThresh = settings.getValue(eMultiStitch_confidenceThresh);
+  // blendType = settings.getBlendType();
+  blendStrength = settings.getValue(eMultiStitch_blendStrength);
   globalScale = 0.0;
   wcType = settings.getValue(eMultiStitch_waveCorrection) > 0.0
     ? WaveCorrectType::WCT_AUTO
@@ -197,6 +202,10 @@ MultiStitcher::initStiching(
 
   tfType = settings.getTransformFinderType();
   matcher = FeatureFactory::CreateMatcher(settings);
+
+  blendType = seamBlend
+    ? BlendType::BT_MULTIBAND
+    : BlendType::BT_NONE;
 
   LogUtils::getLog() << "projectionType " << projectionType << std::endl;
   LogUtils::getLog() << "rectify " << rectify << std::endl;
@@ -209,6 +218,7 @@ MultiStitcher::initStiching(
   LogUtils::getLog() << "calcImageOrder " << calcImageOrder << std::endl;
   LogUtils::getLog() << "calcCenterImage " << calcCenterImage << std::endl;
   LogUtils::getLog() << "confidenceThresh " << confidenceThresh << std::endl;
+  LogUtils::getLog() << "seamFinderType " << (int)(settings.getValue(eMultiStitch_seamFinderType)) << std::endl;
 
   computeKeyPoints();
 
@@ -1237,7 +1247,40 @@ StitchedImage::warpedImage(size_t imageIndex)
 }
 
 void
-StitchedImage::stitch(bool fastAndUgly, bool seamBlend, bool compensateExposure, bool rectify)
+StitchedImage::stitchFast()
+{
+  FUNCLOGTIMEL("StitchedImage::stitchFast");
+
+  std::vector<cv::Point> tlCornersI;
+  std::vector<TMat> images;
+  std::vector<TMat> masks;
+
+  for(auto i : imageIndices) {
+
+    auto &stitchedInfo = stitchedInfos[i];
+
+    tlCornersI.push_back(Point(
+      stitchedInfo.tx + stitchedInfo.tlCorner.x,
+      stitchedInfo.ty + stitchedInfo.tlCorner.y));
+    
+    images.push_back(stitchedInfo.warpedImage);
+    masks.push_back(stitchedInfo.warpedMask);
+  }
+
+  TMat tempImage;
+  ImageUtils::stitchFast(
+    images, masks, tlCornersI, tempImage);
+
+  ImageUtils::crop(tempImage, image);
+}
+
+void
+StitchedImage::stitch(
+  bool compensateExposure,
+  bool rectify,
+  BlendType blendType,
+  double blendStrength,
+  SeamFinderType seamFinderType)
 {
   FUNCLOGTIMEL("StitchedImage::stitch");
 
@@ -1258,20 +1301,15 @@ StitchedImage::stitch(bool fastAndUgly, bool seamBlend, bool compensateExposure,
   }
   
   TMat tempImage;
-  if(fastAndUgly) {
-    
-    ImageUtils::stitchFast(
-      images, masks, tlCornersI, tempImage);
-  }
-  else {
-    ImageUtils::stitch(
-      images, masks, tlCornersI, seamBlend,
-      compensateExposure, tempImage);
-  }
+  ImageUtils::stitch(
+    images, masks, tlCornersI,
+    compensateExposure,
+    blendType,
+    blendStrength,
+    seamFinderType,
+    tempImage);
 
-  if(!fastAndUgly) {
-    LogUtils::getLogUserInfo() << "Cropping" << std::endl;
-  }
+  LogUtils::getLogUserInfo() << "Cropping" << std::endl;
 
   if(!rectify) {
     ImageUtils::crop(tempImage, image);

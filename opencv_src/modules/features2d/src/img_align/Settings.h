@@ -121,6 +121,14 @@ namespace imgalign
     eBundleAdjustType_ray = 571,
     eBundleAdjustType_reproj = 572,
 
+    eBlendType_none = 574,
+    eBlendType_multiBand = 575,
+    eBlendType_feather = 576,
+
+    eSeamFinderType_Vornoi = 578,
+    eSeamFinderType_Graphcut = 579,
+
+    eMultiStitch_seamFinderType = 577,
     eMultiStitch_projection = 305,
     eMultiStitch_rectify = 581,
     eMultiStitch_camEstimate = 582,
@@ -131,7 +139,9 @@ namespace imgalign
     eMultiStitch_calcImageOrder = 587,
     eMultiStitch_calcCenterImage = 588,
     eMultiStitch_confidenceThresh = 589,
-    eMultiStitch_exposureCompensator = 590
+    eMultiStitch_exposureCompensator = 590,
+    //eMultiStitch_blendType = 591,
+    eMultiStitch_blendStrength = 592
 
 
     // eStitch_projectionTypePlane2 = 570,
@@ -163,6 +173,9 @@ namespace imgalign
       MatcherType getMatcherType() const;
       TransformFinderType getTransformFinderType() const;
       BundleAdjustType getBundleAdjustType() const;
+      // BlendType getBlendType() const;
+      SeamFinderType getSeamFinderType() const;
+
       
       void init();
       float getValue(ParamType paramType) const;
