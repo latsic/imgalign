@@ -142,20 +142,6 @@ namespace imgalign
     eMultiStitch_exposureCompensator = 590,
     //eMultiStitch_blendType = 591,
     eMultiStitch_blendStrength = 592
-
-
-    // eStitch_projectionTypePlane2 = 570,
-    // eStitch_projectionTypeAffine2 = 571,
-    // eStitch_projectionTypeCylindrical2 = 572,
-    // eStitch_projectionTypeSpherical2 = 573,
-    // eStitch_projectionTypeFisheye2 = 574,
-    // eStitch_projectionTypeStereographic2 = 575,
-    // eStitch_projectionTypeRectilinear2 = 576,
-    // eStitch_projectionTypeRectilinearPortrait2 = 577,
-    // eStitch_projectionTypePanini2 = 578,
-    // eStitch_projectionTypeMercator2 = 579,
-    // eStitch_projectionTypeTransverseMercator2 = 580,
-    // eStitch_projectionTypeNone2 = 581
   };
 
   class Settings {

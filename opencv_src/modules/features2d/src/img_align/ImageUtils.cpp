@@ -633,53 +633,6 @@ void ImageUtils::blendMultiBand(
 
   cv::detail::MultiBandBlender blender(false, numBands);
   imgalign::blend(blender, images, masks, tlCorners, outImage);
-
-  // auto box = bbox(images, tlCorners);
-  // blender.prepare(cv::Rect(0, 0, box.width, box.height));
-
-  // std::vector<TMat> images_16S3C(images.size());
-  // for(size_t i = 0; i < images.size(); ++i) {
-    
-  //   cv::cvtColor(images[i], images_16S3C[i], CV_RGBA2RGB);
-  //   images_16S3C[i].convertTo(images_16S3C[i], CV_16S);
-
-  //   blender.feed(images_16S3C[i], masks[i], tlCorners[i]);
-  // }
-
-  // TMat dst, dstMask;
-  // blender.blend(dst, dstMask);
-
-  // dst.convertTo(dst, CV_8U);
-  // TMat dst_rgba;
-  // cv::cvtColor(dst, dst_rgba, CV_RGB2RGBA);
-
-  // outImage = TMat::zeros(dst_rgba.size(), dst_rgba.type());
-  // dst_rgba.copyTo(outImage, dstMask);
-
-  // for(size_t i = 0; i < images.size(); ++i) {
-
-  //   auto xAdd = tlCorners[i].x;
-  //   auto yAdd = tlCorners[i].y;
-
-  //   for(int y = 0; y < images[i].rows; ++y) {
-  //     for(int x = 0; x < images[i].cols; ++x) {
-
-  //       int y_ = y + yAdd;
-  //       int x_ = x + xAdd;
-
-  //       if(outImage.at<cv::Vec4b>(y_, x_)[3] != 0) {
-  //         continue;
-  //       }
-
-  //       if(images[i].at<cv::Vec4b>(y, x)[3] < 255 && images[i].at<cv::Vec4b>(y, x)[3] > 0) {
-  //         outImage.at<cv::Vec4b>(y_, x_)[0] = images[i].at<cv::Vec4b>(y, x)[0];
-  //         outImage.at<cv::Vec4b>(y_, x_)[1] = images[i].at<cv::Vec4b>(y, x)[1];
-  //         outImage.at<cv::Vec4b>(y_, x_)[2] = images[i].at<cv::Vec4b>(y, x)[2];
-  //         outImage.at<cv::Vec4b>(y_, x_)[3] = images[i].at<cv::Vec4b>(y, x)[3];
-  //       }
-  //     }
-  //   }
-  // }
 }
 
 void
@@ -838,15 +791,8 @@ void ImageUtils::stitchFast(
 
   if(images.empty()) return;
 
-  // for(auto &image : images) {
-  //   LogUtils::getLog() << "stitchFast w/h " << image.size().width << "/" << image.size().height << std::endl;
-  // }
-
   auto box = bbox(images, tlCorners);
   outDst = TMat::zeros(box, images[0].type());
-
-  // LogUtils::getLog() << "stitchFast " << outDst.type() << " " <<
-  //   outDst.size().width << "/" << outDst.size().height << std::endl;
 
   for(size_t i = 0; i < images.size(); ++i) {
     cv::Rect rRoi(tlCorners[i].x, tlCorners[i].y,
@@ -855,8 +801,6 @@ void ImageUtils::stitchFast(
     TMat mRoi(outDst, rRoi);
     images[i].copyTo(mRoi, masks[i]);
   }
-
-  // LogUtils::getLog() << "STITCHFAST END" << std::endl;
 }
 
 cv::Point ImageUtils::crop(

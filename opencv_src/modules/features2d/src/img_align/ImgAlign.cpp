@@ -303,8 +303,6 @@ class ImgAlign_Impl : public cv::ImgAlign
 		std::vector<cv::Point> _movingImageMaskPolygon;
     cv::Mat fixedImageIn;
     cv::Mat movingImageIn;
-    //cv::Mat fixedImageInOrig;
-    //cv::Mat movingImageInOrig;
 		cv::Mat fixedImage;
 		cv::Mat movingImage;
 		int matchSuccess = 0;
@@ -444,9 +442,6 @@ int ImgAlign_Impl::match_getAlignedImage(
 
 		WarperHelper::warpPerspective(movingImageIn, spMatcher->getTransform(), fixedImageIn.size(), alignedImage.getMatRef());
 
-		//alignedImage.create(fixedImageIn.size(), movingImageIn.type());
-		//warpPerspective(movingImageIn, alignedImage, spMatcher->getTransform(), fixedImageIn.size());
-		
 		return matchSuccess;
 	}
 	catch(std::exception &e) {
@@ -533,11 +528,7 @@ void ImgAlign_Impl::getImageAligned(
 
 	try {
 
-		//alignedImage.create(fixedImageIn.size(), movingImageIn.type());
 		WarperHelper::warpPerspective(movingImageIn, transMatrix.getMat(), fixedImageIn.size(), alignedImage.getMatRef());
-
-		//alignedImage.create(fixedImageIn.size(), movingImageIn.type());
-		//warpPerspective(movingImageIn, alignedImage, transMatrix, fixedImageIn.size());
 	}
 	catch(std::exception &e) {
 		LogUtils::getLogUserError() << e.what() << std::endl;
@@ -557,9 +548,6 @@ void ImgAlign_Impl::getImageBlended(
 
 		Mat alignedImage;
 		WarperHelper::warpPerspective(movingImageIn, transMatrix.getMat(), fixedImageIn.size(), alignedImage);
-
-		//Mat alignedImage(fixedImageIn.size(), movingImageIn.type());
-		//warpPerspective(movingImageIn, alignedImage, transMatrix, fixedImageIn.size());
 
 		blendImage.create(fixedImageIn.size(), fixedImageIn.type());
 		ImageUtils::blendImages(alignedImage, fixedImageIn, weight, doOverlay, blendImage.getMatRef());
@@ -599,9 +587,6 @@ void ImgAlign_Impl::getImageBlendedPolygonFixedImage(
 
 		Mat alignedImage;
 		WarperHelper::warpPerspective(movingImageIn, transMatrix.getMat(), fixedImageIn.size(), alignedImage);
-
-		//Mat alignedImage(fixedImageIn.size(), movingImageIn.type());
-		//warpPerspective(movingImageIn, alignedImage, transMatrix, fixedImageIn.size());
 
 		blendImage.create(fixedImageIn.size(), fixedImageIn.type());
 
@@ -646,14 +631,8 @@ void ImgAlign_Impl::getImageBlendedPolygonMovingImage(
 		Mat polygonImageAligned;
 		WarperHelper::warpPerspective(movingImageIn, transMatrix.getMat(), fixedImageIn.size(), polygonImageAligned);
 
-		//Mat polygonImageAligned(fixedImageIn.size(), movingImageIn.type());
-		//warpPerspective(movingImageIn, polygonImageAligned, transMatrix, fixedImageIn.size());
-
 		Mat polygonMaskAligned;
 		WarperHelper::warpPerspective(polygonMask, transMatrix.getMat(), fixedImageIn.size(), polygonMaskAligned);
-
-		//Mat polygonMaskAligned(fixedImageIn.size(), polygonMask.type());
-		//warpPerspective(polygonMask, polygonMaskAligned, transMatrix, fixedImageIn.size());
 
 		blendImage.create(fixedImageIn.size(), fixedImageIn.type());
 		ImageUtils::blendImages(polygonImageAligned, fixedImageIn, weight, doOverlay, polygonMaskAligned, blendImage.getMatRef());
@@ -700,9 +679,6 @@ void ImgAlign_Impl::getImageFloodFillFixedImage(
 		Mat alignedImage;
 		WarperHelper::warpPerspective(movingImageIn, transMatrix.getMat(), fixedImageIn.size(), alignedImage);
 
-		//Mat alignedImage(fixedImageIn.size(), movingImageIn.type());
-		//warpPerspective(movingImageIn, alignedImage, transMatrix, fixedImageIn.size());
-
 		blendImage.create(fixedImageIn.size(), fixedImageIn.type());
 		ImageUtils::blendImages(alignedImage, fixedImageIn, weight, doOverlay, mask, blendImage.getMatRef());
 	}
@@ -746,9 +722,6 @@ void ImgAlign_Impl::getImageFloodFillMovingImage(
 
 		Mat alignedImage;
 		WarperHelper::warpPerspective(movingImageIn, transMatrix.getMat(), fixedImageIn.size(), alignedImage);
-
-		//Mat alignedImage(fixedImageIn.size(), movingImageIn.type());
-		//warpPerspective(movingImageIn, alignedImage, transMatrix, fixedImageIn.size());
 
 		TMat mask;
 		ImageUtils::floodFillMask(alignedImage, ptsWarped, floodFillTolerances, mask);
@@ -835,13 +808,9 @@ void ImgAlign_Impl::getStitchedImage(
 		Mat alignedImage;
 		WarperHelper::warpPerspective(movingImageIn, tTransMat, fixedImageExpanded.size(), alignedImage);
 
-		//Mat alignedImage(fixedImageExpanded.size(), fixedImageExpanded.type());
-		//warpPerspective(movingImageIn, alignedImage, tTransMat, fixedImageExpanded.size());
-
 		if(goodMatchesFixedImage.empty()) {
 
 			blendImage.create(fixedImageExpanded.size(), fixedImageExpanded.type());
-			//ImageUtils::blendImagesCenterDistance(fixedImageExpanded, alignedImage, blendDistPx, blendImage.getMatRef());
 			ImageUtils::blendImagesAlphaWhereOverlap(alignedImage, fixedImageExpanded, weight, blendImage.getMatRef());
 		}
 		else {
@@ -928,12 +897,6 @@ double ImgAlign_Impl::stitch(
 			projectionType2,
 			homography);
 
-		// LogUtils::logMat("original Transform", spMatcher->getTransform());
-		// LogUtils::logMat("other Transform", homography);
-
-
-		// spMatcher->getTransform().copyTo(homography);
-
 		TMat fixedImageProjected;
 		if((ParamType)projectionType1 != eStitch_projectionTypeNone) {
 			
@@ -943,8 +906,6 @@ double ImgAlign_Impl::stitch(
 			WarperHelper::warpImage(
 				projectionType1, fixedImageIn, fixedImageProjected, fieldOfViewFixedImage, rotMat1);
 
-			// WarperHelper::warpImage(
-			// 	projectionType1, fixedImageIn, fixedImageProjected, fieldOfViewFixedImage, yaw1, pitch1, 0);
 		}
 		else { 
 			fixedImageProjected = fixedImageIn;
@@ -958,9 +919,6 @@ double ImgAlign_Impl::stitch(
 
 			WarperHelper::warpImage(
 				projectionType2, movingImageIn1, movingImageProjected, fieldOfViewMovingImage, rotMat2);
-
-			// WarperHelper::warpImage(
-			// 	projectionType2, movingImageIn1, movingImageProjected, fieldOfViewMovingImage, yaw1 + yaw2, pitch1 + pitch2, 0);
 		}
 		else { 
 			movingImageProjected = movingImageIn1;
@@ -985,20 +943,13 @@ double ImgAlign_Impl::stitch(
 		Mat alignedImage;
 		WarperHelper::warpPerspective(movingImageProjected, homography, fixedImageExpanded.size(), alignedImage);
 
-		//Mat alignedImage(fixedImageExpanded.size(), fixedImageExpanded.type());
-		//warpPerspective(movingImageProjected, alignedImage, homography, fixedImageExpanded.size());
-
 		double outFieldOfViewStichedImage = WarperHelper::fieldOfView(fieldOfViewFixedImage, fieldOfViewMovingImage, yaw2);
 		LogUtils::getLog() << "outFieldOfViewStichedImage: " << outFieldOfViewStichedImage << std::endl;
 		
 		TMat stitchedImageTemp;
 		ImageUtils::stitch(fixedImageExpanded, alignedImage, false,
 			BlendType::BT_MULTIBAND, 5.0, SeamFinderType::SFT_VORNOI, stitchedImageTemp);
-		//stitchedImage.create(fixedImageExpanded.size(), fixedImageExpanded.type());
 		ImageUtils::crop(stitchedImageTemp, stitchedImage.getMatRef());
-
-		//stitchedImage.create(fixedImageExpanded.size(), fixedImageExpanded.type());
-		//ImageUtils::stitch(fixedImageExpanded, alignedImage, blend, stitchedImage.getMatRef());
 
 		return outFieldOfViewStichedImage;
 	}

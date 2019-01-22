@@ -163,10 +163,6 @@ namespace imgalign
     };
     
     TMat(3, 3, CV_64F, dataK).copyTo(outMat);
-
-    // LogUtils::getLog() << "a.at(0, 0) " << outMat.at<double>(0, 0) << std::endl;
-    // LogUtils::logMat("WarperHelper::getMatK", outMat);
-
   }
 
 double
@@ -291,7 +287,6 @@ void WarperHelper::warpPoints(
     throw std::logic_error("WarperHelper::warpPoints: Invalid field of view");
   }
 
-  //double fLenPx = (w * 0.5) / tan(fieldOfView * 0.5 * CV_PI / 180);
   double fLenPx = getFocalLengthPx(w, h, fieldOfView);
   double scale = w * 180 / (fieldOfView  * CV_PI);
 
@@ -331,12 +326,9 @@ void WarperHelper::warpImage(
 {
   FUNCLOGTIMEL("WarperHelper::warpImage  with fieldOfView");
 
-  //float focalLengthPx = (srcMat.size().width * 0.5) / tan(fieldOfView * 0.5 * CV_PI / 180);
   double fLenPx = getFocalLengthPx(srcMat.size().width, srcMat.size().height, fieldOfView);
   double scale = srcMat.size().width * (360 / fieldOfView) / (2 * CV_PI);
 
-  
-  
   auto warper = WarperHelper::getWarper(warperType, (float)scale);
   if(warper == nullptr) {
     srcMat.copyTo(outMat);
@@ -375,16 +367,10 @@ void WarperHelper::warpPoints(
   }
   else {
     double flenPx = kMat.at<double>(0, 0);
-    //double flenPx2 = kMat.at<double>(1, 1);
     double fieldOfView = getFieldOfView(w, h, flenPx);
     scale = w * 180 / (fieldOfView  * CV_PI);
-
-    // LogUtils::getLog() << "WarpImage: fLenPx " << flenPx << std::endl;
-    // LogUtils::getLog() << "WarpImage: fLenPx2 " << flenPx2 << std::endl;
-    // LogUtils::getLog() << "WarpImage: fieldOfView " << fieldOfView << std::endl;
   }
-  // LogUtils::getLog() << "WarpImage: scale " << scale << std::endl;
-
+  
   auto warper = WarperHelper::getWarper(warperType, (float)scale);
   if(warper == nullptr) return;
 
@@ -395,14 +381,8 @@ void WarperHelper::warpPoints(
   K.convertTo(k32, CV_32F);
   R.convertTo(r32, CV_32F);
 
-  // LogUtils::logMat("warpPoints r32", r32);
-  // LogUtils::logMat("warpPoints k32", k32);
-
-  //auto bBoxWarped = warper->warpRoi(Size(w, h), k32, r32);
   cv::Point2f tl, br;
   warper->warpRoif(Size(w, h), k32, r32, tl, br);
-  // LogUtils::getLog() << "warpPoints box " << bBoxWarped.tl().x << "/" << bBoxWarped.tl().y << std::endl;
-  // LogUtils::getLog() << "warpPoints float " << tl.x << "/" << tl.y << std::endl;
   
   for(auto it = ioPts.begin(); it != ioPts.end(); ++it) {
 		
@@ -410,8 +390,6 @@ void WarperHelper::warpPoints(
 
     it->x = it->x - tl.x;
     it->y = it->y - tl.y;
-    // it->x = it->x - bBoxWarped.tl().x;
-    // it->y = it->y - bBoxWarped.tl().y;
   }
 }
 
@@ -434,16 +412,10 @@ void WarperHelper::warpImage(
   }
   else {
     double flenPx = kMat.at<double>(0, 0);
-    // double flenPx2 = kMat.at<double>(1, 1);
     double fieldOfView = getFieldOfView(srcMat.size().width, srcMat.size().height, flenPx);
     scale = srcMat.size().width * 180 / (fieldOfView  * CV_PI);
-
-    // LogUtils::getLog() << "WarpImage: fLenPx " << flenPx << std::endl;
-    // LogUtils::getLog() << "WarpImage: fLenPx2 " << flenPx2 << std::endl;
-    // LogUtils::getLog() << "WarpImage: fieldOfView " << fieldOfView << std::endl;
   }
-  // LogUtils::getLog() << "WarpImage: scale " << scale << std::endl;
-
+  
   auto warper = WarperHelper::getWarper(warperType, (float)scale);
   if(warper == nullptr) {
     srcMat.copyTo(outMat);
@@ -455,9 +427,6 @@ void WarperHelper::warpImage(
     TMat k32, r32;
     K.convertTo(k32, CV_32F);
     R.convertTo(r32, CV_32F);
-
-    // LogUtils::logMat("warpImage r32", r32);
-    // LogUtils::logMat("warpImage k32", k32);
 
     warper->warp(srcMat, k32, r32, cv::INTER_LINEAR, cv::BORDER_CONSTANT, outMat);
   }
@@ -546,14 +515,6 @@ void WarperHelper::getBox(
     outT = yMin.y;
     outR = xMax.x;
     outB = yMax.y;
-
-
-    // LogUtils::getLog() << "outTx: " << outTx << std::endl;
-    // LogUtils::getLog() << "outTy: " << outTy << std::endl;
-    // LogUtils::getLog() << "outL: " << outL << std::endl;
-    // LogUtils::getLog() << "outT: " << outT << std::endl;
-    // LogUtils::getLog() << "outR: " << outR << std::endl;
-    // LogUtils::getLog() << "outB: " << outB << std::endl;
 }
 
 void WarperHelper::getBox(
@@ -594,25 +555,20 @@ void WarperHelper::getBox(
 				return pt1.y < pt2.y;
 			});	
 	
-		//outTx = -std::min(0.0f, xMin.x);
-		//outTy = -std::min(0.0f, yMin.y);
 		outTx = -xMin.x;
 		outTy = -yMin.y;
 
-    //if(xMin.x < 0 || yMin.y < 0) {
 
-      Mat tM = Mat::eye(3,3,CV_64F);
-			tM.at<double>(0,2) = outTx;
-			tM.at<double>(1,2)= outTy;
-			ioHomography = tM * ioHomography;
-    //}
+    Mat tM = Mat::eye(3,3,CV_64F);
+    tM.at<double>(0,2) = outTx;
+    tM.at<double>(1,2)= outTy;
+    ioHomography = tM * ioHomography;
+    
 
     outL = xMin.x;
     outT = yMin.y;
     outR = xMax.x;
     outB = yMax.y;
-
-    // LogUtils::getLog() << "getBox w/h: " << outR - outL << "/" << outB - outT << std::endl;
 }
 
 double WarperHelper::fieldOfView(

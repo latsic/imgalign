@@ -291,10 +291,6 @@ bool MultiStitcher::stitchNext(const StitchInfo &stitchInfo)
 {
   FUNCLOGTIMEL("MultiStitcher::stitchNext");
   return stitch(stitchInfo);
-  // LogUtils::getLogUserInfo() << "Stitching "
-  //   << stitchInfo.srcImageIndex << "->" << stitchInfo.dstImageIndex << ", w/h =>"
-  //   << stitchedImage.image.size().width << "/" << stitchedImage.image.size().width << std::endl;
-  // return ok;
 }
 
 const StitchInfo *
@@ -491,10 +487,6 @@ MultiStitcher::stitch(const StitchInfo &stitchInfo)
       stitchedImage.warpedImage(srcIndex));
 
     stitchedImage.createMaskFor(srcIndex);
-
-    // LogUtils::getLog() << "MultiStitcher::stitch w/h"
-    // <<  stitchedImage.warpedImage(srcIndex).size().width << "/"
-    // <<  stitchedImage.warpedImage(srcIndex).size().height << std::endl;
   }
   
   double tx, ty, t, r, b, l;
@@ -503,28 +495,14 @@ MultiStitcher::stitch(const StitchInfo &stitchInfo)
     homography,
     tx, ty, t, r, b, l);
 
-  // LogUtils::getLog() << "src->dst 2, " << stitchInfo.srcImageIndex << "->" << stitchInfo.dstImageIndex << std::endl;
-  // LogUtils::getLog() << "tx: " << tx << std::endl;
-  // LogUtils::getLog() << "ty: " << ty << std::endl;
-  // LogUtils::getLog() << "l: " << l << std::endl;
-  // LogUtils::getLog() << "r: " << r << std::endl;
-  // LogUtils::getLog() << "t: " << t << std::endl;
-  // LogUtils::getLog() << "b: " << b << std::endl;
-  
-
   stitchedImage.setHomographyFor(srcIndex, homography);
   if(kMat2 != nullptr) stitchedImage.setKMatFor(srcIndex, *kMat2);
   stitchedImage.setRMatFor(srcIndex, rotMat2);
 
-  //homography.copyTo(stitchedImage.homographies[srcIndex]);
-  //rotMat2.copyTo(stitchedImage.rMatVector[srcIndex]);
-  //if(kMat2 != nullptr) kMat2->copyTo(stitchedImage.kMatVector[srcIndex]);
   stitchedImage.addTranslation(tx, ty);
   stitchedImage.imageIndices.push_back(srcIndex);
   stitchedImage.imageSize = cv::Size((int)(b - t), (int)(r - l));
   
-  // stitchedImage.fieldOfView = WarperHelper::fieldOfView(
-  //   stitchedImage.fieldOfView, fieldOfViewSrc, stitchInfo.deltaH);
   return true;
 }
 
@@ -731,10 +709,6 @@ MultiStitcher::TStitchOrder MultiStitcher::computeStitchOrder(size_t startIndex)
         lastDstSuccess = srcIndex;
         _stitchOrder.push_back(stitchInfo);
 
-        // LogUtils::getLog() << "Match found: "
-        //   << stitchInfo->srcImageIndex << "->" << stitchInfo->dstImageIndex << ", "
-        //   << "confidence: " << stitchInfo->matchInfo.confidence << std::endl;
-
         LogUtils::getLogUserInfo() << "Matching, found "
           << stitchInfo->srcImageIndex << "->" << stitchInfo->dstImageIndex << ", "
           << ++matchesFoundN << "/" << srcImages.size() - 1
@@ -749,36 +723,12 @@ MultiStitcher::TStitchOrder MultiStitcher::computeStitchOrder(size_t startIndex)
     for(int i = startIndex; i > 0; --i){
       calcNext(i - 1);
     }
-
-    // for(size_t i = startIndex; i < srcImages.size() - 1; ++i) {
-      
-    //   size_t srcIndex = i + 1;
-    //   size_t dstIndex = lastDstSuccess;
-
-    //   auto *stitchInfo = getStitchInfo(dstIndex, srcIndex);
-    //   if(  stitchInfo != nullptr
-    //     && stitchInfo->matchInfo.isHomographyGood()
-    //     && stitchInfo->matchInfo.confidence > confidenceThresh) {
-        
-    //     lastDstSuccess = srcIndex;
-    //     _stitchOrder.push_back(stitchInfo);
-
-    //     LogUtils::getLog() << "Match found: "
-    //       << stitchInfo->srcImageIndex << "->" << stitchInfo->dstImageIndex << ", "
-    //       << "confidence: " << stitchInfo->matchInfo.confidence << std::endl;
-    //   }
-    // }
   }
   else {
     LogUtils::getLog() << "Matching images and computing stitching order" << std::endl;
     
-    // std::function<int(int)> nthTriangularNumber = [&nthTriangularNumber](int n) -> int {
-    //   if(n == 1) return 1;
-    //   if(n == 0) return 0;
-    //   return n + nthTriangularNumber(n - 1);
-    // };
     int matchesFound = 0;
-    int totalMatchesToFind = srcImages.size() - 1;//nthTriangularNumber(srcImages.size() - 1);
+    int totalMatchesToFind = srcImages.size() - 1;
 
     while(true) {
       const auto *stitchInfo = findNextMatch(_stitchOrder);
@@ -789,10 +739,6 @@ MultiStitcher::TStitchOrder MultiStitcher::computeStitchOrder(size_t startIndex)
           << stitchInfo->srcImageIndex << "->" << stitchInfo->dstImageIndex << ", "
           << ++matchesFound << "/" << totalMatchesToFind
           << std::endl;
-
-      // LogUtils::getLog() << "Match found: "
-      //     << stitchInfo->srcImageIndex << "->" << stitchInfo->dstImageIndex << ", "
-      //     << "confidence: " << stitchInfo->matchInfo.confidence << std::endl;
     }
     
   }
@@ -1051,10 +997,6 @@ void MultiStitcher::waveCorrection(TStitchOrder &rStitchOrder)
     ++i;
   }
   
-  // for(auto *stitchInfo : rStitchOrder) {
-  //   LogUtils::logMat("rb", stitchInfo->matR);
-  // }
-
   WarperHelper::waveCorrect(rMats, horizonal);
 
   i = 0;
@@ -1062,10 +1004,6 @@ void MultiStitcher::waveCorrection(TStitchOrder &rStitchOrder)
     rMats[i].convertTo(stitchInfo->matR, CV_64F);
     ++i;
   }
-
-  // for(auto *stitchInfo : rStitchOrder) {
-  //   LogUtils::logMat("ra", stitchInfo->matR);
-  // }
 
 }
 
@@ -1091,12 +1029,7 @@ void
 StitchedImage::init(
   const TMat &inImage,
   int inProjType,
-  //double inFieldOfView,
   std::vector<const StitchInfo *> &stitchOrder,
-  //size_t startImageIndex,
-  //size_t imagesN,
-  //TConstMat &rotMat,
-  //TConstMat &kMat,
   double *globalScale)
 {
   FUNCLOGTIMEL("StitchedImage::init");

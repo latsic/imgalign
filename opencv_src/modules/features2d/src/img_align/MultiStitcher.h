@@ -64,7 +64,6 @@ namespace imgalign
     TPoints2f getTransformedPts(
       TConstPoints2f &pts,
       const cv::Size &size,
-      //double fieldOfView,
       size_t index,
       double *globalScale = nullptr) const;
 

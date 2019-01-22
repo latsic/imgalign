@@ -110,30 +110,10 @@ bool Homography::getHomography(
     }
   }
 
-  // LogUtils::getLog() << "size: "<< s2.width << "/" << s2.height << std::endl;
-  // LogUtils::logMat("rMat", rotMat2);
-  // LogUtils::logMat("*pMatK2", *pMatK2);
-
-  // LogUtils::getLog() << "points1: ";
-  // for(auto it = points1.begin(); it != points1.end(); ++it) {
-  //   LogUtils::getLog() << it->x << "/" << it->y << " ";
-  // }
-  // LogUtils::getLog() << std::endl;
-
-  // LogUtils::getLog() << "points2: ";
-  // for(auto it = points2.begin(); it != points2.end(); ++it) {
-  //   LogUtils::getLog() << it->x << "/" << it->y << " ";
-  // }
-  // LogUtils::getLog() << std::endl;
-
-  
   TBools mask;
   if(!getHomography(tfType, points1, points2, mask, outHomography)) {
-  // if(!getHomography(points1, points2, outHomography)) {
     return false;
   }
-
-  // LogUtils::logMat("homography", outHomography);
 
   if(warpedPts1 != nullptr)
   {
@@ -177,22 +157,18 @@ bool Homography::isSvdConditionNumberSane(TConstMat &homography, double &conditi
   double maxValue = -std::numeric_limits<double>::max();
   for(auto it = wValues.begin<double>(); it != wValues.end<double>(); ++it) {
     double w = *it;
-    //LogUtils::getLog() << "svdConditionNumber w: " << w << std::endl;
-
+    
     if(w < minValue) minValue = w;
     if(w > maxValue) maxValue = w;
   }
 
   conditionNumber = maxValue / minValue;
-  //LogUtils::getLog() << "svdConditionNumber: " << conditionNumber << std::endl;
-
+  
   if(isinf(conditionNumber)) {
-    //LogUtils::getLog() << "svdConditionNumber: " << "infinite!!" << std::endl;
     return false;
   }
 
   if(conditionNumber > threshHold) {
-    //LogUtils::getLog() << "svdConditionNumber: " << "above treshHold!!" << std::endl;
     return false;
   }
 

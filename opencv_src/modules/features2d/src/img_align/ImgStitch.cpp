@@ -120,15 +120,6 @@ ImgStitch_Impl::ImgStitch_Impl(InputArrayOfArrays images)
       images.getMat(i).copyTo(image);
       srcImages.push_back(image);
     }
-
-    // size_t imagesN = images.total();
-    // std::vector<TMat> _images(imagesN);
-    // for(size_t i = 0; i < imagesN; ++i) {
-    //   _images[i] = images.getMat((int)i);
-    // }
-    // spMultiStitcher = std::unique_ptr<MultiStitcher>(
-    //   new MultiStitcher(_images, settings));
-
   }
 	catch(std::exception &e) {
 		LogUtils::getLogUserError() << e.what() << std::endl;
@@ -268,7 +259,5 @@ void ImgStitch_Impl::createStitcher()
   spMultiStitcher = std::unique_ptr<MultiStitcher>(
     new MultiStitcher(srcImages, settings));
 }
-
-
 
 }
