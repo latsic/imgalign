@@ -132,17 +132,18 @@ export const paramTypes = Object.freeze({
   stitch_pitch2Auto: { id: 526, name: 'Pitch 2 auto', groupId: null },
 
   stitch_projectionTypeNone: { id: 561, name: 'None', groupId: projectionId, groupId2: projection2Id, groupId3: projection3Id },
+  stitch_projectionTypeSpherical: { id: 553, name: 'Spherical', groupId: projectionId, groupId2: projection2Id, groupId3: projection3Id},
+  stitch_projectionTypeCylindrical: { id: 552, name: 'Cylindrical', groupId: projectionId, groupId2: projection2Id, groupId3: projection3Id },
+  stitch_projectionTypeMercator: { id: 559, name: 'Mercator ', groupId: projectionId, groupId2: projection2Id, groupId3: projection3Id },
+  stitch_projectionTypeTransverseMercator: { id: 560, name: 'Transverse Mercator', groupId: projectionId, groupId2: projection2Id, groupId3: projection3Id },
+  stitch_projectionTypeFisheye: { id: 554, name: 'Fisheye', groupId: projectionId, groupId2: projection2Id, groupId3: projection3Id },
   stitch_projectionTypePlane: { id: 550, name: 'Plane', groupId: projectionId, groupId2: projection2Id, groupId3: projection3Id },
   stitch_projectionTypeAffine: { id: 551, name: 'Affine', groupId: projectionId, groupId2: projection2Id, groupId3: projection3Id },
-  stitch_projectionTypeCylindrical: { id: 552, name: 'Cylindrical', groupId: projectionId, groupId2: projection2Id, groupId3: projection3Id },
-  stitch_projectionTypeSpherical: { id: 553, name: 'Spherical', groupId: projectionId, groupId2: projection2Id, groupId3: projection3Id},
-  stitch_projectionTypeFisheye: { id: 554, name: 'Fisheye', groupId: projectionId, groupId2: projection2Id, groupId3: projection3Id },
   stitch_projectionTypeStereographic: { id: 555, name: 'Stereographic', groupId: projectionId, groupId2: projection2Id, groupId3: projection3Id },
   stitch_projectionTypeRectilinear: { id: 556, name: 'Rectilinear', groupId: projectionId, groupId2: projection2Id, groupId3: projection3Id },
   stitch_projectionTypeRectilinearPortrait: { id: 557, name: 'Rectilinear portrait', groupId: projectionId, groupId2: projection2Id, groupId3: projection3Id },
   stitch_projectionTypePanini: { id: 558, name: 'Panini', groupId: projectionId, groupId2: projection2Id, groupId3: projection3Id },
-  stitch_projectionTypeMercator: { id: 559, name: 'Mercator ', groupId: projectionId, groupId2: projection2Id, groupId3: projection3Id },
-  stitch_projectionTypeTransverseMercator: { id: 560, name: 'Transverse Mercator', groupId: projectionId, groupId2: projection2Id, groupId3: projection3Id },
+  
 
   bundleAdjustType_none: { id: 570, name: 'None', groupId: bundleAdjustTypeId },
   bundleAdjustType_ray: { id: 571, name: 'Ray', groupId: bundleAdjustTypeId },
