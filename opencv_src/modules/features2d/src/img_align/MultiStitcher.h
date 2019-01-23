@@ -69,7 +69,8 @@ namespace imgalign
 
     void stitch(
       bool compensateExposure,
-      bool rectify,
+      bool rectifyPerspective,
+      bool rectifyStretch,
       BlendType blendType,
       double blendStrength,
       SeamFinderType seamFinderType);
@@ -111,14 +112,17 @@ namespace imgalign
       void computeKeyPoints();
       size_t getCenterImage();
       const StitchInfo *findNextMatch(const TStitchOrder &rStitchOrder);
-      const StitchInfo *findNextMatch(TConstIndices &dstI, TConstIndices &srcI, const TStitchOrder *pStitchOrder = nullptr);
+      const StitchInfo *findNextMatch(
+        TConstIndices &dstI, TConstIndices &srcI,
+        const TStitchOrder *pStitchOrder = nullptr);
       bool stitch(const StitchInfo &stitchInfo);
       const StitchInfo *getStitchInfo(size_t dstI, size_t srcI);
 
       TStitchOrder computeStitchOrder(size_t startIndex);
       TStitchOrder computeStitchOrder();
       const StitchInfo *computeStitchInfoFirstLast(TStitchOrder &rStitchOrder);
-      bool camEstimateAndBundleAdjust(TStitchOrder &rStitchOrder, const StitchInfo *pStitchInfoFirstLast, double &rGlobalScale);
+      bool camEstimateAndBundleAdjust(
+        TStitchOrder &rStitchOrder, const StitchInfo *pStitchInfoFirstLast, double &rGlobalScale);
       void computeRelativeRotation(TStitchOrder &rStitchOrder);
       void computeRelativeRotation(const StitchInfo &stitchInfo);
       void computeAbsRotation(TStitchOrder &rStitchOrder);
@@ -136,7 +140,8 @@ namespace imgalign
       const Settings &settings;
       std::vector<double> fieldsOfView;
       int projectionType;
-      bool rectify = true;
+      bool rectifyPerspective = true;
+      bool rectifyStretch = false;
       bool camEstimate = true;
       BundleAdjustType bundleAdjustType;
       double globalScale = 0.0;

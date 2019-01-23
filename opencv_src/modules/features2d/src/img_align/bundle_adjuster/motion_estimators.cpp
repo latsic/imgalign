@@ -369,7 +369,7 @@ bool BundleAdjusterBase::estimate(const std::vector<ImageFeatures> &features,
         bool proceed = solver.update(_param, _jac, _err);
 
         cvCopy(_param, &matParams);
-        if(iter > 800) break;
+        if(iter > 500) return false;
 
         if (!proceed || !_err)
             break;
@@ -398,10 +398,7 @@ bool BundleAdjusterBase::estimate(const std::vector<ImageFeatures> &features,
                 }
                 
                 LogUtils::getLogUserInfo()
-                    << "Finding RMS Error " << currError << ", " << iter << "(max 800)" << std::endl;
-
-                // LogUtils::getLog() << "Finding RMS error (currently " << currError << "), "
-                //                    << iter << " iterations done (of max. 800)..." << std::endl; 
+                    << "BA current rms err " << currError << ", " << iter << "(max 500)" << std::endl;
                 startTime = time;
             }
             
@@ -413,8 +410,6 @@ bool BundleAdjusterBase::estimate(const std::vector<ImageFeatures> &features,
         LogUtils::getLog() << "Bundle adjustment, " << iter << " iterations, "
                            << "final RMS error: " << currError << std::endl;
     }
-
-    // LogUtils::logMat("cam_params_", cam_params_);
 
     // Check if all camera parameters are valid
     bool ok = true;

@@ -120,6 +120,7 @@ namespace imgalign
     eBundleAdjustType_none = 570,
     eBundleAdjustType_ray = 571,
     eBundleAdjustType_reproj = 572,
+    eBundleAdjustType_auto = 573,
 
     eBlendType_none = 574,
     eBlendType_multiBand = 575,
@@ -130,7 +131,7 @@ namespace imgalign
 
     eMultiStitch_seamFinderType = 577,
     eMultiStitch_projection = 305,
-    eMultiStitch_rectify = 581,
+    eMultiStitch_rectifyPerspective = 581,
     eMultiStitch_camEstimate = 582,
     eMultiStitch_bundleAdjustType = 583,
     eMultiStitch_waveCorrection = 584,
@@ -141,7 +142,8 @@ namespace imgalign
     eMultiStitch_confidenceThresh = 589,
     eMultiStitch_exposureCompensator = 590,
     //eMultiStitch_blendType = 591,
-    eMultiStitch_blendStrength = 592
+    eMultiStitch_blendStrength = 592,
+    eMultiStitch_rectifyStretch = 593
   };
 
   class Settings {

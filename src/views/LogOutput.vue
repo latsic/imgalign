@@ -1,6 +1,6 @@
 <template>
   <app-view-layout
-    :title="'Lates log messages'"
+    :title="'Latest log messages'"
   >
     <div
       v-for="(msg, index) of $store.getters['logs/errorMessages'].slice().reverse()"

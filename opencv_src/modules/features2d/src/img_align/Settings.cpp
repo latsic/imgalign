@@ -82,18 +82,19 @@ namespace imgalign
 
       { eMultiStitch_seamFinderType, { (float)eSeamFinderType_Vornoi, "MultiStitch_seamFinderType" } },
       { eMultiStitch_projection, { (float)eStitch_projectionTypeSpherical, "MultiStitch_projection" } },
-      { eMultiStitch_rectify, { 1.0f, "MultiStitch_rectify" } },
+      { eMultiStitch_rectifyPerspective, { 1.0f, "MultiStitch_rectifyPerspective" } },
       { eMultiStitch_camEstimate, { 1.0f, "eMultiStitch_camEstimate" } },
-      { eMultiStitch_bundleAdjustType, { (float)eBundleAdjustType_reproj, "MultiStitch_bundleAdjustType" } },
+      { eMultiStitch_bundleAdjustType, { (float)eBundleAdjustType_auto, "MultiStitch_bundleAdjustType" } },
       { eMultiStitch_waveCorrection, { 0.0f, "MultiStitch_waveCorrection" } },
       { eMultiStitch_seamBlend, { 1.0f, "MultiStitch_seamBlend" } },
       { eMultiStitch_colorTransfer, { 0.0f, "MultiStitch_colorTransfer" } },
       { eMultiStitch_calcImageOrder, { 1.0f, "MultiStitch_calcImageOrder" } },
       { eMultiStitch_calcCenterImage, { 1.0f, "MultiStitch_calcCenterImage" } },
       { eMultiStitch_confidenceThresh, { 0.2f, "MultiStitch_confidenceThresh" } },
-      { eMultiStitch_exposureCompensator, { 0.0f, "MultiStitch_exposureCompensator"} },
+      { eMultiStitch_exposureCompensator, { 0.0f, "MultiStitch_exposureCompensator" } },
       //{ eMultiStitch_blendType, { (float)eBlendType_multiBand, "MultiStitch_blendType"}},
-      { eMultiStitch_blendStrength, { 5.0f, "MultiStitch_blendStrength"}}
+      { eMultiStitch_blendStrength, { 5.0f, "MultiStitch_blendStrength" } },
+      { eMultiStitch_rectifyStretch, { 0.0f, "MultiStitch_rectifyStretch" } },
     };
   }
 
@@ -153,7 +154,8 @@ namespace imgalign
       case eBundleAdjustType_none: return BundleAdjustType::BAT_NONE;
       case eBundleAdjustType_ray: return BundleAdjustType::BAT_RAY;
       case eBundleAdjustType_reproj: return BundleAdjustType::BAT_REPROJ;
-      default: return BundleAdjustType::BAT_REPROJ;
+      case eBundleAdjustType_auto:
+      default: return BundleAdjustType::BAT_AUTO;
     }
   }
 

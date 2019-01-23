@@ -137,8 +137,13 @@ MatchInfo DesMatcher::match(
   FUNCLOGTIMEL("DesMatcher::match");
 
   MatchInfo matchInfo;
+  matchInfo.success = false;
+  matchInfo.confidence = 0;
 
   match(inDescriptors1, inDecsriptors2, matchInfo.allMatches);
+  if(matchInfo.allMatches.empty()) {
+    return matchInfo;
+  }
   matchInfo.filterInfo = filter(matchInfo.allMatches, matchInfo.filteredMatches);
   
   for(auto it = matchInfo.allMatches.begin(); it != matchInfo.allMatches.end(); ++it) {
@@ -157,8 +162,6 @@ MatchInfo DesMatcher::match(
 
   TBools mask;
   if(!Homography::getHomography(tfType, matchInfo.filteredPts1, matchInfo.filteredPts2, mask, matchInfo.homography)) {
-    matchInfo.success = false;
-    matchInfo.confidence = 0;
     return matchInfo;
   }
 

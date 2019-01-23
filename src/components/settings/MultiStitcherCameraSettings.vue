@@ -32,6 +32,7 @@
       xs6
       sm6
       pa-2
+      v-if="showFieldOfView"
     >
       <v-text-field
         :name="'fieldOfView'"
@@ -39,9 +40,9 @@
         :hint="'Select input images'"
         persistent-hint
         :placeholder="fieldOfViewDefaultValue"
-        :value="showFieldOfView ? fieldOfView : ''"
+        :value="showFieldOfView && enableFieldOfView ? fieldOfView : ''"
         :type="'number'"
-        :disabled="!showFieldOfView"
+        :disabled="!enableFieldOfView"
         @change="value => fieldOfViewChanged(value)"
       />
     </v-flex>
@@ -63,6 +64,10 @@ export default {
       required: true
     },
     showFieldOfView: {
+      type: Boolean,
+      default: false
+    },
+    enableFieldOfView: {
       type: Boolean,
       default: false
     },

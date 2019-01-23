@@ -1,24 +1,25 @@
 
 export const paramGroups = Object.freeze({
-  other:                  { id: 1001, name: 'Other' },
-  sift:                   { id: 1002, name: 'Sift' },
-  surf:                   { id: 1003, name: 'Surf' },
-  orb:                    { id: 1004, name: 'Orb' },
-  brisk:                  { id: 1005, name: 'Brisk' },
-  kaze:                   { id: 1006, name: 'Kaze' },
-  akaze:                  { id: 1007, name: 'Akaze' },
-  basic:                  { id: 1008, name: 'Basic' },
-  compare:                { id: 1009, name: 'Compare' },
-  matchFilter:            { id: 1010, name: 'Match Filter' },
-  logging:                { id: 1011, name: 'Logging' },
-  stitching:              { id: 1012, name: 'Stitching' },
-  stitcherCommon:         { id: 1013, name: 'Common' },
-  stitcherOrientation:    { id: 1014, name: 'Orientation' },
-  stitcherProjection:     { id: 1015, name: 'Projection' },
-  multiStitcher:          { id: 1016, name: 'Multi Stitcher'},
-  multiStitcherCamera:    { id: 1017, name: 'Camera'},
-  multiStitcherImage:     { id: 1018, name: 'Image'},
-  multiStitcherStitcher:  { id: 1019, name: 'Stitching'}
+  other:                    { id: 1001, name: 'Other' },
+  sift:                     { id: 1002, name: 'Sift' },
+  surf:                     { id: 1003, name: 'Surf' },
+  orb:                      { id: 1004, name: 'Orb' },
+  brisk:                    { id: 1005, name: 'Brisk' },
+  kaze:                     { id: 1006, name: 'Kaze' },
+  akaze:                    { id: 1007, name: 'Akaze' },
+  basic:                    { id: 1008, name: 'Basic' },
+  compare:                  { id: 1009, name: 'Compare' },
+  matchFilter:              { id: 1010, name: 'Match Filter' },
+  logging:                  { id: 1011, name: 'Logging' },
+  stitching:                { id: 1012, name: 'Stitching' },
+  stitcherCommon:           { id: 1013, name: 'Common' },
+  stitcherOrientation:      { id: 1014, name: 'Orientation' },
+  stitcherProjection:       { id: 1015, name: 'Projection' },
+  multiStitcher:            { id: 1016, name: 'Multi Stitcher'},
+  multiStitcherCamera:      { id: 1017, name: 'Camera'},
+  multiStitcherSeams:       { id: 1018, name: 'Seams'},
+  multiStitcherImage:       { id: 1019, name: 'Image'},
+  multiStitcherStitchOrder: { id: 1020, name: 'Stitch Order'}
 });
 
 const detTypeId = 200;
@@ -148,6 +149,7 @@ export const paramTypes = Object.freeze({
   bundleAdjustType_none: { id: 570, name: 'None', groupId: bundleAdjustTypeId },
   bundleAdjustType_ray: { id: 571, name: 'Ray', groupId: bundleAdjustTypeId },
   bundleAdjustType_reproj: { id: 572, name: 'Reprojection', groupId: bundleAdjustTypeId },
+  bundleAdjustType_auto: { id: 573, name: 'Auto', groupId: bundleAdjustTypeId },
 
   blendType_none: { id: 574, name: 'None', groupId: blendTypeId },
   blendType_multiBand: { id: 575, name: 'Multiband', groupId: blendTypeId },
@@ -163,21 +165,22 @@ export const paramTypes = Object.freeze({
   multiStitch_camEstimate: { id: 582, name: 'Cam estimation', groupId: paramGroups.multiStitcherCamera.id },
   
  
-  multiStitch_seamBlend: { id: 585, name: 'Seam blend', groupId: paramGroups.multiStitcherImage.id },
-  multiStitch_rectify: { id: 581, name: 'Rectify result', groupId: paramGroups.multiStitcherImage.id },
+  multiStitch_seamBlend: { id: 585, name: 'Seam blend', groupId: paramGroups.multiStitcherSeams.id },
+  multiStitch_rectifyPerspective: { id: 581, name: 'Rectify perspective', groupId: paramGroups.multiStitcherImage.id },
+  multiStitch_rectifyStretch: { id: 593, name: 'Rectify stretch', groupId: paramGroups.multiStitcherImage.id, enabledIfId: 581 },
   
   
   //multiStitch_blendType: { id: blendTypeId, name: 'Blend type', groupId: paramGroups.multiStitcherImage.id },
-  multiStitch_blendStrength: { id: 592, name: 'Blend strength', groupId: paramGroups.multiStitcherImage.id, enabledIfId: 585 },
-  multiStitch_seamFinderType: { id: seamFinderTypeId, name: 'Seam finder', groupId: paramGroups.multiStitcherImage.id },
+  multiStitch_blendStrength: { id: 592, name: 'Blend strength', groupId: paramGroups.multiStitcherSeams.id, enabledIfId: 585 },
+  multiStitch_seamFinderType: { id: seamFinderTypeId, name: 'Seam finder', groupId: paramGroups.multiStitcherSeams.id },
   
   
   multiStitch_exposureCompensator: { id: 590, name: 'Exposure compens.', groupId: paramGroups.multiStitcherImage.id },
   multiStitch_colorTransfer: { id: 586, name: 'Color transfer', groupId: paramGroups.multiStitcherImage.id },
 
-  multiStitch_calcImageOrder: { id: 587, name: 'Calc stitch order', groupId: paramGroups.multiStitcherStitcher.id },
-  multiStitch_calcCenterImage: { id: 588, name: 'Estimate start image', groupId: paramGroups.multiStitcherStitcher.id },
-  multiStitch_confidenceThresh: { id: 589, name: 'Confidence thresh', groupId: paramGroups.multiStitcherStitcher.id }
+  multiStitch_calcImageOrder: { id: 587, name: 'Calc stitch order', groupId: paramGroups.multiStitcherStitchOrder.id },
+  multiStitch_calcCenterImage: { id: 588, name: 'Estimate start image', groupId: paramGroups.multiStitcherStitchOrder.id },
+  multiStitch_confidenceThresh: { id: 589, name: 'Confidence thresh', groupId: paramGroups.multiStitcherStitchOrder.id }
 
   
 });

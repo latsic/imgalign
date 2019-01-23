@@ -85,11 +85,18 @@
             <app-multi-stitcher-camera-settings
               v-if="groupKey == 'multiStitcherCamera'"
               :params="params(groupKey)"
-              :showFieldOfView="selectedIndices.length > 0 && !camEstimationOn"
+              :showFieldOfView="!camEstimationOn"
+              :enableFieldOfView="selectedIndices.length > 0"
               :fieldOfView="fieldOfView"
               :fieldOfViewDefaultValue="fieldOfViewDefaultValue"
               @change="paramChanged"
               @fieldOfViewChange="setFieldOfView"
+            />
+
+            <app-multi-stitcher-seams-settings
+              v-if="groupKey == 'multiStitcherSeams'"
+              :params="params(groupKey)"
+              @change="paramChanged"
             />
 
             <app-multi-stitcher-image-settings
@@ -99,7 +106,7 @@
             />
 
             <app-multi-stitcher-stitch-settings
-              v-if="groupKey == 'multiStitcherStitcher'"
+              v-if="groupKey == 'multiStitcherStitchOrder'"
               :params="params(groupKey)"
               @change="paramChanged"
             />
@@ -146,6 +153,7 @@ import ImageResult from '@/components/common/ImageResult';
 import MultiStitcherCameraSettings from '@/components/settings/MultiStitcherCameraSettings';
 import MultiStitcherImageSettings from '@/components/settings/MultiStitcherImageSettings';
 import MultiStitcherStitchSettings from '@/components/settings/MultiStitcherStitchSettings';
+import MultiStitcherSeamsSettings from '@/components/settings/MultiStitcherSeamsSettings';
 import { multiStitchName } from '@/models/constants/images';
 import { paramTypes, paramGroups, ParamUtils } from '@/models/constants/params';
 
@@ -158,7 +166,8 @@ export default {
     'AppMultiInputImages': MultiInputImages,
     'AppMultiStitcherImageSettings': MultiStitcherImageSettings,
     'AppMultiStitcherCameraSettings': MultiStitcherCameraSettings,
-    'AppMultiStitcherStitchSettings': MultiStitcherStitchSettings
+    'AppMultiStitcherStitchSettings': MultiStitcherStitchSettings,
+    'AppMultiStitcherSeamsSettings': MultiStitcherSeamsSettings
   },
   created() {
     //this.$store.dispatch('input/init');
@@ -201,21 +210,15 @@ export default {
       settingsOn: false,
       groupKeysMultiStitcherSettings: [
         'multiStitcherCamera',
+        'multiStitcherSeams',
         'multiStitcherImage',
-        'multiStitcherStitcher'
+        'multiStitcherStitchOrder'
       ]
     }
   },
   methods: {
     async multiStitch() {
 
-      // await this.$store.dispatch(
-      //   'worker/computeMultiStitchedImage', {
-      //     images: this.$store.getters['multiInput/imageDataArray'],
-      //     fieldsOfView: this.$store.getters['multiInput/imageFieldOfViewArray'],
-      //     settings: this.$store.getters['settings/settings']
-      //   }
-      // );      
       await this.$store.dispatch(
         'worker/computeMultiStitchImageInSteps', {
           images: this.$store.getters['multiInput/imageDataArray'],

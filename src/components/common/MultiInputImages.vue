@@ -17,7 +17,9 @@
         align-center
         justify-center
         :style="{
-          border: $store.getters['multiInput/imageDataValid'](index) ? `${borderLineWidth(index)} solid ${borderColor(index)}` : null,
+          border: $store.getters['multiInput/imageDataValid'](index)
+            ? `${borderLineWidth(index)} solid ${borderColor(index)}`
+            : null,
         }"
         @click.stop="imageClicked(index)"
        
@@ -42,7 +44,7 @@
                 :style="{
                   display: 'block',
                   'max-width': '100%',
-                  'max-height': '250px',
+                  'max-height': '30vh',
                   'width': 'auto',
                   'height': 'auto'
                 }"

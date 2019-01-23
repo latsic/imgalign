@@ -228,7 +228,7 @@ export default {
           icon: "device_hub"
         },
         {
-          title: "Settings",
+          title: "Global settings",
           componentName: "settings",
           func: null,
           icon: "settings"

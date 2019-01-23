@@ -183,7 +183,7 @@ inline void blend(
           continue;
         }
 
-        if(images[i].at<cv::Vec4b>(y, x)[3] < 255 && images[i].at<cv::Vec4b>(y, x)[3] > 0) {
+        if(images[i].at<cv::Vec4b>(y, x)[3] <= 255 && images[i].at<cv::Vec4b>(y, x)[3] > 0) {
           outImage.at<cv::Vec4b>(y_, x_)[0] = images[i].at<cv::Vec4b>(y, x)[0];
           outImage.at<cv::Vec4b>(y_, x_)[1] = images[i].at<cv::Vec4b>(y, x)[1];
           outImage.at<cv::Vec4b>(y_, x_)[2] = images[i].at<cv::Vec4b>(y, x)[2];
@@ -752,6 +752,7 @@ void ImageUtils::stitch(
 
   LogUtils::getLogUserInfo() << "Finding seams" << std::endl;
   seamFinder->find(imagesU, tlCorners, masksU);
+  imagesU.clear();
 
   if(exposureCompensate) {
     LogUtils::getLogUserInfo() << "Compensating exposure" << std::endl;
@@ -761,6 +762,7 @@ void ImageUtils::stitch(
   for(size_t i = 0; i < images.size(); ++i) {
     masksU[i].copyTo(masks[i]);
   }
+  masksU.clear();
 
   LogUtils::getLogUserInfo() << "Blending" << std::endl;
 
@@ -1055,9 +1057,9 @@ bool ImageUtils::estimateCorners(
   return true;
 }
 
-bool ImageUtils::rectify(TConstMat &srcImage, TMat &dstImage)
+bool ImageUtils::rectifyPerspective(TConstMat &srcImage, TMat &dstImage)
 {
-  FUNCLOGTIMEL("ImageUtils::rectify");
+  FUNCLOGTIMEL("ImageUtils::rectifyPerspective");
 
   auto ptDist = [](const cv::Point2f &pt1, const cv::Point2f &pt2) {
     return std::sqrt(
@@ -1092,6 +1094,64 @@ bool ImageUtils::rectify(TConstMat &srcImage, TMat &dstImage)
   warpPerspective(srcImage, dstImage, matTransform, dstImageSize);
 
   return true;
+}
+
+void ImageUtils::rectifyStretch(TConstMat &srcImage, TMat &dstImage)
+{
+  FUNCLOGTIMEL("ImageUtils::rectifyStretch");
+
+  TMat xMap(srcImage.size(), CV_32FC1);
+
+  for(auto y = 0; y < srcImage.rows; ++y) {
+    
+    int xMin, xMax;
+    for(xMin = 0; xMin < srcImage.cols; ++xMin) {
+      if(srcImage.at<cv::Vec4b>(y, xMin)[3] != 0) {
+        break;
+      }
+    }
+    for(xMax = srcImage.cols - 1; xMax >= 0; --xMax) {
+      if(srcImage.at<cv::Vec4b>(y, xMax)[3] != 0) {
+        break;
+      }
+    }
+
+    float xLenSrc = xMax - xMin;
+    float xLenDst = srcImage.cols - 1;
+    float xFactor = xLenSrc / xLenDst;
+
+    for(auto x = 0; x < srcImage.cols; ++x) {
+      xMap.at<float>(y, x) = xMin + x * xFactor;
+    }
+  }
+
+  TMat yMap(srcImage.size(), CV_32FC1);
+
+  for(auto x = 0; x < srcImage.cols; ++x) {
+
+    int yMin, yMax;
+    for(yMin = 0; yMin < srcImage.rows - 1; ++yMin) {
+      if(srcImage.at<cv::Vec4b>(yMin, x)[3] != 0) {
+        break;
+      }
+    }
+    for(yMax = srcImage.rows - 1; yMax >= 0; --yMax) {
+      if(srcImage.at<cv::Vec4b>(yMax, x)[3] != 0) {
+        break;
+      }
+    }
+
+    float yLenSrc = yMax - yMin;
+    float yLenDst = srcImage.rows - 1;
+    float yFactor = yLenSrc / yLenDst;;
+
+    for(auto y = 0; y < srcImage.rows; ++y) {
+      yMap.at<float>(y, x) = yMin + y * yFactor;
+    }
+  }
+
+  dstImage = TMat::zeros(srcImage.size(), srcImage.type());
+  cv::remap(srcImage, dstImage, xMap, yMap, cv::INTER_LINEAR);
 }
 
 } // imgalign

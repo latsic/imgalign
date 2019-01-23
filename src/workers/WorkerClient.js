@@ -332,46 +332,45 @@ export class WorkerClient {
     this.__messageDone = null;
   }
 
+  _getImageData(data) {
+
+    if(data.width == 0 || data.height == 0) {
+      return null;
+    }
+
+    const clampedArray = new Uint8ClampedArray(data.buf, data.byteOffset, data.bufLen);
+    return new ImageData(clampedArray, data.width, data.height);
+  }
+
   _messageImage(rawImageData) {
-    
-    const clampedArray = new Uint8ClampedArray(rawImageData.buf, rawImageData.byteOffset, rawImageData.bufLen);
-    const imageData = new ImageData(clampedArray, rawImageData.width, rawImageData.height);
-    this._messageDone(imageData);
+    this._messageDone(this._getImageData(rawImageData));
   }
 
   _messageCompareImage(payload) {
-    const clampedArray = new Uint8ClampedArray(payload.buf, payload.byteOffset, payload.bufLen);
-    const imageData = new ImageData(clampedArray, payload.width, payload.height);
     this._messageDone({
-      imageData,
+      imageData: this._getImageData(payload),
       timeUsedArr: payload.additionalData.timeUsedArr,
       keyPointsCountArr: payload.additionalData.keyPointsCountArr
     });
   }
 
   _messageStitchedImage(payload) {
-    const clampedArray = new Uint8ClampedArray(payload.buf, payload.byteOffset, payload.bufLen);
-    const imageData = new ImageData(clampedArray, payload.width, payload.height);
     this._messageDone({
-      imageData,
+      imageData: this._getImageData(payload),
       fieldOfView: payload.additionalData
     });
   }
 
   _messageMultiStitchImage(payload) {
-    const clampedArray = new Uint8ClampedArray(payload.buf, payload.byteOffset, payload.bufLen);
-    const imageData = new ImageData(clampedArray, payload.width, payload.height);
     this._messageDone({
-      imageData,
+      imageData: this._getImageData(payload),
       stitchedImagesN: payload.additionalData
     });
   }
 
   _messageMultiStitchImageStart(payload) {
-    const clampedArray = new Uint8ClampedArray(payload.buf, payload.byteOffset, payload.bufLen);
-    const imageData = new ImageData(clampedArray, payload.width, payload.height);
     this._messageDone({
-      imageData,
+      imageData: this._getImageData(payload),
       stitchIndices: payload.additionalData
     });
   }

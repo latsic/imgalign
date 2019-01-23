@@ -143,7 +143,8 @@ class ImageUtils{
 			TConstMat &srcImage,
 			cv::Point2f &tl, cv::Point2f &tr, cv::Point2f &br, cv::Point2f &bl);
 
-		static bool rectify(TConstMat &srcImage, TMat &dstImage);
+		static bool rectifyPerspective(TConstMat &srcImage, TMat &dstImage);
+		static void rectifyStretch(TConstMat &srcImage, TMat &dstImage);
 };
 
 } //imgalign

@@ -235,9 +235,8 @@ int ImgStitch_Impl::stitchNext(OutputArray stitchedImage)
     else {
       LogUtils::getLogUserInfo() << "Stitching "
       << stitchInfo.srcImageIndex << "->" << stitchInfo.dstImageIndex << ", "
-      << currentStitchIndex << "/" << stitchOrder.size() << " "
-      <<"=> w/h: "
-      << stitchedImage.getMatRef().size().width << "/" << stitchedImage.getMatRef().size().height
+      << currentStitchIndex << "/" << stitchOrder.size() << ", "
+      << "w/h: " << stitchedImage.getMatRef().size().width << "/" << stitchedImage.getMatRef().size().height
       << std::endl;
     }
 

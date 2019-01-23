@@ -10,11 +10,13 @@
     >
       <img
         :style="{
-          width: 'auto',
+          display: 'block',
           'max-width': '100%',
+          'max-height': '50vh',
+          'width': 'auto',
+          'height': 'auto',
           'margin': 'auto',
-          'padding': '0',
-          display: 'block'
+          'padding': '0'
         }"
         :class="{'cursor-drag-zoom': canShowDialog, 'cursor-drag': !canShowDialog}"
         class="transparent-pattern"

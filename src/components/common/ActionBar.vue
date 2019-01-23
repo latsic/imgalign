@@ -288,7 +288,7 @@ export default {
       || this.showStatusInfo
       || !this.workerReady
       || (!this.multiple && !this.$store.getters['input/allImageDataValid'])
-      || (this.multiple && this.$store.getters['multiInput/imageCount'] == 0)
+      || (this.multiple && this.$store.getters['multiInput/imageCount'] <= 1)
       //|| this.workerBusy
       || (this.workerBusyCompute && this.kill == null)
       || (this.multiple && this.inputBusyImage);

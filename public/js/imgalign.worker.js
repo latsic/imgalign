@@ -80,7 +80,7 @@ function imageDataFromMat(mat) {
   }
 
   if(mat.rows == 0 || mat.cols == 0) {
-    throw new Error('Empty mat instance');
+    return null;
   }
 
   // convert the mat type to cv.CV_8U
@@ -116,18 +116,35 @@ function postDoneMessage(msg, payload = null) {
 }
 
 function postDoneMessageImage(msg, imageData, additionalData) {
-  postMessage({
-    msg: msg,
-    info: 'done',
-    payload: {
-      width: imageData.width,
-      height: imageData.height,
-      bufLen: imageData.data.length,
-      bufOffset: imageData.data.byteOffset,
-      buf: imageData.data.buffer,
-      additionalData: additionalData
-    }
-  }, [ imageData.data.buffer ]);
+  
+  if(!imageData) {
+    postMessage({
+      msg: msg,
+      info: 'done',
+      payload: {
+        width: 0,
+        height: 0,
+        bufLen: 0,
+        bufOffset: 0,
+        buf: null,
+        additionalData: additionalData
+      }
+    });
+  }
+  else {
+    postMessage({
+      msg: msg,
+      info: 'done',
+      payload: {
+        width: imageData.width,
+        height: imageData.height,
+        bufLen: imageData.data.length,
+        bufOffset: imageData.data.byteOffset,
+        buf: imageData.data.buffer,
+        additionalData: additionalData
+      }
+    }, [ imageData.data.buffer ]);
+  }
 }
 
 function _reset(resetResults = true) {
@@ -429,12 +446,13 @@ function multiStitchStart(payload) {
     }
     
     mImgStitch.stitchStart(fieldsOfView, stitchedImage, stitchIndices); 
-    const imageData = imageDataFromMat(stitchedImage);
     
     const stitchIndicesResult = [];
     for(let i = 0; i < stitchIndices.size(); ++i) {
       stitchIndicesResult.push(stitchIndices.get(i));
     }
+
+    const imageData = imageDataFromMat(stitchedImage);
 
     return () => postDoneMessageImage(msgMultiStitchStart, imageData, stitchIndicesResult);
   }

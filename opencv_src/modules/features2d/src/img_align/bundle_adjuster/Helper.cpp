@@ -15,7 +15,7 @@ void Helper::getData(
     const std::vector<cv::Size> &imageSizes,
     const std::vector<double> &fieldOfViews,
     const std::vector<const StitchInfo *> &stitchInfos,
-    const StitchInfo *stitchInfoFirstLast,
+    const StitchInfo * /*stitchInfoFirstLast*/,
     std::vector<MatchesInfo> &matchesInfoV,
     std::vector<CameraParams> &cameraParamsV,
     std::vector<ImageFeatures> &imageFeaturesV)
@@ -103,51 +103,9 @@ void Helper::getData(
         }
       };
 
-      // if(stitchInfoFirstLast != nullptr) {
-      //   applyInfoIf(stitchInfoFirstLast);
-      // }
-
       for(auto it = stitchInfos.begin(); it != stitchInfos.end(); ++it) {
 
         applyInfoIf(*it);
-        
-        // //if((*it)->srcImageIndex == j && (*it)->dstImageIndex == i) {
-        // if((*it)->srcImageIndex == srcIndex && (*it)->dstImageIndex == dstIndex) {
-          
-        //   //LogUtils::getLog() << "Helper::getData " << "src " << j << " dst " << i << std::endl;
-
-        //   m.confidence = 1.1;
-        //   const auto &inliers = (*it)->matchInfo.inlierMatchInfos;
-
-        //   for(auto itM = inliers.begin(); itM != inliers.end(); ++itM) {
-        //     m.matches.push_back(std::get<1>(*itM));
-        //     m.inliers_mask.push_back(255);
-        //   }
-        //   m.num_inliers = (int)inliers.size();
-
-        //   TMat h;
-        //   (*it)->matchInfo.homography.convertTo(h, CV_64F);
-
-        //   h.copyTo(m.H);
-        // }
-        // else if((*it)->srcImageIndex == dstIndex && (*it)->dstImageIndex == srcIndex) {
-          
-        //   //LogUtils::getLog() << "Helper::getData " << "src " << i << " dst " << j << std::endl;
-
-        //   m.confidence = 1.1;
-        //   const auto &inliers = (*it)->matchInfoInverse.inlierMatchInfos;
-
-        //   for(auto itM = inliers.begin(); itM != inliers.end(); ++itM) {
-        //     m.matches.push_back(std::get<1>(*itM));
-        //     m.inliers_mask.push_back(255);
-        //   }
-        //   m.num_inliers = (int)inliers.size();
-
-        //   TMat h;
-        //   (*it)->matchInfoInverse.homography.convertTo(h, CV_64F);
-
-        //   h.copyTo(m.H);
-        // }
       }
 
       matchesInfoV.push_back(std::move(m));      

@@ -63,14 +63,14 @@ export class Settings {
 
       { id: paramTypes.imageCap.id,
         type: valueTypes.rangeSquareRoot,
-        defaultValue: 600000,
-        value: 600000,
+        defaultValue: 500000,
+        value: 500000,
         range: { min: 10000, max: 9000000 }
       },
       { id: paramTypes.imageCapInput.id,
         type: valueTypes.rangeSquareRoot,
-        defaultValue: 1000000,
-        value: 1000000,
+        defaultValue: 600000,
+        value: 600000,
         range: { min: 10000, max: 16000000 }
       },
 
@@ -340,10 +340,16 @@ export class Settings {
         values: getDiscreteParams(paramTypes.multiStitch_projectionType.id)
       },
       {
-        id: paramTypes.multiStitch_rectify.id,
+        id: paramTypes.multiStitch_rectifyPerspective.id,
         type: valueTypes.bool,
         value: 1,
         defaultValue: 1,
+      },
+      {
+        id: paramTypes.multiStitch_rectifyStretch.id,
+        type: valueTypes.bool,
+        value: 0,
+        defaultValue: 0,
       },
       {
         id: paramTypes.multiStitch_camEstimate.id,
@@ -354,8 +360,8 @@ export class Settings {
       {
         id: paramTypes.multiStitch_bundleAdjust.id,
         type: valueTypes.discrete,
-        value: paramTypes.bundleAdjustType_reproj.id,
-        defaultValue: paramTypes.bundleAdjustType_reproj.id,
+        value: paramTypes.bundleAdjustType_auto.id,
+        defaultValue: paramTypes.bundleAdjustType_auto.id,
         values: getDiscreteParams(paramTypes.multiStitch_bundleAdjust.id)
       },
       {

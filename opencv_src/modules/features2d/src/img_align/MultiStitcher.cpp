@@ -63,7 +63,7 @@ namespace
         }
     };
     
-    for(auto it = ++stitchOrder.begin(); it != stitchOrder.end(); ++it) {
+    for(auto it = stitchOrder.begin(); it != stitchOrder.end(); ++it) {
       logStitchInfo(*it, false);
       LogUtils::getLog() << "--------------------------" << std::endl;
     }
@@ -85,7 +85,7 @@ namespace
       << ", aborting. "
       << "Advice: "
       << "1: Try different bundle adjustment type. "
-      << "2: Try a different surface propjection." << std::endl;
+      << "2: Try a different surface projection." << std::endl;
 
     return false;
   }
@@ -141,7 +141,8 @@ TConstMat &
 MultiStitcher::getStitchedImage()
 {
   FUNCLOGTIMEL("MultiStitcher::getStitchedImage");
-  stitchedImage.stitch(compensateExposure, rectify, blendType, blendStrength, seamFinderType);
+  stitchedImage.stitch(compensateExposure, rectifyPerspective,
+    rectifyStretch, blendType, blendStrength, seamFinderType);
   return stitchedImage.image;
 }
 
@@ -182,7 +183,8 @@ MultiStitcher::initStiching(
   fieldsOfView.assign(inFieldsOfView.begin(), inFieldsOfView.end());
 
   projectionType = settings.getValue(eMultiStitch_projection);
-  rectify = settings.getValue(eMultiStitch_rectify);
+  rectifyPerspective = settings.getValue(eMultiStitch_rectifyPerspective);
+  rectifyStretch = settings.getValue(eMultiStitch_rectifyStretch);
   camEstimate = settings.getValue(eMultiStitch_camEstimate);
   bundleAdjustType = settings.getBundleAdjustType();
   colorTransfer = settings.getValue(eMultiStitch_colorTransfer);
@@ -208,7 +210,8 @@ MultiStitcher::initStiching(
     : BlendType::BT_NONE;
 
   LogUtils::getLog() << "projectionType " << projectionType << std::endl;
-  LogUtils::getLog() << "rectify " << rectify << std::endl;
+  LogUtils::getLog() << "rectifyPerspective " << rectifyPerspective << std::endl;
+  LogUtils::getLog() << "rectifyStretch " << rectifyStretch << std::endl;
   LogUtils::getLog() << "camEstimate " << camEstimate << std::endl;
   LogUtils::getLog() << "bundleAdjust " << (int)(settings.getValue(eMultiStitch_bundleAdjustType)) << std::endl;
   LogUtils::getLog() << "waveCorrection " << (wcType != WaveCorrectType::WCT_NONE ? "on" : "off") << std::endl;
@@ -862,7 +865,8 @@ MultiStitcher::camEstimateAndBundleAdjust(
     ba_cost_func = "ray";
     ba_refine_mask = "xxx_x";
   }
-  else if(bundleAdjustType == BundleAdjustType::BAT_REPROJ){
+  else if(bundleAdjustType == BundleAdjustType::BAT_REPROJ
+       || bundleAdjustType == BundleAdjustType::BAT_AUTO) {
     ba_cost_func = "reproj";
     ba_refine_mask = "xxx_x";
   }
@@ -916,38 +920,63 @@ MultiStitcher::camEstimateAndBundleAdjust(
 
   if(bundleAdjustType != BundleAdjustType::BAT_NONE) {
     
-    LogUtils::getLogUserInfo() << "Bundle adjustement, type " << ba_cost_func << std::endl;
+    while(true) {
 
-    Ptr<detail::BundleAdjusterBase> adjuster = nullptr;
-    if(ba_cost_func == "reproj") adjuster = makePtr<detail::BundleAdjusterReproj>();
-    else if(ba_cost_func == "ray") adjuster = makePtr<detail::BundleAdjusterRay>();
-    else if(ba_cost_func == "affine") adjuster = makePtr<detail::BundleAdjusterAffinePartial>();
-    else if(ba_cost_func == "no") adjuster = makePtr<detail::NoBundleAdjuster>();
-    else {
-      LogUtils::getLog() << "Unknown bundle adjustment cost function: '" << ba_cost_func << " " << std::endl;
-    }
-    if(adjuster != nullptr) {
-      std::vector<CameraParams> cameraParamsBundleV(cameraParamsV.begin(), cameraParamsV.end());
-      adjuster->setConfThresh(confThresh);
-      Mat_<uchar> refine_mask = Mat::zeros(3, 3, CV_8U);
-      if (ba_refine_mask[0] == 'x') refine_mask(0,0) = 1;
-      if (ba_refine_mask[1] == 'x') refine_mask(0,1) = 1;
-      if (ba_refine_mask[2] == 'x') refine_mask(0,2) = 1;
-      if (ba_refine_mask[3] == 'x') refine_mask(1,1) = 1;
-      if (ba_refine_mask[4] == 'x') refine_mask(1,2) = 1;
-      adjuster->setRefinementMask(refine_mask);
-      if (!(*adjuster)(imageFeaturesV, matchesInfoV, cameraParamsBundleV))
-      {
-        LogUtils::getLogUserInfo() << "Bundle adjustement failed." << std::endl;
-        if(!camEstimate) return false;
-        bundleAdjustFailed = true;
-      }
+      LogUtils::getLogUserInfo() << "Bundle adjustement, type " << ba_cost_func << std::endl;
+
+      Ptr<detail::BundleAdjusterBase> adjuster = nullptr;
+      if(ba_cost_func == "reproj") adjuster = makePtr<detail::BundleAdjusterReproj>();
+      else if(ba_cost_func == "ray") adjuster = makePtr<detail::BundleAdjusterRay>();
+      else if(ba_cost_func == "affine") adjuster = makePtr<detail::BundleAdjusterAffinePartial>();
+      else if(ba_cost_func == "no") adjuster = makePtr<detail::NoBundleAdjuster>();
       else {
-        cameraParamsV.clear();
-        cameraParamsV.assign(cameraParamsBundleV.begin(), cameraParamsBundleV.end());
+        LogUtils::getLog() << "Unknown bundle adjustment cost function: '" << ba_cost_func << " " << std::endl;
+      }
+      if(adjuster != nullptr) {
+        std::vector<CameraParams> cameraParamsBundleV(cameraParamsV.begin(), cameraParamsV.end());
+        adjuster->setConfThresh(confThresh);
+        Mat_<uchar> refine_mask = Mat::zeros(3, 3, CV_8U);
+        if (ba_refine_mask[0] == 'x') refine_mask(0,0) = 1;
+        if (ba_refine_mask[1] == 'x') refine_mask(0,1) = 1;
+        if (ba_refine_mask[2] == 'x') refine_mask(0,2) = 1;
+        if (ba_refine_mask[3] == 'x') refine_mask(1,1) = 1;
+        if (ba_refine_mask[4] == 'x') refine_mask(1,2) = 1;
+        adjuster->setRefinementMask(refine_mask);
+        
+        bool ok = false;
+        try {
+          ok = (*adjuster)(imageFeaturesV, matchesInfoV, cameraParamsBundleV);
+        }
+        catch(std::exception &e) {
+          LogUtils::getLog() << e.what() << std::endl;
+        }
+
+        if (!ok)
+        {
+          LogUtils::getLogUserInfo() << "Bundle adjustement failed." << std::endl;
+
+          if(   bundleAdjustType == BundleAdjustType::BAT_AUTO
+             && ba_cost_func == "reproj") {
+               
+              LogUtils::getLogUserInfo() << "Bundle adjustement retrying type ray." << std::endl;
+              ba_cost_func = "ray";
+          }
+          else {
+            if(!camEstimate) return false;
+            bundleAdjustFailed = true;
+            break;
+          }
+        }
+        else {
+          cameraParamsV.clear();
+          cameraParamsV.assign(cameraParamsBundleV.begin(), cameraParamsBundleV.end());
+          break;
+        }
       }
     }
   }
+  
+  
   if(bundleAdjustType == BundleAdjustType::BAT_NONE || bundleAdjustFailed) {
     TMat eye = TMat::eye(3, 3, CV_32F);
     for(auto &camParams : cameraParamsV) {
@@ -976,9 +1005,6 @@ MultiStitcher::camEstimateAndBundleAdjust(
 void MultiStitcher::waveCorrection(TStitchOrder &rStitchOrder)
 {
   FUNCLOGTIMEL("MultiStitcher::waveCorrection");
-  if(!LogUtils::isDebug) {
-    LogUtils::getLogUserInfo() << "Wave correction" << std::endl;
-  }
   
   if(wcType == WaveCorrectType::WCT_NONE) return;
   
@@ -989,6 +1015,9 @@ void MultiStitcher::waveCorrection(TStitchOrder &rStitchOrder)
   else if(wcType == WaveCorrectType::WCT_AUTO) {
     horizonal = estimatedFieldOfViewH >= estimatesFieldOfViewV;
   }
+
+  LogUtils::getLogUserInfo() << "Wave correction "
+    << (horizonal ? "horizontal" : "vertical") << std::endl;
 
   std::vector<TMat> rMats(rStitchOrder.size());
   size_t i = 0;
@@ -1004,7 +1033,6 @@ void MultiStitcher::waveCorrection(TStitchOrder &rStitchOrder)
     rMats[i].convertTo(stitchInfo->matR, CV_64F);
     ++i;
   }
-
 }
 
 const MultiStitcher::TStitchOrder &
@@ -1210,7 +1238,8 @@ StitchedImage::stitchFast()
 void
 StitchedImage::stitch(
   bool compensateExposure,
-  bool rectify,
+  bool rectifyPerspective,
+  bool rectifyStretch,
   BlendType blendType,
   double blendStrength,
   SeamFinderType seamFinderType)
@@ -1242,9 +1271,17 @@ StitchedImage::stitch(
     seamFinderType,
     tempImage);
 
+  images.clear();
+  masks.clear();
+
+  for(auto i : imageIndices) {
+    stitchedInfos[i].warpedImage.release();
+    stitchedInfos[i].warpedMask.release();
+  }
+
   LogUtils::getLogUserInfo() << "Cropping" << std::endl;
 
-  if(!rectify) {
+  if(!rectifyPerspective) {
     ImageUtils::crop(tempImage, image);
     return;
   }
@@ -1252,11 +1289,27 @@ StitchedImage::stitch(
   TMat croppedImage;
   ImageUtils::crop(tempImage, croppedImage);
 
-  LogUtils::getLogUserInfo() << "Rectifying" << std::endl;
+  tempImage.release();
 
-  if(!ImageUtils::rectify(croppedImage, image)) {
-    croppedImage.copyTo(image);
+  LogUtils::getLogUserInfo() << "Rectifying perspective" << std::endl;
+
+  if(!rectifyStretch) {
+    if(!ImageUtils::rectifyPerspective(croppedImage, image)) {
+      croppedImage.copyTo(image);
+    }
+    return;
   }
+  
+  TMat temp;
+  if(!ImageUtils::rectifyPerspective(croppedImage, temp)) {
+    croppedImage.copyTo(image);
+    return;
+  }
+
+  croppedImage.release();
+  
+  LogUtils::getLogUserInfo() << "Rectifying stretch" << std::endl;
+  ImageUtils::rectifyStretch(temp, image);
 }
 
 StitchInfo::StitchInfo(size_t srcI, size_t dstI)

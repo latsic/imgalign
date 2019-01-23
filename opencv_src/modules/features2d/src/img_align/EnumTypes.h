@@ -35,7 +35,7 @@ namespace imgalign
     WCT_NONE = 0, WCT_H = 1, WCT_V = 2, WCT_AUTO = 3
   };
   enum class BundleAdjustType{
-    BAT_NONE = 0, BAT_RAY = 1, BAT_REPROJ = 2
+    BAT_NONE = 0, BAT_RAY = 1, BAT_REPROJ = 2, BAT_AUTO = 3
   };
   enum class BlendType{
     BT_MULTIBAND = 0, BT_FEATHER = 1, BT_NONE = 3
