@@ -76,14 +76,14 @@ class ImageUtils{
 			const std::vector<TMat> &images,
 			const std::vector<TMat> &masks,
 			const std::vector<cv::Point> &tlCorners,
-			double blendStrength,
+			double blendWidth,
 			TMat &outImage);
 
 		static void featherBlend(
 			const std::vector<TMat> &images,
 			const std::vector<TMat> &masks,
 			const std::vector<cv::Point> &tlCorners,
-			double blendStrength,
+			double blendWidth,
 			TMat &outImage);
 
 		static void blendNone(
@@ -115,6 +115,7 @@ class ImageUtils{
 			std::vector<TMat> &images,
 			std::vector<TMat> &masks,
 			const std::vector<cv::Point> &tlCorners,
+			const std::vector<cv::Point> &tlCornersWarpedImage,
 			bool exposureCompensate,
 			BlendType blendType,
 			double blendStrength,
@@ -142,6 +143,8 @@ class ImageUtils{
 		static bool estimateCorners(
 			TConstMat &srcImage,
 			cv::Point2f &tl, cv::Point2f &tr, cv::Point2f &br, cv::Point2f &bl);
+
+		static void createMaskFor(TConstMat &srcImage, TMat &outMask);
 
 		static bool rectifyPerspective(TConstMat &srcImage, TMat &dstImage);
 		static void rectifyStretch(TConstMat &srcImage, TMat &dstImage);

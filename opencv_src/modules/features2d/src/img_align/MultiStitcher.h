@@ -41,7 +41,8 @@ namespace imgalign
       double tx, ty;
       TMat rMat, kMat;
       TMat warpedImage, warpedMask;
-      cv::Point tlCorner;  
+      cv::Point tlCorner;
+      cv::Point tlCornerRoi; 
     };
 
     void init(
@@ -52,6 +53,7 @@ namespace imgalign
 
     void addTranslation(double tx, double ty);
     void createMaskFor(size_t imageIndex);
+    void setMaskFor(size_t imageIndex, TMat mat);
     void setHomographyFor(size_t imageIndex, TConstMat &h);
     void setKMatFor(size_t imageIndex, TConstMat &k);
     void setRMatFor(size_t imageIndex, TConstMat &r);
@@ -59,7 +61,10 @@ namespace imgalign
     void setYTranslationFor(size_t imageIndex, double ty);
     void setCornerXFor(size_t imageIndex, double x);
     void setCornerYFor(size_t imageIndex, double y);
+    void setCornerRoiXFor(size_t imageIndex, double x);
+    void setCornerRoiYFor(size_t imageIndex, double y);
     TMat& warpedImage(size_t imageIndex);
+    TMat& warpedMask(size_t imageIndex);
 
     TPoints2f getTransformedPts(
       TConstPoints2f &pts,

@@ -175,6 +175,9 @@
         this.$emit('file-selection-ended');
         this.fileChangedCalled = false;
       }
+    },
+    beforeDestroy() {
+      this.$emit('file-selection-ended');
     }
   }
 </script>

@@ -64,7 +64,7 @@ namespace
     };
     
     for(auto it = stitchOrder.begin(); it != stitchOrder.end(); ++it) {
-      logStitchInfo(*it, false);
+      logStitchInfo(*it, LogUtils::isDebug);
       LogUtils::getLog() << "--------------------------" << std::endl;
     }
     if(stitchInfoFirstLast != nullptr) {
@@ -442,20 +442,36 @@ MultiStitcher::stitch(const StitchInfo &stitchInfo)
     throw std::logic_error("No homography found on warped images");
   }
 
+  cv::Point tlCornerRoi(0, 0);
   TMat srcImageProjected;
+  // TMat mask(srcImage.size(), CV_8U);
+  // mask.setTo(Scalar::all(255));
+  TMat mask;
+  ImageUtils::createMaskFor(srcImage, mask);
+  TMat maskProjected;
   if((ParamType)projectionType != eStitch_projectionTypeNone) {
     if(kMat2 != nullptr) {
+      tlCornerRoi = WarperHelper::warpImage(
+        projectionType, srcImage, srcImageProjected, *kMat2, rotMat2, true, true, globalScale == 0.0 ? nullptr : &globalScale);
       WarperHelper::warpImage(
-        projectionType, srcImage, srcImageProjected, *kMat2, rotMat2, globalScale == 0.0 ? nullptr : &globalScale);
+        projectionType, mask, maskProjected, *kMat2, rotMat2, false, false, globalScale == 0.0 ? nullptr : &globalScale);
     }
     else {
+      tlCornerRoi = WarperHelper::warpImage(
+        projectionType, srcImage, srcImageProjected, fieldOfViewSrc, rotMat2, true, true);
       WarperHelper::warpImage(
-        projectionType, srcImage, srcImageProjected, fieldOfViewSrc, rotMat2);
+        projectionType, mask, maskProjected, fieldOfViewSrc, rotMat2, false, false);
     }
   }
   else {
     srcImage.copyTo(srcImageProjected);
+    mask.copyTo(maskProjected);
+    //stitchedImage.createMaskFor(srcIndex);
   }
+
+  stitchedImage.setCornerRoiXFor(srcIndex, tlCornerRoi.x);
+  stitchedImage.setCornerRoiYFor(srcIndex, tlCornerRoi.y);
+
 
   int w1 = stitchedImage.imageSize.width;
   int h1 = stitchedImage.imageSize.height;
@@ -487,9 +503,16 @@ MultiStitcher::stitch(const StitchInfo &stitchInfo)
     WarperHelper::warpPerspective(
       srcImageProjected, homography2,
       cv::Size((int)(r - l), (int)(b - t)),
-      stitchedImage.warpedImage(srcIndex));
+      stitchedImage.warpedImage(srcIndex), true, true);
 
-    stitchedImage.createMaskFor(srcIndex);
+    WarperHelper::warpPerspective(
+      maskProjected, homography2,
+      cv::Size((int)(r - l), (int)(b - t)),
+      stitchedImage.warpedMask(srcIndex), false, false);
+
+    srcImageProjected.release();
+    //stitchedImage.createMaskFor(srcIndex);
+    //stitchedImage.setMaskFor(srcIndex, warpedMask);
   }
   
   double tx, ty, t, r, b, l;
@@ -1075,14 +1098,30 @@ StitchedImage::init(
   stitchOrder[0]->matR.copyTo(stitchedInfo.rMat);
   stitchOrder[0]->matK.copyTo(stitchedInfo.kMat);
 
+  cv::Point tlCornerRoi(0, 0);
+  // TMat mask(inImage.size(), CV_8U);
+  // mask.setTo(Scalar::all(255));
+  TMat mask;
+  ImageUtils::createMaskFor(inImage, mask);
   if(projType != eStitch_projectionTypeNone) {
-    WarperHelper::warpImage(projType, inImage, stitchedInfo.warpedImage, stitchedInfo.kMat, stitchedInfo.rMat, globalScale);
+    tlCornerRoi = WarperHelper::warpImage(projType, inImage, stitchedInfo.warpedImage, stitchedInfo.kMat, stitchedInfo.rMat, true, true, globalScale);
+    WarperHelper::warpImage(projType, mask, stitchedInfo.warpedMask, stitchedInfo.kMat, stitchedInfo.rMat, false, false, globalScale);
   }
   else {
     inImage.copyTo(stitchedInfo.warpedImage);
+    mask.copyTo(stitchedInfo.warpedMask);
   }
 
-  createMaskFor(startIndex);
+  setCornerRoiXFor(startIndex, tlCornerRoi.x);
+  setCornerRoiYFor(startIndex, tlCornerRoi.y);
+
+  LogUtils::getLog() << "InImage init: w/h "
+    << inImage.size().width << "/" << inImage.size().height << std::endl;
+
+  LogUtils::getLog() << "WarpImage init: w/h "
+    << stitchedInfo.warpedImage.size().width << "/" << stitchedInfo.warpedImage.size().height << std::endl;
+
+  //createMaskFor(startIndex);
   imageSize = stitchedInfo.warpedImage.size();
 }
 
@@ -1151,10 +1190,20 @@ void StitchedImage::createMaskFor(size_t imageIndex)
   auto imageEnd = stitchedInfo.warpedImage.end<cv::Vec4b>();
 
   for(auto it = imageBegin; it != imageEnd; ++it, ++itMask) {
+    // if((*it)[3] > 0) {
+    //   *itMask = 255;
+    // }
     if((*it)[3] == 255) {
       *itMask = (*it)[3];
     }
   }
+}
+
+void StitchedImage::setMaskFor(size_t imageIndex, TMat mat)
+{
+  FUNCLOGTIMEL("StitchedImage::setMaskFor");
+
+  stitchedInfos[imageIndex].warpedMask = mat;
 }
 
 void
@@ -1200,11 +1249,31 @@ StitchedImage::setCornerYFor(size_t imageIndex, double y)
   stitchedInfo.tlCorner.y = y;
 }
 
+void
+StitchedImage::setCornerRoiXFor(size_t imageIndex, double x)
+{
+  auto &stitchedInfo = stitchedInfos[imageIndex];
+  stitchedInfo.tlCornerRoi.x = x;
+}
+void
+StitchedImage::setCornerRoiYFor(size_t imageIndex, double y)
+{
+  auto &stitchedInfo = stitchedInfos[imageIndex];
+  stitchedInfo.tlCornerRoi.y = y;
+}
+
 TMat&
 StitchedImage::warpedImage(size_t imageIndex)
 {
   auto &stitchedInfo = stitchedInfos[imageIndex];
   return stitchedInfo.warpedImage;
+}
+
+TMat&
+StitchedImage::warpedMask(size_t imageIndex)
+{
+  auto &stitchedInfo = stitchedInfos[imageIndex];
+  return stitchedInfo.warpedMask;
 }
 
 void
@@ -1247,6 +1316,7 @@ StitchedImage::stitch(
   FUNCLOGTIMEL("StitchedImage::stitch");
 
   std::vector<cv::Point> tlCornersI;
+  std::vector<cv::Point> tlCornersWarpedImage;
   std::vector<TMat> images;
   std::vector<TMat> masks;
 
@@ -1257,6 +1327,19 @@ StitchedImage::stitch(
     tlCornersI.push_back(Point(
       stitchedInfo.tx + stitchedInfo.tlCorner.x,
       stitchedInfo.ty + stitchedInfo.tlCorner.y));
+
+    // tlCornersWarpedImage.push_back(Point(
+    //   stitchedInfo.tlCornerRoi.x,
+    //   stitchedInfo.tlCornerRoi.y));
+    // tlCornersWarpedImage.push_back(Point(
+    //   stitchedInfo.tlCorner.x,
+    //   stitchedInfo.tlCorner.y));
+    tlCornersWarpedImage.push_back(Point(
+      stitchedInfo.tx + stitchedInfo.tlCorner.x,
+      stitchedInfo.ty + stitchedInfo.tlCorner.y));
+    // tlCornersNoTranslation.push_back(Point(
+    //   0,
+    //   0));
     
     images.push_back(stitchedInfo.warpedImage);
     masks.push_back(stitchedInfo.warpedMask);
@@ -1265,6 +1348,7 @@ StitchedImage::stitch(
   TMat tempImage;
   ImageUtils::stitch(
     images, masks, tlCornersI,
+    tlCornersWarpedImage,
     compensateExposure,
     blendType,
     blendStrength,

@@ -434,6 +434,46 @@ bool BundleAdjusterBase::estimate(const std::vector<ImageFeatures> &features,
     for (int i = 0; i < num_images_; ++i)
         cameras[i].R = R_inv * cameras[i].R;
 
+    // there is sometimes some kind of bug which leads to wrong sign of the focal length in some k matrices;
+    {   
+        size_t positiveSigns = 0;
+        size_t negativeSigns = 0;
+        double focalsSumAbs = 0;
+        for(size_t i = 0; i < cameras.size(); ++i) {
+            if(cameras[i].focal > 0) ++positiveSigns;
+            else                     ++negativeSigns;
+            
+            focalsSumAbs += std::abs(cameras[i].focal);
+        }
+        if(positiveSigns != cameras.size() || negativeSigns != cameras.size()) {
+            // if all focals are within 30% of the average value, try to correct.
+            double averageFocal = focalsSumAbs / cameras.size();
+            bool allWithinRange = true;
+            double maxAllowedDiff = averageFocal * 0.3;
+            for(size_t i = 0; i < cameras.size(); ++i) {
+                double diffAbs = std::abs(averageFocal - std::abs(cameras[i].focal));
+                if(diffAbs > maxAllowedDiff) {
+                    allWithinRange = false;
+                    break;
+                }
+            }
+            if(allWithinRange) {
+                if(positiveSigns >= negativeSigns) {
+                    //make all positive
+                    for(size_t i = 0; i < cameras.size(); ++i) {
+                        cameras[i].focal = std::abs(cameras[i].focal);
+                    }
+                }
+                else {
+                    //make all negative
+                    for(size_t i = 0; i < cameras.size(); ++i) {
+                        cameras[i].focal = -std::abs(cameras[i].focal);
+                    }
+                }
+            }
+        }
+    }
+
     return true;
 }
 

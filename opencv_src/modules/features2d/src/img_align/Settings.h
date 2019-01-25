@@ -116,6 +116,10 @@ namespace imgalign
     eStitch_projectionTypeMercator = 559,
     eStitch_projectionTypeTransverseMercator = 560,
     eStitch_projectionTypeNone = 561,
+    eStitch_projectionTypeRectilinearA2B1 = 562,
+    eStitch_projectionTypeRectilinearPortraitA2B1 = 563,
+    eStitch_projectionTypePaniniA2B1 = 564,
+    eStitch_projectionTypePaniniPortraitA2B1 = 565,
 
     eBundleAdjustType_none = 570,
     eBundleAdjustType_ray = 571,

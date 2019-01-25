@@ -75,6 +75,28 @@ namespace imgalign
         rotWraper = warper.create(scale);
         break;
       }
+
+      case eStitch_projectionTypeRectilinearA2B1: {
+        cv::CompressedRectilinearWarper warper(2.0f, 1.0f);
+        rotWraper = warper.create(scale);
+        break;
+      }
+      case eStitch_projectionTypeRectilinearPortraitA2B1: {
+        cv::CompressedRectilinearPortraitWarper warper(2.0f, 1.0f);
+        rotWraper = warper.create(scale);
+        break;
+      }
+      case eStitch_projectionTypePaniniA2B1: {
+        cv::PaniniWarper warper(2.0f, 1.0f);
+        rotWraper = warper.create(scale);
+        break;
+      }
+      case eStitch_projectionTypePaniniPortraitA2B1: {
+        cv::PaniniPortraitWarper warper(1.5f, 1.0f);
+        rotWraper = warper.create(scale);
+        break;
+      }
+
       case eStitch_projectionTypeNone:
         break;
       default: {
@@ -317,14 +339,18 @@ void WarperHelper::warpPoints(
 }
 
 
-void WarperHelper::warpImage(
+cv::Point WarperHelper::warpImage(
   int warperType,
   TConstMat& srcMat,
   TMat &outMat,
   double fieldOfView,
-  TConstMat &rotMat)
+  TConstMat &rotMat,
+  bool useLinear,
+  bool useBorderReflect)
 {
   FUNCLOGTIMEL("WarperHelper::warpImage  with fieldOfView");
+
+  //useLinear = true;
 
   double fLenPx = getFocalLengthPx(srcMat.size().width, srcMat.size().height, fieldOfView);
   double scale = srcMat.size().width * (360 / fieldOfView) / (2 * CV_PI);
@@ -332,6 +358,7 @@ void WarperHelper::warpImage(
   auto warper = WarperHelper::getWarper(warperType, (float)scale);
   if(warper == nullptr) {
     srcMat.copyTo(outMat);
+    return cv::Point(0, 0);
   }
   else {
 
@@ -343,7 +370,14 @@ void WarperHelper::warpImage(
     K.convertTo(k32, CV_32F);
     R.convertTo(r32, CV_32F);
 
-    warper->warp(srcMat, k32, r32, cv::INTER_LINEAR, cv::BORDER_CONSTANT, outMat);
+    return warper->warp(
+      srcMat, k32, r32,
+      useLinear
+        ? cv::INTER_LINEAR
+        : cv::INTER_NEAREST,
+      useBorderReflect
+        ? cv::BORDER_REFLECT
+        : cv::BORDER_CONSTANT, outMat);
   }
 }
 
@@ -363,7 +397,6 @@ void WarperHelper::warpPoints(
   double scale;
   if(globalScale != nullptr) {
     scale = *globalScale;
-    
   }
   else {
     double flenPx = kMat.at<double>(0, 0);
@@ -393,15 +426,19 @@ void WarperHelper::warpPoints(
   }
 }
 
-void WarperHelper::warpImage(
+cv::Point WarperHelper::warpImage(
   int warperType,
   TConstMat& srcMat,
   TMat &outMat,
   TConstMat &kMat,
   TConstMat &rotMat,
+  bool useBorderReflect,
+  bool useLinear,
   double *globalScale)
 {
   FUNCLOGTIMEL("WarperHelper::warpImage");
+
+  //useLinear = true;
 
   CV_Assert(kMat.type() == CV_64F);
   CV_Assert(rotMat.type() == CV_64F);
@@ -419,6 +456,7 @@ void WarperHelper::warpImage(
   auto warper = WarperHelper::getWarper(warperType, (float)scale);
   if(warper == nullptr) {
     srcMat.copyTo(outMat);
+    return cv::Point(0, 0);
   }
   else {
 
@@ -428,34 +466,41 @@ void WarperHelper::warpImage(
     K.convertTo(k32, CV_32F);
     R.convertTo(r32, CV_32F);
 
-    warper->warp(srcMat, k32, r32, cv::INTER_LINEAR, cv::BORDER_CONSTANT, outMat);
+    return warper->warp(
+      srcMat, k32, r32,
+      useLinear
+        ? cv::INTER_LINEAR
+        : cv::INTER_NEAREST,
+      useBorderReflect
+        ? cv::BORDER_REFLECT
+        : cv::BORDER_CONSTANT, outMat);
   }
 }
-void WarperHelper::warpImageBackwards(
-  int warperType,
-  TConstMat& srcMat,
-  TMat &outMat,
-  double fieldOfView,
-  double yaw, double pitch, double roll)
-{
-  FUNCLOGTIMEL("WarperHelper::warpImageBackwards");
+// void WarperHelper::warpImageBackwards(
+//   int warperType,
+//   TConstMat& srcMat,
+//   TMat &outMat,
+//   double fieldOfView,
+//   double yaw, double pitch, double roll)
+// {
+//   FUNCLOGTIMEL("WarperHelper::warpImageBackwards");
 
-  float focalLengthPx = (srcMat.size().width * 0.5) / tan(fieldOfView * 0.5 * CV_PI / 180);
+//   float focalLengthPx = (srcMat.size().width * 0.5) / tan(fieldOfView * 0.5 * CV_PI / 180);
 
-  float scale = srcMat.size().width * (360 / fieldOfView) / (2 * CV_PI);
+//   float scale = srcMat.size().width * (360 / fieldOfView) / (2 * CV_PI);
   
-  TMat R, K;
-  WarperHelper::getMatR(yaw, pitch, roll, R);
-  WarperHelper::getMatK(srcMat.size().width, srcMat.size().height, focalLengthPx, K);
+//   TMat R, K;
+//   WarperHelper::getMatR(yaw, pitch, roll, R);
+//   WarperHelper::getMatK(srcMat.size().width, srcMat.size().height, focalLengthPx, K);
 
-  auto warper = WarperHelper::getWarper(warperType, (float)scale);
-  if(warper == nullptr) {
-    srcMat.copyTo(outMat);
-  }
-  else {
-    warper->warpBackward(srcMat, K, R, cv::INTER_LINEAR, cv::BORDER_CONSTANT, outMat.size(), outMat);
-  }
-}
+//   auto warper = WarperHelper::getWarper(warperType, (float)scale);
+//   if(warper == nullptr) {
+//     srcMat.copyTo(outMat);
+//   }
+//   else {
+//     warper->warpBackward(srcMat, K, R, cv::INTER_LINEAR, cv::BORDER_CONSTANT, outMat.size(), outMat);
+//   }
+// }
 
 void WarperHelper::getBox(
   double w1, double h1, double w2, double h2,
@@ -592,14 +637,26 @@ void WarperHelper::warpPerspective(
   TConstMat &src,
   TConstMat &homography, 
   cv::Size dstSize,
-  TMat &dst)
+  TMat &dst,
+  bool useBorderReplicate,
+  bool useLinear)
 {
   FUNCLOGTIMEL("WarperHelper::warpPerspective");
 
-  dst = TMat::zeros(dstSize, src.type());
-  cv::warpPerspective(src, dst, homography, dstSize, INTER_LINEAR, BORDER_CONSTANT, Scalar::all(0));
-}
+  //useLinear = true;
 
+  dst = TMat::zeros(dstSize, src.type());
+  
+  cv::warpPerspective(
+    src, dst, homography, dstSize,
+    useLinear
+      ? INTER_LINEAR
+      : INTER_NEAREST,
+    useBorderReplicate
+      ? BORDER_REPLICATE
+      : BORDER_CONSTANT,
+    Scalar(0, 0, 0, 0));
+}
 
 void WarperHelper::waveCorrect(std::vector<TMat> &rmats, bool horizontal)
 {

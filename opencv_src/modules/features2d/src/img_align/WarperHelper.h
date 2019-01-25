@@ -40,12 +40,14 @@ namespace imgalign
         int warperType,
         TPoints2f &ioPts);
 
-      static void warpImage(
+      static cv::Point warpImage(
         int warperType,
         TConstMat& srcMat,
         TMat &outMat,
         double fieldOfView,
-        TConstMat &rotMat);
+        TConstMat &rotMat,
+        bool useBorderReflect,
+        bool useLinear);
 
       static void warpPoints(
         double w, double h,
@@ -55,20 +57,22 @@ namespace imgalign
         TPoints2f &ioPts,
         double *globalScale = nullptr);
 
-      static void warpImage(
+      static cv::Point warpImage(
         int warperType,
         TConstMat& srcMat,
         TMat &outMat,
         TConstMat &kMat,
         TConstMat &rotMat,
+        bool useBorderReflect,
+        bool useLinear,
         double *globalScale = nullptr);
 
-      static void warpImageBackwards(
-        int warperType,
-        TConstMat& srcMat,
-        TMat &outMat,
-        double fieldOfView,
-        double yaw, double pitch, double roll);
+      // static void warpImageBackwards(
+      //   int warperType,
+      //   TConstMat& srcMat,
+      //   TMat &outMat,
+      //   double fieldOfView,
+      //   double yaw, double pitch, double roll);
 
       static void getBox(
         double w1, double h1, double w2, double h2,
@@ -89,7 +93,9 @@ namespace imgalign
         TConstMat &src,
         TConstMat &homography, 
         cv::Size dstSize,
-        TMat &dst);
+        TMat &dst,
+        bool useBorderReplicate = false,
+        bool useLinear = true);
 
       static void waveCorrect(
         std::vector<TMat> &rmats, bool horizontal);

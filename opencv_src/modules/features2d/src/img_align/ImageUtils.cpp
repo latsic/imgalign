@@ -38,11 +38,16 @@ inline cv::Size getSize(
 inline double getBlendWidth(
   double blendStrength,
   const std::vector<cv::Point> &tlCorners,
-  const std::vector<cv::Size> &sizes)
-{  
+  const std::vector<TMat> &images)
+{ 
+  std::vector<cv::Size> sizes(images.size());
+  for(size_t i = 0; i < images.size(); ++i) {
+    sizes[i] = images[i].size();
+  }
+
   auto fullSize = getSize(tlCorners, sizes);
   double area = fullSize.width * fullSize.height;
-  return sqrt(area) * blendStrength / 100.f;
+  return sqrt(area) * blendStrength / 100.0f;
 }
 
 inline uint8_t divideBy255(int value) {
@@ -81,8 +86,6 @@ inline void blend(
   const TMat &src1, const TMat &src2,
   int x, int y, double sqrDistDiff, int blendDistPx, TMat &dst)
 { 
-
-
   int blendDistPxSqr = blendDistPx * blendDistPx;
   
   if(sqrDistDiff < -blendDistPxSqr) {
@@ -168,30 +171,99 @@ inline void blend(
   outImage = TMat::zeros(dst_rgba.size(), dst_rgba.type());
   dst_rgba.copyTo(outImage, dstMask);
 
+
+  std::vector<int> xDiffs(images.size());
+  std::vector<int> yDiffs(images.size());
+
   for(size_t i = 0; i < images.size(); ++i) {
+    xDiffs[i] = tlCorners[i].x;
+    yDiffs[i] = tlCorners[i].y;
+  }
 
-    auto xAdd = tlCorners[i].x;
-    auto yAdd = tlCorners[i].y;
+  for(int y = 0; y < outImage.rows; ++y) {
+    for(int x = 0; x < outImage.cols; ++x) {
 
-    for(int y = 0; y < images[i].rows; ++y) {
-      for(int x = 0; x < images[i].cols; ++x) {
+      if(dstMask.at<uint8_t>(y, x) == 0) {
+        continue;
+      }
 
-        int y_ = y + yAdd;
-        int x_ = x + xAdd;
+      int iTake = -1;
+      int xTake, yTake;
+      for(size_t i = 0; i < images.size(); ++i) {
+        
+        int y_ = y - yDiffs[i];
+        int x_ = x - xDiffs[i];
+        if(x_ < 0 || y_ < 0) continue;
+        if(x_ >= images[i].size().width) continue;
+        if(y_ >= images[i].size().height) continue;
 
-        if(outImage.at<cv::Vec4b>(y_, x_)[3] != 0) {
-          continue;
+        if(images[i].at<cv::Vec4b>(y_, x_)[3] == 255) {
+          iTake = -1;
+          break;
         }
-
-        if(images[i].at<cv::Vec4b>(y, x)[3] <= 255 && images[i].at<cv::Vec4b>(y, x)[3] > 0) {
-          outImage.at<cv::Vec4b>(y_, x_)[0] = images[i].at<cv::Vec4b>(y, x)[0];
-          outImage.at<cv::Vec4b>(y_, x_)[1] = images[i].at<cv::Vec4b>(y, x)[1];
-          outImage.at<cv::Vec4b>(y_, x_)[2] = images[i].at<cv::Vec4b>(y, x)[2];
-          outImage.at<cv::Vec4b>(y_, x_)[3] = images[i].at<cv::Vec4b>(y, x)[3];
+        if(images[i].at<cv::Vec4b>(y_, x_)[3] >= 0) {
+          iTake = i;
+          xTake = x_;
+          yTake = y_;
         }
+        // if(masks[i].at<uint8_t>(y_, x_) == 255) {
+        //   iTake = -1;
+        //   break;
+        // }
+        // if(masks[i].at<uint8_t>(y_, x_) > 0) {
+        //   iTake = i;
+        //   xTake = x_;
+        //   yTake = y_;
+        // }
+      }
+      if(iTake != -1) {
+        outImage.at<cv::Vec4b>(y, x)[0] = images[iTake].at<cv::Vec4b>(yTake, xTake)[0];
+        outImage.at<cv::Vec4b>(y, x)[1] = images[iTake].at<cv::Vec4b>(yTake, xTake)[1];
+        outImage.at<cv::Vec4b>(y, x)[2] = images[iTake].at<cv::Vec4b>(yTake, xTake)[2];
+        outImage.at<cv::Vec4b>(y, x)[3] = images[iTake].at<cv::Vec4b>(yTake, xTake)[3];
       }
     }
   }
+
+
+  // for(size_t i = 0; i < images.size(); ++i) {
+
+  //   auto xAdd = tlCorners[i].x;
+  //   auto yAdd = tlCorners[i].y;
+
+  //   for(int y = 0; y < images[i].rows; ++y) {
+  //     for(int x = 0; x < images[i].cols; ++x) {
+
+  //       int y_ = y + yAdd;
+  //       int x_ = x + xAdd;
+
+  //       // if(outImage.at<cv::Vec4b>(y_, x_)[3] != 0) {
+  //       //   continue;
+  //       // }
+
+  //       if(dstMask.at<uint8_t>(y_, x_) != 0) {
+  //         continue;
+  //       }
+
+  //       if(masks[i].at<uint8_t>(y, x) == 0 || masks[i].at<uint8_t>(y, x) == 255) {
+  //         continue;
+  //       }
+
+       
+  //       outImage.at<cv::Vec4b>(y_, x_)[0] = images[i].at<cv::Vec4b>(y, x)[0];
+  //       outImage.at<cv::Vec4b>(y_, x_)[1] = images[i].at<cv::Vec4b>(y, x)[1];
+  //       outImage.at<cv::Vec4b>(y_, x_)[2] = images[i].at<cv::Vec4b>(y, x)[2];
+  //       outImage.at<cv::Vec4b>(y_, x_)[3] = masks[i].at<uint8_t>(y, x);
+        
+  //       // if(images[i].at<cv::Vec4b>(y, x)[3] <= 255 && images[i].at<cv::Vec4b>(y, x)[3] > 0) {
+  //       //   outImage.at<cv::Vec4b>(y_, x_)[0] = images[i].at<cv::Vec4b>(y, x)[0];
+  //       //   outImage.at<cv::Vec4b>(y_, x_)[1] = images[i].at<cv::Vec4b>(y, x)[1];
+  //       //   outImage.at<cv::Vec4b>(y_, x_)[2] = images[i].at<cv::Vec4b>(y, x)[2];
+  //       //   outImage.at<cv::Vec4b>(y_, x_)[3] = images[i].at<cv::Vec4b>(y, x)[3];
+  //       // }
+  //     }
+  //   }
+  // }
 }
 
 void ImageUtils::blendImages(
@@ -601,16 +673,11 @@ void ImageUtils::featherBlend(
   const std::vector<TMat> &images,
   const std::vector<TMat> &masks,
   const std::vector<cv::Point> &tlCorners,
-  double blendStrength,
+  double blendWidth,
   TMat &outImage)
 {
   FUNCLOGTIMEL("ImageUtils::featherBlend");
 
-  std::vector<cv::Size> sizes(images.size());
-  for(size_t i = 0; i < images.size(); ++i) {
-    sizes[i] = images[i].size();
-  }
-  auto blendWidth = getBlendWidth(blendStrength, tlCorners, sizes);
   cv::detail::FeatherBlender blender((float)(1.0 / blendWidth));
   imgalign::blend(blender, images, masks, tlCorners, outImage);
 }
@@ -619,18 +686,12 @@ void ImageUtils::blendMultiBand(
   const std::vector<TMat> &images,
   const std::vector<TMat> &masks,
   const std::vector<cv::Point> &tlCorners,
-  double blendStrength,
+  double blendWidth,
   TMat &outImage)
 {
   FUNCLOGTIMEL("ImageUtils::blendMultiBand");
 
-  std::vector<cv::Size> sizes(images.size());
-  for(size_t i = 0; i < images.size(); ++i) {
-    sizes[i] = images[i].size();
-  }
-  auto blendWidth = getBlendWidth(blendStrength, tlCorners, sizes);
   int numBands = ceil(log(blendWidth) / log(2.0)) - 1.0;
-
   cv::detail::MultiBandBlender blender(false, numBands);
   imgalign::blend(blender, images, masks, tlCorners, outImage);
 }
@@ -688,31 +749,40 @@ void ImageUtils::stitch(
 {
   FUNCLOGTIMEL("ImageUtils::stitch");
 
-  TMat mask1 = TMat::zeros(src1.size(), CV_8UC1);
-  auto itMask1 = mask1.begin<uint8_t>();
-  for(auto it = src1.begin<cv::Vec4b>(); it != src1.end<cv::Vec4b>(); ++it, ++itMask1) {
-    if((*it)[3] == 255) {
-      *itMask1 = (*it)[3];
-    }
-  }
-  TMat mask2 = TMat::zeros(src2.size(), CV_8UC1);
-  auto itMask2 = mask2.begin<uint8_t>();
-  for(auto it = src2.begin<cv::Vec4b>(); it != src2.end<cv::Vec4b>(); ++it, ++itMask2) {
-    if((*it)[3] == 255) {
-      *itMask2 = (*it)[3];
-    }
-  }
+  // TMat mask1 = TMat::zeros(src1.size(), CV_8UC1);
+  // auto itMask1 = mask1.begin<uint8_t>();
+
+  // for(auto it = src1.begin<cv::Vec4b>(); it != src1.end<cv::Vec4b>(); ++it, ++itMask1) {
+  //   if((*it)[3] == 255) {
+  //     *itMask1 = (*it)[3];
+  //   }
+  // }
+
+  TMat mask1;
+  createMaskFor(src1, mask1);
+
+  // TMat mask2 = TMat::zeros(src2.size(), CV_8UC1);
+  // auto itMask2 = mask2.begin<uint8_t>();
+  // for(auto it = src2.begin<cv::Vec4b>(); it != src2.end<cv::Vec4b>(); ++it, ++itMask2) {
+  //   if((*it)[3] == 255) {
+  //     *itMask2 = (*it)[3];
+  //   }
+  // }
+
+  TMat mask2;
+  createMaskFor(src2, mask2);
   
   std::vector<TMat> images{src1, src2};
   std::vector<TMat> masks{ mask1, mask2};
   std::vector<cv::Point> tlCorners(2, cv::Point(0, 0));
-  stitch(images, masks, tlCorners, exposureCompensate, blendType, blendStrength, seamFinderType, outDst);
+  stitch(images, masks, tlCorners, tlCorners, exposureCompensate, blendType, blendStrength, seamFinderType, outDst);
 }
 
 void ImageUtils::stitch(
   std::vector<TMat> &images,
   std::vector<TMat> &masks,
   const std::vector<cv::Point> &tlCorners,
+  const std::vector<cv::Point> &tlCornersWarpedImage,
   bool exposureCompensate,
   BlendType blendType,
   double blendStrength,
@@ -750,14 +820,25 @@ void ImageUtils::stitch(
     masks[i].copyTo(masksU[i]);
   }
 
+  if(exposureCompensate) {
+
+    LogUtils::getLogUserInfo() << "Compensating exposure" << std::endl;
+    compensateExposure(tlCornersWarpedImage, masksU, images);
+  }
+
   LogUtils::getLogUserInfo() << "Finding seams" << std::endl;
   seamFinder->find(imagesU, tlCorners, masksU);
   imagesU.clear();
 
-  if(exposureCompensate) {
-    LogUtils::getLogUserInfo() << "Compensating exposure" << std::endl;
-    compensateExposure(tlCorners, masksU, images);
-  }
+  
+
+  // std::vector<TMat> seamMasks(images.size());
+  // for(size_t i = 0; i < images.size(); ++i) {
+  //   masksU[i].copyTo(seamMasks[i]);
+  //   TMat t = seamMasks[i] & masks[i];
+  //   t.copyTo(masks[i]);
+  // }
+  
 
   for(size_t i = 0; i < images.size(); ++i) {
     masksU[i].copyTo(masks[i]);
@@ -766,10 +847,16 @@ void ImageUtils::stitch(
 
   LogUtils::getLogUserInfo() << "Blending" << std::endl;
 
-  switch(blendType) {
+  auto blendWidth = getBlendWidth(blendStrength, tlCorners, images);
+
+  auto _blendType = blendWidth < 1.0
+    ? BlendType::BT_NONE
+    : blendType;
+
+  switch(_blendType) {
     
     case BlendType::BT_FEATHER: {
-      featherBlend(images, masks, tlCorners, blendStrength, outDst);
+      featherBlend(images, masks, tlCorners, blendWidth, outDst);
       break;
     }
     case BlendType::BT_NONE: {
@@ -778,7 +865,7 @@ void ImageUtils::stitch(
     }
     case BlendType::BT_MULTIBAND:
     default: {
-      blendMultiBand(images, masks, tlCorners, blendStrength, outDst);    
+      blendMultiBand(images, masks, tlCorners, blendWidth, outDst);    
     }
   }
 }
@@ -1055,6 +1142,15 @@ bool ImageUtils::estimateCorners(
   if(minDist < 0) return false;
 
   return true;
+}
+
+void ImageUtils::createMaskFor(TConstMat &srcImage, TMat &outMask)
+{
+  outMask = TMat::zeros(srcImage.size(), CV_8U);
+  auto itMask = outMask.begin<uint8_t>();
+  for(auto it = srcImage.begin<cv::Vec4b>(); it != srcImage.end<cv::Vec4b>(); ++it, ++itMask) {
+    (*itMask) = (*it)[3];
+  }
 }
 
 bool ImageUtils::rectifyPerspective(TConstMat &srcImage, TMat &dstImage)

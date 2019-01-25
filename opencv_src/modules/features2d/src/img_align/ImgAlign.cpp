@@ -904,7 +904,7 @@ double ImgAlign_Impl::stitch(
 			WarperHelper::getMatR(yaw1, pitch1, 0, rotMat1);
 
 			WarperHelper::warpImage(
-				projectionType1, fixedImageIn, fixedImageProjected, fieldOfViewFixedImage, rotMat1);
+				projectionType1, fixedImageIn, fixedImageProjected, fieldOfViewFixedImage, rotMat1, false, true);
 
 		}
 		else { 
@@ -918,7 +918,7 @@ double ImgAlign_Impl::stitch(
 			WarperHelper::getMatR(yaw1 + yaw2, pitch1 + pitch2, 0, rotMat2);
 
 			WarperHelper::warpImage(
-				projectionType2, movingImageIn1, movingImageProjected, fieldOfViewMovingImage, rotMat2);
+				projectionType2, movingImageIn1, movingImageProjected, fieldOfViewMovingImage, rotMat2, false, true);
 		}
 		else { 
 			movingImageProjected = movingImageIn1;

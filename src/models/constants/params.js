@@ -144,7 +144,10 @@ export const paramTypes = Object.freeze({
   stitch_projectionTypeRectilinear: { id: 556, name: 'Rectilinear', groupId: projectionId, groupId2: projection2Id, groupId3: projection3Id },
   stitch_projectionTypeRectilinearPortrait: { id: 557, name: 'Rectilinear portrait', groupId: projectionId, groupId2: projection2Id, groupId3: projection3Id },
   stitch_projectionTypePanini: { id: 558, name: 'Panini', groupId: projectionId, groupId2: projection2Id, groupId3: projection3Id },
-  
+  stitch_projectionTypeRectilinearA2B1: { id: 562, name: 'Rectilinear A2B1', groupId: projectionId, groupId2: projection2Id, groupId3: projection3Id },
+  stitch_projectionTypeRectilinearPortraitA2B1: { id: 563, name: 'Rectilinear p. A2B1', groupId: projectionId, groupId2: projection2Id, groupId3: projection3Id },
+  stitch_projectionTypePaniniA2B1: { id: 564, name: 'Panini A2B1', groupId: projectionId, groupId2: projection2Id, groupId3: projection3Id },
+  stitch_projectionTypePaniniPortraitA2B1: { id: 565, name: 'Panini portrait A2B1', groupId: projectionId, groupId2: projection2Id, groupId3: projection3Id },
 
   bundleAdjustType_none: { id: 570, name: 'None', groupId: bundleAdjustTypeId },
   bundleAdjustType_ray: { id: 571, name: 'Ray', groupId: bundleAdjustTypeId },
