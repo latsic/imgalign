@@ -143,6 +143,7 @@ MultiStitcher::getStitchedImage()
   FUNCLOGTIMEL("MultiStitcher::getStitchedImage");
   stitchedImage.stitch(compensateExposure, rectifyPerspective,
     rectifyStretch, blendType, blendStrength, seamFinderType);
+  WarperHelper::rotateIf(stitchedImage.image, settings.getValue(eMultiStitch_projection));
   return stitchedImage.image;
 }
 
@@ -151,6 +152,7 @@ MultiStitcher::getStitchedImageCurrent()
 {
   FUNCLOGTIMEL("MultiStitcher::getStitchedImageCurrent");
   stitchedImage.stitchFast();
+  WarperHelper::rotateIf(stitchedImage.image, settings.getValue(eMultiStitch_projection));
   return stitchedImage.image;
 }
 
@@ -1328,19 +1330,6 @@ StitchedImage::stitch(
       stitchedInfo.tx + stitchedInfo.tlCorner.x,
       stitchedInfo.ty + stitchedInfo.tlCorner.y));
 
-    // tlCornersWarpedImage.push_back(Point(
-    //   stitchedInfo.tlCornerRoi.x,
-    //   stitchedInfo.tlCornerRoi.y));
-    // tlCornersWarpedImage.push_back(Point(
-    //   stitchedInfo.tlCorner.x,
-    //   stitchedInfo.tlCorner.y));
-    tlCornersWarpedImage.push_back(Point(
-      stitchedInfo.tx + stitchedInfo.tlCorner.x,
-      stitchedInfo.ty + stitchedInfo.tlCorner.y));
-    // tlCornersNoTranslation.push_back(Point(
-    //   0,
-    //   0));
-    
     images.push_back(stitchedInfo.warpedImage);
     masks.push_back(stitchedInfo.warpedMask);
   }
@@ -1348,7 +1337,6 @@ StitchedImage::stitch(
   TMat tempImage;
   ImageUtils::stitch(
     images, masks, tlCornersI,
-    tlCornersWarpedImage,
     compensateExposure,
     blendType,
     blendStrength,
@@ -1378,22 +1366,24 @@ StitchedImage::stitch(
   LogUtils::getLogUserInfo() << "Rectifying perspective" << std::endl;
 
   if(!rectifyStretch) {
-    if(!ImageUtils::rectifyPerspective(croppedImage, image)) {
-      croppedImage.copyTo(image);
+    if(!WarperHelper::rectifyPerspective(croppedImage, image)) {
+      //croppedImage.copyTo(image);
+      image = croppedImage;
     }
     return;
   }
   
   TMat temp;
-  if(!ImageUtils::rectifyPerspective(croppedImage, temp)) {
-    croppedImage.copyTo(image);
+  if(!WarperHelper::rectifyPerspective(croppedImage, temp)) {
+    //croppedImage.copyTo(image);
+    image = croppedImage;
     return;
   }
 
   croppedImage.release();
   
   LogUtils::getLogUserInfo() << "Rectifying stretch" << std::endl;
-  ImageUtils::rectifyStretch(temp, image);
+  WarperHelper::rectifyStretch(temp, image);
 }
 
 StitchInfo::StitchInfo(size_t srcI, size_t dstI)

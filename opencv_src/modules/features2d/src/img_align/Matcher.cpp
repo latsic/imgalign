@@ -759,7 +759,6 @@ Matcher::getHomography(
 		nullptr, nullptr,
 		fieldOfViewFixedImage, fieldOfViewMovingImage,
 		rotMat1, rotMat2,
-		//yaw1, pitch1, yaw2, pitch2,
 		projectionType1, projectionType2,
 		type.transformFinderType, outHomography);
 }

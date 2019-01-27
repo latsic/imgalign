@@ -188,7 +188,8 @@ void ImgStitch_Impl::stitchStart(
     
     if(spMultiStitcher->initStiching(fieldsOfViewdD, stitchIndices)) {
       currentStitchIndex = 0;
-      spMultiStitcher->getStitchedImageCurrent().copyTo(stitchedImage.getMatRef());
+      //spMultiStitcher->getStitchedImageCurrent().copyTo(stitchedImage.getMatRef());
+      stitchedImage.getMatRef() = spMultiStitcher->getStitchedImageCurrent(); 
     }
   }
   catch(std::exception &e) {
@@ -226,7 +227,8 @@ int ImgStitch_Impl::stitchNext(OutputArray stitchedImage)
     }
 
     if(!stitchedImageRef.empty()) {
-      stitchedImageRef.copyTo(stitchedImage.getMatRef());
+      //stitchedImageRef.copyTo(stitchedImage.getMatRef());
+      stitchedImage.getMatRef() = stitchedImageRef;
     }
 
     if(currentStitchIndex == (int)stitchOrder.size() - 1) {
@@ -240,7 +242,7 @@ int ImgStitch_Impl::stitchNext(OutputArray stitchedImage)
       << std::endl;
     }
 
-    spMultiStitcher->releaseStitchedImage();
+    //spMultiStitcher->releaseStitchedImage();
 
     return currentStitchIndex + 1;
   }

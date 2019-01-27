@@ -944,11 +944,12 @@ double ImgAlign_Impl::stitch(
 		WarperHelper::warpPerspective(movingImageProjected, homography, fixedImageExpanded.size(), alignedImage);
 
 		double outFieldOfViewStichedImage = WarperHelper::fieldOfView(fieldOfViewFixedImage, fieldOfViewMovingImage, yaw2);
-		LogUtils::getLog() << "outFieldOfViewStichedImage: " << outFieldOfViewStichedImage << std::endl;
+		//LogUtils::getLog() << "outFieldOfViewStichedImage: " << outFieldOfViewStichedImage << std::endl;
 		
 		TMat stitchedImageTemp;
 		ImageUtils::stitch(fixedImageExpanded, alignedImage, false,
-			BlendType::BT_MULTIBAND, 5.0, SeamFinderType::SFT_VORNOI, stitchedImageTemp);
+			blend > 0 ? BlendType::BT_MULTIBAND : BlendType::BT_NONE, 5.0,
+			SeamFinderType::SFT_VORNOI, stitchedImageTemp);
 		ImageUtils::crop(stitchedImageTemp, stitchedImage.getMatRef());
 
 		return outFieldOfViewStichedImage;

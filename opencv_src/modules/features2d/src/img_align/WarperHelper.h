@@ -67,13 +67,6 @@ namespace imgalign
         bool useLinear,
         double *globalScale = nullptr);
 
-      // static void warpImageBackwards(
-      //   int warperType,
-      //   TConstMat& srcMat,
-      //   TMat &outMat,
-      //   double fieldOfView,
-      //   double yaw, double pitch, double roll);
-
       static void getBox(
         double w1, double h1, double w2, double h2,
         TMat &ioHomography,
@@ -99,6 +92,16 @@ namespace imgalign
 
       static void waveCorrect(
         std::vector<TMat> &rmats, bool horizontal);
+
+      static bool estimateCorners(
+			  TConstMat &srcImage,
+			  cv::Point2f &tl, cv::Point2f &tr, cv::Point2f &br, cv::Point2f &bl);
+
+      static bool rectifyPerspective(TConstMat &srcImage, TMat &dstImage);
+		  static void rectifyStretch(TConstMat &srcImage, TMat &dstImage);
+
+      static void rotateIf(TMat &ioImage, int warperType);
+  
   };
 
 }

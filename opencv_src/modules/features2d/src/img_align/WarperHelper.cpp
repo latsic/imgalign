@@ -731,6 +731,222 @@ void WarperHelper::waveCorrect(std::vector<TMat> &rmats, bool horizontal)
         rmats[i] = R * rmats[i];
 }
 
+bool WarperHelper::estimateCorners(
+  TConstMat &srcImage,
+  cv::Point2f &tl, cv::Point2f &tr, cv::Point2f &br, cv::Point2f &bl)
+{
+  FUNCLOGTIMEL("ImageUtils::estimateCorners");
+
+  double minDist = std::numeric_limits<double>::max();
+  double d, cx, cy;;
+
+  for(int y = 0; y < srcImage.rows / 2; ++y) {
+    for(int x = 0; x < srcImage.cols / 2; ++x) {
+      if(srcImage.at<cv::Vec4b>(y, x)[3] > 0) {
+        
+        d = x * x + y * y;  
+
+        if(d < minDist) {
+          tl.x = x;
+          tl.y = y;
+          minDist = d;
+        }
+      }
+    }
+  }
+  if(minDist < 0) return false;
+
+  minDist = std::numeric_limits<double>::max();
+  for(int y = 0; y < srcImage.rows / 2; ++y) {
+    for(int x = srcImage.cols / 2; x < srcImage.cols; ++x) {
+      if(srcImage.at<cv::Vec4b>(y, x)[3] > 0) {
+        
+        cx = srcImage.cols - x;
+        cy = y;
+
+        d = cx * cx + cy * cy;
+
+        if(d < minDist) {
+          tr.x = x;
+          tr.y = y;
+          minDist = d;
+        }
+      }
+    }
+  }
+  if(minDist < 0) return false;
+
+  minDist = std::numeric_limits<double>::max();
+  for(int y = srcImage.rows / 2; y < srcImage.rows; ++y) {
+    for(int x = srcImage.cols / 2; x < srcImage.cols; ++x) {
+      if(srcImage.at<cv::Vec4b>(y, x)[3] > 0) {
+        
+        cx = srcImage.cols - x;
+        cy = srcImage.rows - y;
+
+        d = cx * cx + cy * cy;
+
+        if(d < minDist) {
+          br.x = x;
+          br.y = y;
+          minDist = d;
+        }
+      }
+    }
+  }
+  if(minDist < 0) return false;
+
+  minDist = std::numeric_limits<double>::max();
+  for(int y = srcImage.rows / 2; y < srcImage.rows; ++y) {
+    for(int x = 0; x < srcImage.cols / 2; ++x) {
+      if(srcImage.at<cv::Vec4b>(y, x)[3] > 0) {
+        
+        cx = x;
+        cy = srcImage.rows - y;
+
+        d = cx * cx + cy * cy;
+
+        if(d < minDist) {
+          bl.x = x;
+          bl.y = y;
+          minDist = d;
+        }
+      }
+    }
+  }
+  if(minDist < 0) return false;
+
+  return true;
+}
+
+
+bool WarperHelper::rectifyPerspective(TConstMat &srcImage, TMat &dstImage)
+{
+  FUNCLOGTIMEL("ImageUtils::rectifyPerspective");
+
+  auto ptDist = [](const cv::Point2f &pt1, const cv::Point2f &pt2) {
+    return std::sqrt(
+      (pt1.x - pt2.x) * (pt1.x - pt2.x) + (pt1.y - pt2.y) * (pt1.y - pt2.y));
+  };
+
+  cv::Point2f tl, tr, br, bl;
+  if(!WarperHelper::estimateCorners(srcImage, tl, tr, br, bl)) {
+    LogUtils::getLog() << "Failed to estimate corners in image";
+    return false;
+  }
+
+  auto topDimX = ptDist(tl, tr);
+  auto bottomDimX = ptDist(bl, br);
+  auto leftDimY = ptDist(tl, bl);
+  auto rightDimY = ptDist(tr, br);
+  
+  double dimX = topDimX > bottomDimX ? topDimX : bottomDimX;
+  double dimY = leftDimY > rightDimY ? leftDimY: rightDimY;
+  cv::Size dstImageSize((int)dimX, int(dimY));
+
+  cv::Point2f tlDst(0, 0);
+  cv::Point2f trDst(dstImageSize.width, 0);
+  cv::Point2f brDst(dstImageSize.width, dstImageSize.height);
+  cv::Point2f blDst(0, dstImageSize.height);
+
+  TPoints2f ptsSrc{tl, tr, br, bl};
+  TPoints2f ptsDst{tlDst, trDst, brDst, blDst};
+
+  auto matTransform = getPerspectiveTransform(ptsSrc, ptsDst);
+
+  cv::warpPerspective(srcImage, dstImage, matTransform, dstImageSize);
+
+  return true;
+}
+
+void WarperHelper::rectifyStretch(TConstMat &srcImage, TMat &dstImage)
+{
+  FUNCLOGTIMEL("ImageUtils::rectifyStretch");
+
+  TMat xMap(srcImage.size(), CV_32FC1);
+
+  for(auto y = 0; y < srcImage.rows; ++y) {
+    
+    int xMin, xMax;
+    for(xMin = 0; xMin < srcImage.cols; ++xMin) {
+      if(srcImage.at<cv::Vec4b>(y, xMin)[3] != 0) {
+        break;
+      }
+    }
+    for(xMax = srcImage.cols - 1; xMax >= 0; --xMax) {
+      if(srcImage.at<cv::Vec4b>(y, xMax)[3] != 0) {
+        break;
+      }
+    }
+
+    float xLenSrc = xMax - xMin;
+    float xLenDst = srcImage.cols - 1;
+    float xFactor = xLenSrc / xLenDst;
+
+    for(auto x = 0; x < srcImage.cols; ++x) {
+      xMap.at<float>(y, x) = xMin + x * xFactor;
+    }
+  }
+
+  TMat yMap(srcImage.size(), CV_32FC1);
+
+  for(auto x = 0; x < srcImage.cols; ++x) {
+
+    int yMin, yMax;
+    for(yMin = 0; yMin < srcImage.rows - 1; ++yMin) {
+      if(srcImage.at<cv::Vec4b>(yMin, x)[3] != 0) {
+        break;
+      }
+    }
+    for(yMax = srcImage.rows - 1; yMax >= 0; --yMax) {
+      if(srcImage.at<cv::Vec4b>(yMax, x)[3] != 0) {
+        break;
+      }
+    }
+
+    float yLenSrc = yMax - yMin;
+    float yLenDst = srcImage.rows - 1;
+    float yFactor = yLenSrc / yLenDst;;
+
+    for(auto y = 0; y < srcImage.rows; ++y) {
+      yMap.at<float>(y, x) = yMin + y * yFactor;
+    }
+  }
+
+  dstImage = TMat::zeros(srcImage.size(), srcImage.type());
+  cv::remap(srcImage, dstImage, xMap, yMap, cv::INTER_LINEAR);
+}
+
+void WarperHelper::rotateIf(TMat &ioImage, int warperType)
+{
+  FUNCLOGTIMEL("ImageUtils::rotateIf");
+
+  bool rotate = false;
+  cv::RotateFlags rFlag = cv::ROTATE_90_CLOCKWISE;
+
+  switch((ParamType)warperType) {
+      
+      case eStitch_projectionTypeFisheye:
+        rotate = true;
+        break;
+      case eStitch_projectionTypeStereographic:
+      case eStitch_projectionTypeRectilinearPortrait:
+      case eStitch_projectionTypeRectilinearPortraitA2B1:
+      case eStitch_projectionTypePaniniPortraitA2B1: 
+        rFlag = cv::ROTATE_90_COUNTERCLOCKWISE;
+        rotate = true;
+        break;
+      default: {
+      }
+  }
+  if(rotate) {
+    TMat dst;
+    cv::rotate(ioImage, dst, rFlag);
+    ioImage = dst;
+  }
+
+}
+
 
 
 }

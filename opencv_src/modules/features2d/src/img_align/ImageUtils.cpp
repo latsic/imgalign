@@ -140,6 +140,59 @@ inline void blendI(const cv::Vec4b &src, int srcW, cv::Vec4b &dst) {
   dst[3] = divideBy255(srcW * src[3]);
 }
 
+inline void restoreAlphaChannel(
+  TMat &image,
+  TConstMat &mask,
+  const std::vector<TMat> &images,
+  const std::vector<cv::Point> &tlCorners)
+{
+  FUNCLOGTIMEL("ImageUtils::restoreAlphaChannel");
+
+  std::vector<int> xDiffs(images.size());
+  std::vector<int> yDiffs(images.size());
+
+  for(size_t i = 0; i < images.size(); ++i) {
+    xDiffs[i] = tlCorners[i].x;
+    yDiffs[i] = tlCorners[i].y;
+  }
+
+  for(int y = 0; y < image.rows; ++y) {
+    for(int x = 0; x < image.cols; ++x) {
+
+      if(mask.at<uint8_t>(y, x) == 0) {
+        continue;
+      }
+
+      int iTake = -1;
+      int xTake, yTake;
+      for(size_t i = 0; i < images.size(); ++i) {
+        
+        int y_ = y - yDiffs[i];
+        int x_ = x - xDiffs[i];
+
+        if(  x_ < 0
+          || y_ < 0
+          || x_ >= images[i].size().width
+          || y_ >= images[i].size().height)
+        {
+          continue;
+        }
+
+        if(images[i].at<cv::Vec4b>(y_, x_)[3] == 255) {
+          iTake = -1;
+          break;
+        }
+        iTake = i;
+        xTake = x_;
+        yTake = y_;
+      }
+      if(iTake != -1) {
+        image.at<cv::Vec4b>(y, x)= images[iTake].at<cv::Vec4b>(yTake, xTake);
+      }
+    }
+  }
+}
+
 inline void blend(
   cv::detail::Blender &blender,
   const std::vector<TMat> &images,
@@ -171,99 +224,7 @@ inline void blend(
   outImage = TMat::zeros(dst_rgba.size(), dst_rgba.type());
   dst_rgba.copyTo(outImage, dstMask);
 
-
-  std::vector<int> xDiffs(images.size());
-  std::vector<int> yDiffs(images.size());
-
-  for(size_t i = 0; i < images.size(); ++i) {
-    xDiffs[i] = tlCorners[i].x;
-    yDiffs[i] = tlCorners[i].y;
-  }
-
-  for(int y = 0; y < outImage.rows; ++y) {
-    for(int x = 0; x < outImage.cols; ++x) {
-
-      if(dstMask.at<uint8_t>(y, x) == 0) {
-        continue;
-      }
-
-      int iTake = -1;
-      int xTake, yTake;
-      for(size_t i = 0; i < images.size(); ++i) {
-        
-        int y_ = y - yDiffs[i];
-        int x_ = x - xDiffs[i];
-        if(x_ < 0 || y_ < 0) continue;
-        if(x_ >= images[i].size().width) continue;
-        if(y_ >= images[i].size().height) continue;
-
-        if(images[i].at<cv::Vec4b>(y_, x_)[3] == 255) {
-          iTake = -1;
-          break;
-        }
-        if(images[i].at<cv::Vec4b>(y_, x_)[3] >= 0) {
-          iTake = i;
-          xTake = x_;
-          yTake = y_;
-        }
-        // if(masks[i].at<uint8_t>(y_, x_) == 255) {
-        //   iTake = -1;
-        //   break;
-        // }
-        // if(masks[i].at<uint8_t>(y_, x_) > 0) {
-        //   iTake = i;
-        //   xTake = x_;
-        //   yTake = y_;
-        // }
-      }
-      if(iTake != -1) {
-        outImage.at<cv::Vec4b>(y, x)[0] = images[iTake].at<cv::Vec4b>(yTake, xTake)[0];
-        outImage.at<cv::Vec4b>(y, x)[1] = images[iTake].at<cv::Vec4b>(yTake, xTake)[1];
-        outImage.at<cv::Vec4b>(y, x)[2] = images[iTake].at<cv::Vec4b>(yTake, xTake)[2];
-        outImage.at<cv::Vec4b>(y, x)[3] = images[iTake].at<cv::Vec4b>(yTake, xTake)[3];
-      }
-    }
-  }
-
-
-  // for(size_t i = 0; i < images.size(); ++i) {
-
-  //   auto xAdd = tlCorners[i].x;
-  //   auto yAdd = tlCorners[i].y;
-
-  //   for(int y = 0; y < images[i].rows; ++y) {
-  //     for(int x = 0; x < images[i].cols; ++x) {
-
-  //       int y_ = y + yAdd;
-  //       int x_ = x + xAdd;
-
-  //       // if(outImage.at<cv::Vec4b>(y_, x_)[3] != 0) {
-  //       //   continue;
-  //       // }
-
-  //       if(dstMask.at<uint8_t>(y_, x_) != 0) {
-  //         continue;
-  //       }
-
-  //       if(masks[i].at<uint8_t>(y, x) == 0 || masks[i].at<uint8_t>(y, x) == 255) {
-  //         continue;
-  //       }
-
-       
-  //       outImage.at<cv::Vec4b>(y_, x_)[0] = images[i].at<cv::Vec4b>(y, x)[0];
-  //       outImage.at<cv::Vec4b>(y_, x_)[1] = images[i].at<cv::Vec4b>(y, x)[1];
-  //       outImage.at<cv::Vec4b>(y_, x_)[2] = images[i].at<cv::Vec4b>(y, x)[2];
-  //       outImage.at<cv::Vec4b>(y_, x_)[3] = masks[i].at<uint8_t>(y, x);
-        
-  //       // if(images[i].at<cv::Vec4b>(y, x)[3] <= 255 && images[i].at<cv::Vec4b>(y, x)[3] > 0) {
-  //       //   outImage.at<cv::Vec4b>(y_, x_)[0] = images[i].at<cv::Vec4b>(y, x)[0];
-  //       //   outImage.at<cv::Vec4b>(y_, x_)[1] = images[i].at<cv::Vec4b>(y, x)[1];
-  //       //   outImage.at<cv::Vec4b>(y_, x_)[2] = images[i].at<cv::Vec4b>(y, x)[2];
-  //       //   outImage.at<cv::Vec4b>(y_, x_)[3] = images[i].at<cv::Vec4b>(y, x)[3];
-  //       // }
-  //     }
-  //   }
-  // }
+  restoreAlphaChannel(outImage, dstMask, images, tlCorners);
 }
 
 void ImageUtils::blendImages(
@@ -749,40 +710,21 @@ void ImageUtils::stitch(
 {
   FUNCLOGTIMEL("ImageUtils::stitch");
 
-  // TMat mask1 = TMat::zeros(src1.size(), CV_8UC1);
-  // auto itMask1 = mask1.begin<uint8_t>();
-
-  // for(auto it = src1.begin<cv::Vec4b>(); it != src1.end<cv::Vec4b>(); ++it, ++itMask1) {
-  //   if((*it)[3] == 255) {
-  //     *itMask1 = (*it)[3];
-  //   }
-  // }
-
-  TMat mask1;
+  TMat mask1, mask2;
   createMaskFor(src1, mask1);
-
-  // TMat mask2 = TMat::zeros(src2.size(), CV_8UC1);
-  // auto itMask2 = mask2.begin<uint8_t>();
-  // for(auto it = src2.begin<cv::Vec4b>(); it != src2.end<cv::Vec4b>(); ++it, ++itMask2) {
-  //   if((*it)[3] == 255) {
-  //     *itMask2 = (*it)[3];
-  //   }
-  // }
-
-  TMat mask2;
   createMaskFor(src2, mask2);
   
   std::vector<TMat> images{src1, src2};
   std::vector<TMat> masks{ mask1, mask2};
   std::vector<cv::Point> tlCorners(2, cv::Point(0, 0));
-  stitch(images, masks, tlCorners, tlCorners, exposureCompensate, blendType, blendStrength, seamFinderType, outDst);
+  stitch(images, masks, tlCorners,
+    exposureCompensate, blendType, blendStrength, seamFinderType, outDst);
 }
 
 void ImageUtils::stitch(
   std::vector<TMat> &images,
   std::vector<TMat> &masks,
   const std::vector<cv::Point> &tlCorners,
-  const std::vector<cv::Point> &tlCornersWarpedImage,
   bool exposureCompensate,
   BlendType blendType,
   double blendStrength,
@@ -821,24 +763,14 @@ void ImageUtils::stitch(
   }
 
   if(exposureCompensate) {
-
     LogUtils::getLogUserInfo() << "Compensating exposure" << std::endl;
-    compensateExposure(tlCornersWarpedImage, masksU, images);
+    compensateExposure(tlCorners, masksU, images);
   }
 
   LogUtils::getLogUserInfo() << "Finding seams" << std::endl;
   seamFinder->find(imagesU, tlCorners, masksU);
   imagesU.clear();
 
-  
-
-  // std::vector<TMat> seamMasks(images.size());
-  // for(size_t i = 0; i < images.size(); ++i) {
-  //   masksU[i].copyTo(seamMasks[i]);
-  //   TMat t = seamMasks[i] & masks[i];
-  //   t.copyTo(masks[i]);
-  // }
-  
 
   for(size_t i = 0; i < images.size(); ++i) {
     masksU[i].copyTo(masks[i]);
@@ -865,7 +797,7 @@ void ImageUtils::stitch(
     }
     case BlendType::BT_MULTIBAND:
     default: {
-      blendMultiBand(images, masks, tlCorners, blendWidth, outDst);    
+      blendMultiBand(images, masks, tlCorners, blendWidth, outDst); 
     }
   }
 }
@@ -1056,94 +988,6 @@ TMat ImageUtils::colorTransfer(
   return ColorTransfer::calculate(src, dst);
 }
 
-bool ImageUtils::estimateCorners(
-  TConstMat &srcImage,
-  cv::Point2f &tl, cv::Point2f &tr, cv::Point2f &br, cv::Point2f &bl)
-{
-  FUNCLOGTIMEL("ImageUtils::estimateCorners");
-
-  double minDist = std::numeric_limits<double>::max();
-  double d, cx, cy;;
-
-  for(int y = 0; y < srcImage.rows / 2; ++y) {
-    for(int x = 0; x < srcImage.cols / 2; ++x) {
-      if(srcImage.at<cv::Vec4b>(y, x)[3] > 0) {
-        
-        d = x * x + y * y;  
-
-        if(d < minDist) {
-          tl.x = x;
-          tl.y = y;
-          minDist = d;
-        }
-      }
-    }
-  }
-  if(minDist < 0) return false;
-
-  minDist = std::numeric_limits<double>::max();
-  for(int y = 0; y < srcImage.rows / 2; ++y) {
-    for(int x = srcImage.cols / 2; x < srcImage.cols; ++x) {
-      if(srcImage.at<cv::Vec4b>(y, x)[3] > 0) {
-        
-        cx = srcImage.cols - x;
-        cy = y;
-
-        d = cx * cx + cy * cy;
-
-        if(d < minDist) {
-          tr.x = x;
-          tr.y = y;
-          minDist = d;
-        }
-      }
-    }
-  }
-  if(minDist < 0) return false;
-
-  minDist = std::numeric_limits<double>::max();
-  for(int y = srcImage.rows / 2; y < srcImage.rows; ++y) {
-    for(int x = srcImage.cols / 2; x < srcImage.cols; ++x) {
-      if(srcImage.at<cv::Vec4b>(y, x)[3] > 0) {
-        
-        cx = srcImage.cols - x;
-        cy = srcImage.rows - y;
-
-        d = cx * cx + cy * cy;
-
-        if(d < minDist) {
-          br.x = x;
-          br.y = y;
-          minDist = d;
-        }
-      }
-    }
-  }
-  if(minDist < 0) return false;
-
-  minDist = std::numeric_limits<double>::max();
-  for(int y = srcImage.rows / 2; y < srcImage.rows; ++y) {
-    for(int x = 0; x < srcImage.cols / 2; ++x) {
-      if(srcImage.at<cv::Vec4b>(y, x)[3] > 0) {
-        
-        cx = x;
-        cy = srcImage.rows - y;
-
-        d = cx * cx + cy * cy;
-
-        if(d < minDist) {
-          bl.x = x;
-          bl.y = y;
-          minDist = d;
-        }
-      }
-    }
-  }
-  if(minDist < 0) return false;
-
-  return true;
-}
-
 void ImageUtils::createMaskFor(TConstMat &srcImage, TMat &outMask)
 {
   outMask = TMat::zeros(srcImage.size(), CV_8U);
@@ -1153,101 +997,5 @@ void ImageUtils::createMaskFor(TConstMat &srcImage, TMat &outMask)
   }
 }
 
-bool ImageUtils::rectifyPerspective(TConstMat &srcImage, TMat &dstImage)
-{
-  FUNCLOGTIMEL("ImageUtils::rectifyPerspective");
-
-  auto ptDist = [](const cv::Point2f &pt1, const cv::Point2f &pt2) {
-    return std::sqrt(
-      (pt1.x - pt2.x) * (pt1.x - pt2.x) + (pt1.y - pt2.y) * (pt1.y - pt2.y));
-  };
-
-  cv::Point2f tl, tr, br, bl;
-  if(!ImageUtils::estimateCorners(srcImage, tl, tr, br, bl)) {
-    LogUtils::getLog() << "Failed to estimate corners in image";
-    return false;
-  }
-
-  auto topDimX = ptDist(tl, tr);
-  auto bottomDimX = ptDist(bl, br);
-  auto leftDimY = ptDist(tl, bl);
-  auto rightDimY = ptDist(tr, br);
-  
-  double dimX = topDimX > bottomDimX ? topDimX : bottomDimX;
-  double dimY = leftDimY > rightDimY ? leftDimY: rightDimY;
-  cv::Size dstImageSize((int)dimX, int(dimY));
-
-  cv::Point2f tlDst(0, 0);
-  cv::Point2f trDst(dstImageSize.width, 0);
-  cv::Point2f brDst(dstImageSize.width, dstImageSize.height);
-  cv::Point2f blDst(0, dstImageSize.height);
-
-  TPoints2f ptsSrc{tl, tr, br, bl};
-  TPoints2f ptsDst{tlDst, trDst, brDst, blDst};
-
-  auto matTransform = getPerspectiveTransform(ptsSrc, ptsDst);
-
-  warpPerspective(srcImage, dstImage, matTransform, dstImageSize);
-
-  return true;
-}
-
-void ImageUtils::rectifyStretch(TConstMat &srcImage, TMat &dstImage)
-{
-  FUNCLOGTIMEL("ImageUtils::rectifyStretch");
-
-  TMat xMap(srcImage.size(), CV_32FC1);
-
-  for(auto y = 0; y < srcImage.rows; ++y) {
-    
-    int xMin, xMax;
-    for(xMin = 0; xMin < srcImage.cols; ++xMin) {
-      if(srcImage.at<cv::Vec4b>(y, xMin)[3] != 0) {
-        break;
-      }
-    }
-    for(xMax = srcImage.cols - 1; xMax >= 0; --xMax) {
-      if(srcImage.at<cv::Vec4b>(y, xMax)[3] != 0) {
-        break;
-      }
-    }
-
-    float xLenSrc = xMax - xMin;
-    float xLenDst = srcImage.cols - 1;
-    float xFactor = xLenSrc / xLenDst;
-
-    for(auto x = 0; x < srcImage.cols; ++x) {
-      xMap.at<float>(y, x) = xMin + x * xFactor;
-    }
-  }
-
-  TMat yMap(srcImage.size(), CV_32FC1);
-
-  for(auto x = 0; x < srcImage.cols; ++x) {
-
-    int yMin, yMax;
-    for(yMin = 0; yMin < srcImage.rows - 1; ++yMin) {
-      if(srcImage.at<cv::Vec4b>(yMin, x)[3] != 0) {
-        break;
-      }
-    }
-    for(yMax = srcImage.rows - 1; yMax >= 0; --yMax) {
-      if(srcImage.at<cv::Vec4b>(yMax, x)[3] != 0) {
-        break;
-      }
-    }
-
-    float yLenSrc = yMax - yMin;
-    float yLenDst = srcImage.rows - 1;
-    float yFactor = yLenSrc / yLenDst;;
-
-    for(auto y = 0; y < srcImage.rows; ++y) {
-      yMap.at<float>(y, x) = yMin + y * yFactor;
-    }
-  }
-
-  dstImage = TMat::zeros(srcImage.size(), srcImage.type());
-  cv::remap(srcImage, dstImage, xMap, yMap, cv::INTER_LINEAR);
-}
 
 } // imgalign
