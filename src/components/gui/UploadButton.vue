@@ -8,7 +8,7 @@
       :name="name"
       :value="value"
       :accept="accept"
-      :multiple="multiple"
+      :multiple="isMultiple"
       @change="fileChanged"
       @click="fileSelectionStarted"
     >
@@ -24,7 +24,12 @@
   </div>
 </template>
 
+
+
 <script>
+
+  import { UserAgentInfo } from '@/utilities/UserAgentInfo';
+
   export default {
     props: {
       accept: {
@@ -129,6 +134,9 @@
           }
         }
         return classString;
+      },
+      isMultiple() {
+        return this.multiple && !UserAgentInfo.instance.isGeckoOnAndroid();
       }
     },
     data() {
@@ -144,10 +152,10 @@
         if(e) {
           if(this.fileChangedCallback) {
             if(e.target.files) {
-              if(!this.multiple && e.target.files[0]) {
-                this.fileChangedCallback(e.target.files[0]);
+              if(!this.isMultiple && e.target.files[0]) {
+                this.fileChangedCallback([e.target.files[0]]);
               }
-              else if(this.multiple) {
+              else if(this.isMultiple) {
                 this.fileChangedCallback(e.target.files);
               }
               else {
@@ -163,6 +171,10 @@
         this.fileSelectionEnded();
       },
       fileSelectionStarted() {
+        if(UserAgentInfo.instance.isGeckoOnAndroid())
+        {
+          return;
+        }
         this.$emit('file-selection-started');
         // a hack, don't know a way to detect if the user canceled the file dialog.
         setTimeout(() => {
@@ -172,11 +184,23 @@
         }, 7000);
       },
       fileSelectionEnded() {
+
+        if(UserAgentInfo.instance.isGeckoOnAndroid())
+        {
+          return;
+        }
+
         this.$emit('file-selection-ended');
         this.fileChangedCalled = false;
       }
     },
     beforeDestroy() {
+
+      if(UserAgentInfo.instance.isGeckoOnAndroid())
+      {
+        return;
+      }
+
       this.$emit('file-selection-ended');
     }
   }

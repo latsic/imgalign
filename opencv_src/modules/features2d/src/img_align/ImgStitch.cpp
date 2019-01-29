@@ -121,6 +121,13 @@ ImgStitch_Impl::ImgStitch_Impl(InputArrayOfArrays images)
       srcImages.push_back(image);
     }
   }
+  catch(cv::Exception &e) {
+    if(e.code == CV_StsNoMem) {
+      LogUtils::getLogUserError() << "Insufficent memory" << std::endl;
+    }
+    LogUtils::getLog() << e.what() << std::endl;
+    throw e;
+  }
 	catch(std::exception &e) {
 		LogUtils::getLogUserError() << e.what() << std::endl;
 		throw e;
@@ -141,6 +148,13 @@ void ImgStitch_Impl::set(
       LogUtils::isDebug = true;
     }
 	}
+	catch(cv::Exception &e) {
+    if(e.code == CV_StsNoMem) {
+      LogUtils::getLogUserError() << "Insufficent memory" << std::endl;
+    }
+    LogUtils::getLog() << e.what() << std::endl;
+    throw e;
+  }
 	catch(std::exception &e) {
 		LogUtils::getLogUserError() << e.what() << std::endl;
 		throw e;
@@ -166,7 +180,14 @@ int ImgStitch_Impl::stitch(
     spMultiStitcher->getStitchedImage().copyTo(stitchedImage.getMatRef());
     return stitchCount;
   }
-  catch(std::exception &e) {
+  catch(cv::Exception &e) {
+    if(e.code == CV_StsNoMem) {
+      LogUtils::getLogUserError() << "Insufficent memory" << std::endl;
+    }
+    LogUtils::getLog() << e.what() << std::endl;
+    throw e;
+  }
+	catch(std::exception &e) {
 		LogUtils::getLogUserError() << e.what() << std::endl;
 		throw e;
 	}
@@ -192,7 +213,14 @@ void ImgStitch_Impl::stitchStart(
       stitchedImage.getMatRef() = spMultiStitcher->getStitchedImageCurrent(); 
     }
   }
-  catch(std::exception &e) {
+  catch(cv::Exception &e) {
+    if(e.code == CV_StsNoMem) {
+      LogUtils::getLogUserError() << "Insufficent memory" << std::endl;
+    }
+    LogUtils::getLog() << e.what() << std::endl;
+    throw e;
+  }
+	catch(std::exception &e) {
 		LogUtils::getLogUserError() << e.what() << std::endl;
 		throw e;
 	}
@@ -246,7 +274,14 @@ int ImgStitch_Impl::stitchNext(OutputArray stitchedImage)
 
     return currentStitchIndex + 1;
   }
-  catch(std::exception &e) {
+  catch(cv::Exception &e) {
+    if(e.code == CV_StsNoMem) {
+      LogUtils::getLogUserError() << "Insufficent memory" << std::endl;
+    }
+    LogUtils::getLog() << e.what() << std::endl;
+    throw e;
+  }
+	catch(std::exception &e) {
 		LogUtils::getLogUserError() << e.what() << std::endl;
 		throw e;
 	}
