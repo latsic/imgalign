@@ -3,10 +3,36 @@
     :title="'What does this application do?'"
     >
     <div>
+
       <p class="text-xs-left">
-        An spa to align an image to a template image. It uses a custom opencv version (compiled to wasm) to do so.
-        To align the image 2d-feature detection is used (orb, sift, kaze, etc).
+        A client-side only <strong>webapplication</strong> to <strong>join, stitch or align</strong> overlapping images.
+        It can be used to created <strong>panoramas</strong> or to <strong>align images</strong> (for example forms which have not been scanned properly).
       </p>
+      
+      <p class="text-xs-left">
+        The main technologies used are <a href="https://vuejs.org/"><strong>Vue</strong></a> and <a href="https://opencv.org/"><strong>OpenCV</strong></a>.
+      </p>
+
+      <p class="text-xs-left">
+        <strong>Features:</strong> Surface projection, feature detection, feature matching, bundle adjustement, wave correction, color transfer, seam detection and multiband blending.
+      </p>
+
+      <p class="text-xs-left">
+        The core algorithms are taken from OpenCV (modules
+        <a href="https://github.com/opencv/opencv/tree/master/modules/features2d">Feature2D</a> and
+        <a href="https://github.com/opencv/opencv/tree/master/modules/stitching">Stiching</a> mainly)
+        and have been adjusted where needed. A customized version of OpenCV
+        has than been compiled to <strong>wasm</strong>. To ensure a non blocking UI, all OpenCV related function run via a <strong>webworker</strong>.
+      </p>
+      
+      <p class="text-xs-left">
+        <strong>Pros and cons:</strong> As image stiching can be quite <strong>memory and cpu intensive</strong>, there are some limitations
+        on the amount or sizes of images which can be stitched together, especially on mobile devices.
+        On the plus side, basic stitching functionality is available on almost any
+        devices which can run a browser. There is no need to download a professional stitching software.
+        The application is <strong>fully functional offline</strong> as well.
+      </p>
+
     </div>
   </app-view-layout>
 </template>
@@ -23,5 +49,7 @@ export default {
 </script>
 
 <style scoped>
-
+  a {
+    text-decoration: none;
+  }
 </style>

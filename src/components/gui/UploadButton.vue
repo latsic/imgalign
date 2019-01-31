@@ -152,11 +152,14 @@
         if(e) {
           if(this.fileChangedCallback) {
             if(e.target.files) {
-              if(!this.isMultiple && e.target.files[0]) {
+              if(this.multiple && !this.isMultiple && e.target.files[0]) {
                 this.fileChangedCallback([e.target.files[0]]);
               }
               else if(this.isMultiple) {
                 this.fileChangedCallback(e.target.files);
+              }
+              else if(!this.multiple && e.target.files[0]) {
+                this.fileChangedCallback(e.target.files[0]);
               }
               else {
                 this.fileChangedCallback(null);
