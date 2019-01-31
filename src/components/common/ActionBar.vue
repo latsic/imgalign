@@ -353,6 +353,10 @@ export default {
     },
     startIntervalCurrentLoadingTime() {
 
+      if(this.currentLoadingTime) {
+        return;
+      }
+
       const startTime = new Date();
       this.setCurrentLoadingTime(0);
 
