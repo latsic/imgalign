@@ -58,4 +58,19 @@ export class WorkerResult {
     this._settings = value;
   }
 
+  setImageData(imageData, imageDataSmall) {
+    this._imageData = imageData;
+    if(imageData) {
+      if(imageDataSmall) {
+        this._imageDataUrl = this._imageDataToUrlFn(imageDataSmall);
+      }
+      else {
+        this._imageDataUrl = this._imageDataToUrlFn(imageData);
+      }
+    }
+    else {
+      this._imageDataUrl = null;
+    }
+  }
+
 }

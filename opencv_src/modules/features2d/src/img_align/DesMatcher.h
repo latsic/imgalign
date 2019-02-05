@@ -46,6 +46,8 @@ namespace imgalign
     bool isHomographyGood() const;
     MatchInfo getInverse() const;
     void logInfo(bool logH = false) const;
+
+    void dismissDetailData();
   };
 
   class DesMatcher {

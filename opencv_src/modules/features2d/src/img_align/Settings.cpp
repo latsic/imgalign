@@ -82,7 +82,7 @@ namespace imgalign
 
       { eMultiStitch_seamFinderType, { (float)eSeamFinderType_Vornoi, "MultiStitch_seamFinderType" } },
       { eMultiStitch_projection, { (float)eStitch_projectionTypeSpherical, "MultiStitch_projection" } },
-      { eMultiStitch_rectifyPerspective, { 1.0f, "MultiStitch_rectifyPerspective" } },
+      { eMultiStitch_rectifyPerspective, { 0.0f, "MultiStitch_rectifyPerspective" } },
       { eMultiStitch_camEstimate, { 1.0f, "eMultiStitch_camEstimate" } },
       { eMultiStitch_bundleAdjustType, { (float)eBundleAdjustType_auto, "MultiStitch_bundleAdjustType" } },
       { eMultiStitch_waveCorrection, { 0.0f, "MultiStitch_waveCorrection" } },
@@ -95,6 +95,12 @@ namespace imgalign
       //{ eMultiStitch_blendType, { (float)eBlendType_multiBand, "MultiStitch_blendType"}},
       { eMultiStitch_blendStrength, { 5.0f, "MultiStitch_blendStrength" } },
       { eMultiStitch_rectifyStretch, { 0.0f, "MultiStitch_rectifyStretch" } },
+
+      { eMultiStitch_limitResultPreview, { 800000.0f, "MultiStitch_limitResultPreview" } },
+      { eMultiStitch_limitInputView, { 100000.0f, "MultiStitch_limitInputView" } },
+      { eMultiStitch_disposeInputImages, { 0.0f, "MultiStitch_disposeInputImages" } },
+      { eMultiStitch_limitLiveStitchingPreview, { 200000.0f, "MultiStitch_limitLiveStitchingPreview" } }
+
     };
   }
 

@@ -25,7 +25,7 @@ namespace
 {
   void logStitchOrder(
     double globalScale,
-    const std::vector<TMat> &srcImages,
+    const std::vector<cv::Size> &srcImagesSizes,
     const MultiStitcher::TStitchOrder &stitchOrder,
     const StitchInfo *stitchInfoFirstLast) {
     
@@ -36,8 +36,8 @@ namespace
     
     auto logStitchInfo = [&](const StitchInfo *stitchInfo, bool logMats) {
 
-      double w = srcImages[stitchInfo->srcImageIndex].size().width;
-      double h = srcImages[stitchInfo->srcImageIndex].size().height;
+      double w = srcImagesSizes[stitchInfo->srcImageIndex].width;
+      double h = srcImagesSizes[stitchInfo->srcImageIndex].height;
 
       auto vfw = WarperHelper::getFieldOfView(w, h, stitchInfo->matK.at<double>(0, 0));
       auto vfh = WarperHelper::getFieldOfView(w, h, stitchInfo->matK.at<double>(1, 1)) * (h / w);
@@ -106,10 +106,18 @@ namespace
       ++index;
     }
   }
+
+  void dismissDetailedMatchInfoData(std::vector<std::shared_ptr<StitchInfo>> &stitchInfos)
+  {
+    for(auto spStitchInfo : stitchInfos) {
+      spStitchInfo->matchInfo.dismissDetailData();
+      spStitchInfo->matchInfoInverse.dismissDetailData();
+    }
+  }
 }
 
 MultiStitcher::MultiStitcher(
-  const std::vector<TMat> &inSrcImages,
+  std::vector<TMat> &inSrcImages,
   const Settings &inSettings)
 
   : srcImages(inSrcImages)
@@ -126,6 +134,7 @@ MultiStitcher::MultiStitcher(
   
   int maxPixelsN = (int)settings.getValue(eImageCap);
   srcImagesScaled.resize(inSrcImages.size());
+  srcImagesSizes.resize(inSrcImages.size());
   size_t imageIndex = 0;
   for(const auto &image : inSrcImages) {
 
@@ -133,7 +142,11 @@ MultiStitcher::MultiStitcher(
 		cvtColor(image, srcImageGray, CV_RGBA2GRAY);
 
     scaleFactors.push_back(
-      1.0 / ImageUtils::resize(srcImageGray, srcImagesScaled[imageIndex++], maxPixelsN));
+      1.0 / ImageUtils::resize(srcImageGray, srcImagesScaled[imageIndex], maxPixelsN));
+  
+    srcImagesSizes[imageIndex] = image.size();
+
+    ++imageIndex;
   }
 }
 
@@ -143,17 +156,33 @@ MultiStitcher::getStitchedImage()
   FUNCLOGTIMEL("MultiStitcher::getStitchedImage");
   stitchedImage.stitch(compensateExposure, rectifyPerspective,
     rectifyStretch, blendType, blendStrength, seamFinderType);
+  stitchedImage.imageSizeOrig = stitchedImage.image.size();
   WarperHelper::rotateIf(stitchedImage.image, settings.getValue(eMultiStitch_projection));
   return stitchedImage.image;
 }
 
 TConstMat &
-MultiStitcher::getStitchedImageCurrent()
+MultiStitcher::getStitchedImageCurrent(bool update)
 {
   FUNCLOGTIMEL("MultiStitcher::getStitchedImageCurrent");
-  stitchedImage.stitchFast();
-  WarperHelper::rotateIf(stitchedImage.image, settings.getValue(eMultiStitch_projection));
+
+  if(update) {
+
+    int maxPixelsN = (int)settings.getValue(eMultiStitch_limitLiveStitchingPreview);
+    stitchedImage.stitchFast();
+    stitchedImage.imageSizeOrig = stitchedImage.image.size();
+    ImageUtils::resizeIf(stitchedImage.image, maxPixelsN);
+
+    WarperHelper::rotateIf(stitchedImage.image, settings.getValue(eMultiStitch_projection));
+  }
   return stitchedImage.image;
+}
+
+const cv::Size &
+MultiStitcher::getStitchImageCurrentOrigSize()
+{
+  FUNCLOGTIMEL("MultiStitcher::getStitchImageCurrentSize");
+  return stitchedImage.imageSizeOrig;
 }
 
 void
@@ -238,7 +267,7 @@ MultiStitcher::initStiching(
 
   stitchOrder = computeStitchOrder();
   //stitchInfoFirstLast = computeStitchInfoFirstLast(stitchOrder);
-  
+
   for(auto *stitchInfo : stitchOrder) {
     outStitchIndices.push_back(stitchInfo->srcImageIndex);
   }
@@ -270,7 +299,13 @@ MultiStitcher::initStiching(
     waveCorrection(stitchOrder);
   }
 
-  logStitchOrder(globalScale, srcImages, stitchOrder, stitchInfoFirstLast);
+  logStitchOrder(globalScale, srcImagesSizes, stitchOrder, stitchInfoFirstLast);
+
+  descriptors.clear();
+  srcImagesScaled.clear();
+  keyPoints.clear();
+  points.clear();
+  dismissDetailedMatchInfoData(stitchInfos);
   
   stitchedImage.init(
     srcImages[centerImageIndex],
@@ -417,7 +452,8 @@ MultiStitcher::stitch(const StitchInfo &stitchInfo)
 
   TPoints2f ptsWarped1 = stitchedImage.getTransformedPts(
     stitchInfo.matchInfo.inlierPts1,
-    srcImages[dstIndex].size(),
+    // srcImages[dstIndex].size(),
+    srcImagesSizes[dstIndex],
     dstIndex,
     globalScale == 0.0 ? nullptr : &globalScale);
 
@@ -470,6 +506,9 @@ MultiStitcher::stitch(const StitchInfo &stitchInfo)
     mask.copyTo(maskProjected);
     //stitchedImage.createMaskFor(srcIndex);
   }
+
+  srcImages[srcIndex].release();
+  srcImage.release();
 
   stitchedImage.setCornerRoiXFor(srcIndex, tlCornerRoi.x);
   stitchedImage.setCornerRoiYFor(srcIndex, tlCornerRoi.y);
@@ -601,6 +640,13 @@ MultiStitcher::getStitchInfo(size_t dstI, size_t srcI)
   stitchInfos.push_back(spStitchInfo);
   if(dstI != srcI) {
 
+    if(descriptors.empty()) {
+      throw std::logic_error("Can not match, descriptors not available");
+    }
+    if(keyPoints.empty()) {
+      throw std::logic_error("Can not match, key points not available");
+    }
+    
     spStitchInfo->matchInfo = matcher.match(
       tfType, descriptors[dstI], descriptors[srcI],
       keyPoints[dstI], keyPoints[srcI]);
@@ -817,10 +863,14 @@ MultiStitcher::computeRelativeRotation(const StitchInfo &stitchInfo)
     return;
   }
 
-  auto w1 = srcImages[stitchInfo.dstImageIndex].size().width;
-  auto h1 = srcImages[stitchInfo.dstImageIndex].size().height;
-  auto w2 = srcImages[stitchInfo.srcImageIndex].size().width;
-  auto h2 = srcImages[stitchInfo.srcImageIndex].size().height;
+  auto w1 = srcImagesSizes[stitchInfo.dstImageIndex].width;
+  auto h1 = srcImagesSizes[stitchInfo.dstImageIndex].height;
+  auto w2 = srcImagesSizes[stitchInfo.srcImageIndex].width;
+  auto h2 = srcImagesSizes[stitchInfo.srcImageIndex].height;
+  // auto w1 = srcImages[stitchInfo.dstImageIndex].size().width;
+  // auto h1 = srcImages[stitchInfo.dstImageIndex].size().height;
+  // auto w2 = srcImages[stitchInfo.srcImageIndex].size().width;
+  // auto h2 = srcImages[stitchInfo.srcImageIndex].size().height;
 
   WarperHelper::getRelativeRotation(
     w1, h1, w2, h2,
@@ -869,8 +919,10 @@ MultiStitcher::setCamMatrices(TStitchOrder &rStitchOrder)
   for(auto it = rStitchOrder.begin(); it != rStitchOrder.end(); ++it) {
 
     size_t srcIndex = (*it)->srcImageIndex;
-    auto w = srcImages[srcIndex].size().width;
-    auto h = srcImages[srcIndex].size().height;
+    auto w = srcImagesSizes[srcIndex].width;
+    auto h = srcImagesSizes[srcIndex].height;
+    // auto w = srcImages[srcIndex].size().width;
+    // auto h = srcImages[srcIndex].size().height;
 
     auto fLenPx = WarperHelper::getFocalLengthPx(w, h, fieldsOfView[srcIndex]);
     WarperHelper::getMatK(w, h, fLenPx, (*it)->matK);
@@ -886,12 +938,13 @@ MultiStitcher::camEstimateAndBundleAdjust(
   if(bundleAdjustType == BundleAdjustType::BAT_NONE && !camEstimate) return false;
 
   std::string ba_cost_func, ba_refine_mask;
-  if(bundleAdjustType == BundleAdjustType::BAT_RAY) {
+  if(   bundleAdjustType == BundleAdjustType::BAT_RAY
+     || bundleAdjustType == BundleAdjustType::BAT_AUTO) {
+
     ba_cost_func = "ray";
     ba_refine_mask = "xxx_x";
   }
-  else if(bundleAdjustType == BundleAdjustType::BAT_REPROJ
-       || bundleAdjustType == BundleAdjustType::BAT_AUTO) {
+  else if(bundleAdjustType == BundleAdjustType::BAT_REPROJ) {
     ba_cost_func = "reproj";
     ba_refine_mask = "xxx_x";
   }
@@ -908,13 +961,13 @@ MultiStitcher::camEstimateAndBundleAdjust(
   std::vector<CameraParams> cameraParamsV;
   std::vector<ImageFeatures> imageFeaturesV;
 
-  std::vector<cv::Size> imageSizes;
-  for(size_t i = 0; i < srcImages.size(); ++i) {
-    imageSizes.push_back(srcImages[i].size());
-  }
+  // std::vector<cv::Size> imageSizes;
+  // for(size_t i = 0; i < srcImages.size(); ++i) {
+  //   imageSizes.push_back(srcImages[i].size());
+  // }
 
   Helper::getData(
-    keyPoints, descriptors, imageSizes, fieldsOfView, rStitchOrder, pStitchInfoFirstLast,
+    keyPoints, descriptors, srcImagesSizes/*imageSizes*/, fieldsOfView, rStitchOrder, pStitchInfoFirstLast,
     matchesInfoV, cameraParamsV, imageFeaturesV);
 
   if(camEstimate) {
@@ -981,10 +1034,10 @@ MultiStitcher::camEstimateAndBundleAdjust(
           LogUtils::getLogUserInfo() << "Bundle adjustement failed." << std::endl;
 
           if(   bundleAdjustType == BundleAdjustType::BAT_AUTO
-             && ba_cost_func == "reproj") {
+             && ba_cost_func == "ray") {
                
-              LogUtils::getLogUserInfo() << "Bundle adjustement retrying type ray." << std::endl;
-              ba_cost_func = "ray";
+              LogUtils::getLogUserInfo() << "Bundle adjustement retrying type reproj." << std::endl;
+              ba_cost_func = "reproj";
           }
           else {
             if(!camEstimate) return false;
@@ -1305,6 +1358,7 @@ StitchedImage::stitchFast()
 
   ImageUtils::crop(tempImage, image);
 }
+
 
 void
 StitchedImage::stitch(

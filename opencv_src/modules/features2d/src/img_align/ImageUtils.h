@@ -92,7 +92,11 @@ class ImageUtils{
 		static double resize(
 			const cv::Mat& image,
 			cv::Mat& matOut,
-			double maxPixelsN);
+			int maxPixelsN);
+
+		static double resizeIf(
+			TMat &ioImage,
+			int maxPixelsN);
 
 		static void stitch(
 			TConstMat &src1,
@@ -118,7 +122,7 @@ class ImageUtils{
 			const std::vector<TMat> &masks,
 			const std::vector<cv::Point> &tlCorners,
 			TMat &outDst);
-
+			
 		static cv::Point crop(
 			TConstMat &src,
 			TMat &outDst);

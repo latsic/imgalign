@@ -274,4 +274,18 @@ void MatchInfo::logInfo(bool logH) const
   }
 }
 
+void MatchInfo::dismissDetailData()
+{
+  FUNCLOGTIMEL("DesMatcher::dismissAdvancedData");
+
+  allMatches.clear();
+  filteredMatches.clear();
+  allMatchInfos.clear();
+  filteredMatchInfos.clear();
+  inlierMatchInfos.clear();
+  outlierMatchInfos.clear();
+  filteredPts1.clear();
+  filteredPts2.clear();
+}
+
 } // imgalign

@@ -19,7 +19,8 @@ export const paramGroups = Object.freeze({
   multiStitcherCamera:      { id: 1017, name: 'Camera'},
   multiStitcherSeams:       { id: 1018, name: 'Seams'},
   multiStitcherImage:       { id: 1019, name: 'Image'},
-  multiStitcherStitchOrder: { id: 1020, name: 'Stitch Order'}
+  multiStitcherStitchOrder: { id: 1020, name: 'Stitch Order'},
+  multiStitcherMemory:      { id: 1021, name: 'Memory'}
 });
 
 const detTypeId = 200;
@@ -183,7 +184,13 @@ export const paramTypes = Object.freeze({
 
   multiStitch_calcImageOrder: { id: 587, name: 'Calc stitch order', groupId: paramGroups.multiStitcherStitchOrder.id },
   multiStitch_calcCenterImage: { id: 588, name: 'Estimate start image', groupId: paramGroups.multiStitcherStitchOrder.id },
-  multiStitch_confidenceThresh: { id: 589, name: 'Confidence thresh', groupId: paramGroups.multiStitcherStitchOrder.id }
+  multiStitch_confidenceThresh: { id: 589, name: 'Confidence thresh', groupId: paramGroups.multiStitcherStitchOrder.id },
+
+
+  multiStitch_limitResultPreview: { id: 596, name: 'Max result view size', groupId: paramGroups.multiStitcherMemory.id },
+  multiStitch_limitInputView: { id: 597, name: 'Max input view size', groupId: paramGroups.multiStitcherMemory.id },
+  multiStitch_disposeInputImages: { id: 598, name: 'Dispose input before stitching', groupId: paramGroups.multiStitcherMemory.id },
+  multiStitch_limitLiveStitchingPreview: { id: 599, name: 'Max temp result size', groupId: paramGroups.multiStitcherMemory.id },
 
   
 });
@@ -401,7 +408,27 @@ export const paramTexts = Object.freeze([
     text: 'When calculating a mapping between two images, a confidence value '
         + 'indicates how good the mapping is. Mappings with a confidence value lower '
         + 'than this value are dismissed.' 
+  },
+
+  { id: paramTypes.multiStitch_limitResultPreview.id,
+    text: 'To save memory, the display stitched result image may be shown only in a reduced resolution. '
+        + 'The full resolution image can still be saved via the "save image button".' 
+  },
+  { id: paramTypes.multiStitch_limitInputView.id,
+    text: 'To save memory, the displayed input images may be resized and displayed with a lower resolution. '
+        + 'This has no influence on the final stitching result.'
+  },
+  { id: paramTypes.multiStitch_disposeInputImages.id,
+    text: 'To save memory, before the stitching process is started, all input '
+        + 'images are disposed and only a small preview is kept. This has no influence '
+        + 'on the final stitching result. If the stitching process is restarted with the same images though, '
+        + 'the images will have to be reloaded (this is done automatically).' 
+  },
+  { id: paramTypes.multiStitch_limitLiveStitchingPreview.id,
+    text: 'To save memory and increase performance, the preview during stitching can be reduces in size.'
+        + 'This has no influence on the final stitching result.' 
   }
+
 
 ]);
 

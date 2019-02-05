@@ -81,9 +81,11 @@ namespace imgalign
       SeamFinderType seamFinderType);
 
     void stitchFast();
+    // void stitchFastLatest();
    
     TMat image;
     cv::Size imageSize;
+    cv::Size imageSizeOrig;
     int projType;
     std::vector<size_t> imageIndices;
     std::map<size_t, StitchedInfo> stitchedInfos;
@@ -97,7 +99,7 @@ namespace imgalign
       using TIndices = std::vector<size_t>;
 
       MultiStitcher(
-        const std::vector<TMat> &inSrcImages,
+        std::vector<TMat> &inSrcImages,
         const Settings &inSettings);
       
       bool initStiching(
@@ -105,9 +107,10 @@ namespace imgalign
         std::vector<int> &outStitchIndices);
       int stitchAll();      
       TConstMat &getStitchedImage();
-      TConstMat &getStitchedImageCurrent();
+      TConstMat &getStitchedImageCurrent(bool update = true);
       void releaseStitchedImage();
       void releaseStitchedData();
+      const cv::Size &getStitchImageCurrentOrigSize();
 
       const TStitchOrder &getStitchOrder() const;
       
@@ -134,7 +137,8 @@ namespace imgalign
       void setCamMatrices(TStitchOrder &rStitchOrder);
       void waveCorrection(TStitchOrder &rStitchOrder);
 
-      const std::vector<TMat> &srcImages;
+      std::vector<TMat> &srcImages;
+      std::vector<cv::Size> srcImagesSizes;
       std::vector<TMat> srcImagesScaled;
       std::vector<double> scaleFactors;
       std::vector<TKeyPoints> keyPoints;

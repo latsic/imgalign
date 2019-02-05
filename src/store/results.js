@@ -63,9 +63,9 @@ const getters = {
 }
 
 const mutations = {
-  imageData(state, { name, imageData }) {
+  imageData(state, { name, imageData, imageDataSmall }) {
     if(!imageData) state.imageResults[name].imageData = null;
-    else state.imageResults[name].imageData = imageData;
+    else state.imageResults[name].setImageData(imageData, imageDataSmall);
   },
   success(state, { name, success }) {
     state.imageResults[name].success = success;

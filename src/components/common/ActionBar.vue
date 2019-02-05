@@ -36,14 +36,31 @@
         </span>
         <span
           v-else-if="resultValid && !showStatusInfo && transitionDone"
-          :style="{
-            'color': 'red',
-            cursor: 'pointer',
-            'padding-right': '0.2rem'
-          }"
-          @click="$emit('delete-result')"
         >
-          <strong>▶ Clear image</strong>
+          <span
+            :style="{
+              'color': $vuetify.theme.error,
+              cursor: 'pointer',
+            }"
+            @click="$emit('delete-result')"
+          >
+            <strong>▶ Clear image</strong>
+          </span>
+
+          <span
+            v-if="enableSaveImage"
+            :style="{
+              'color': $vuetify.theme.primary,
+              cursor: workerBusyImage ? 'wait' : 'pointer',
+              'padding-left': '1rem',
+              'padding-right': '0.2rem',
+              'opacity': workerBusyImage ? '0.5' : '1.0'
+            }"
+            @click="workerBusyImage ? ()=>{} : $emit('save-result')"
+          >
+            <strong>▶ Save image</strong>
+          </span>
+
         </span>
 
         <transition
@@ -247,6 +264,10 @@ export default {
     deleteDisabled: {
       type: Boolean,
       default: false
+    },
+    enableSaveImage: {
+      type: Boolean,
+      default: false
     }
   },
   created() {
@@ -304,8 +325,8 @@ export default {
     onFileChanged(name, file) {
       this.$store.dispatch('input/imageFile', { name, file });
     },
-    async onMultiFileChanged(files) {
-      this.$store.dispatch('multiInput/imageFiles', files);
+    onMultiFileChanged(files) {
+      this.$emit('multi-input-files-changed', files)
     },
     afterEnter() {
       this.showStatusInfo = false;

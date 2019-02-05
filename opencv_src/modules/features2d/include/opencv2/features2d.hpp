@@ -137,7 +137,7 @@ class CV_EXPORTS_W ImgStitch
 {
   public:
     virtual ~ImgStitch();
-
+    CV_WRAP virtual void setImages(InputArrayOfArrays images);
     CV_WRAP virtual void set(
         CV_IN_OUT std::vector<int> &valueTypes,
 		CV_IN_OUT std::vector<float> &values);
@@ -148,7 +148,10 @@ class CV_EXPORTS_W ImgStitch
       CV_IN_OUT std::vector<float> &fieldsOfView,
       OutputArray stitchedImage,
       CV_IN_OUT std::vector<int> &stitchIndices);
-    CV_WRAP virtual int stitchNext(OutputArray stitchedImage);
+    CV_WRAP virtual int stitchNext(
+        OutputArray stitchedImage,
+        OutputArray stitchedImageSmall,
+        int maxPixelsN);
 
     CV_WRAP static Ptr<ImgStitch> create(InputArrayOfArrays images);
 };

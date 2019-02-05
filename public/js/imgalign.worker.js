@@ -47,6 +47,9 @@ let mMovingPtsInlier = null;
 let mImgStitch = null;
 let mMultiStitchImages = null;
 
+let previewMaxPixelsN = 10000000;
+
+
 
 function postMessageConsoleFromExtern(msg, args) {
   postMessage({
@@ -104,7 +107,9 @@ function imageDataFromMat(mat) {
           throw new Error('Bad number of channels (Source image must have 1, 3 or 4 channels)');
           // return;
   }
-  return new ImageData(new Uint8ClampedArray(img.data), img.cols, img.rows);
+  const clampedArray = new ImageData(new Uint8ClampedArray(img.data), img.cols, img.rows);
+  img.delete();
+  return clampedArray;
 }
 
 function postDoneMessage(msg, payload = null) {
@@ -115,7 +120,7 @@ function postDoneMessage(msg, payload = null) {
   });
 }
 
-function postDoneMessageImage(msg, imageData, additionalData) {
+function postDoneMessageImage(msg, imageData, additionalData, imageDataSmall) {
   
   if(!imageData) {
     postMessage({
@@ -132,6 +137,22 @@ function postDoneMessageImage(msg, imageData, additionalData) {
     });
   }
   else {
+
+    let imageSmall = null; 
+    if(imageDataSmall) {
+      imageSmall = {
+        width: imageDataSmall.width,
+        height: imageDataSmall.height,
+        bufLen: imageDataSmall.data.length,
+        bufOffset: imageDataSmall.data.byteOffset,
+        buf: imageDataSmall.data.buffer,
+      }
+    }
+
+    const transferData = imageDataSmall
+      ? [ imageData.data.buffer,  imageDataSmall.data.buffer]
+      : [ imageData.data.buffer ];
+
     postMessage({
       msg: msg,
       info: 'done',
@@ -141,9 +162,10 @@ function postDoneMessageImage(msg, imageData, additionalData) {
         bufLen: imageData.data.length,
         bufOffset: imageData.data.byteOffset,
         buf: imageData.data.buffer,
-        additionalData: additionalData
+        additionalData: additionalData,
+        imageDataSmall: imageSmall
       }
-    }, [ imageData.data.buffer ]);
+    }, transferData);
   }
 }
 
@@ -243,9 +265,13 @@ function multiStitchInit(payload) {
     throw new Error('No data available, forgot to call load?');
   }
 
-  if(mImgStitch == null) {
+    if(payload.previewMaxPixelsN) {
+      previewMaxPixelsN = payload.previewMaxPixelsN;
+    }
 
-    _multiStitchReset();
+    if(mImgStitch == null) {
+      _multiStitchReset();
+    }
     try {
 
       mMultiStitchImages = new cv.MatVector();
@@ -253,7 +279,13 @@ function multiStitchInit(payload) {
         mMultiStitchImages.push_back(cv.matFromImageData(image));
       }   
 
-      mImgStitch = new cv.ImgStitch(mMultiStitchImages);
+      if(mImgStitch == null) {
+        mImgStitch = new cv.ImgStitch(mMultiStitchImages);
+      }
+      else {
+        mImgStitch.setImages(mMultiStitchImages);
+      }
+      
       mMultiStitchImages.delete();
       mMultiStitchImages = null;
     }
@@ -261,7 +293,7 @@ function multiStitchInit(payload) {
       _multiStitchReset();
       throw error;
     }
-  }
+  //}
   return () => postDoneMessage(msgMultiStitchInit);
 }
 
@@ -469,9 +501,11 @@ function multiStitchNext() {
   }
 
   let stitchedImage = new cv.Mat();
+  let stitchedImageSmall = new cv.Mat();
+  let maxPixelsN = previewMaxPixelsN;
 
   try {
-    const imagesN = mImgStitch.stitchNext(stitchedImage);
+    const imagesN = mImgStitch.stitchNext(stitchedImage, stitchedImageSmall, maxPixelsN);
 
     if(imagesN == -1) {
       throw new Error("failed to stitch image");
@@ -484,10 +518,13 @@ function multiStitchNext() {
     }
 
     const imageData = imageDataFromMat(stitchedImage);
-    return () => postDoneMessageImage(msgMultiStitchNext, imageData, imagesN);
+    const imageDataSmall = imageDataFromMat(stitchedImageSmall);
+
+    return () => postDoneMessageImage(msgMultiStitchNext, imageData, imagesN, imageDataSmall);
   }
   finally {
     stitchedImage.delete();
+    stitchedImageSmall.delete();
   }
 }
 

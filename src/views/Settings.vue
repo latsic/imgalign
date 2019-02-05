@@ -42,7 +42,6 @@
     <v-tabs
       :value="$store.getters['settings/activeTabIndexDetector'] || 0"
       
-      show-arrows
       light
       color="warning"
       @change="index => $store.dispatch('settings/activeTabIndexDetector', index)"

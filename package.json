@@ -10,6 +10,7 @@
   "dependencies": {
     "axios": "^0.18.0",
     "exif-js": "^2.3.0",
+    "file-saver": "^2.0.0",
     "vue": "^2.5.22",
     "vue-router": "^3.0.2",
     "vuetify": "^1.4.2",

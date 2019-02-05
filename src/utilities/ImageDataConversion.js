@@ -23,31 +23,44 @@ export class ImageDataConversion {
 
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-    ctx.globalAlpha
+
     canvas.width = imageData.width;
     canvas.height = imageData.height;
     
     ctx.putImageData(imageData, 0, 0);
-    let cData = ctx.getImageData(0, 0, imageData.width, imageData.height).data;
-
-    for(let i = 3; i < imageData.length; i += 4) {
-      cData[i] = 0;//imageData[i];
-    }
-
-    // const canvas2 = document.createElement('canvas');
-    // canvas2.width = imageData.width;
-    // canvas2.height = imageData.height;
-    // const ctx2 = canvas2.getContext('2d');
-    // ctx2.rect(0, 0, imageData.width, imageData.height);
-    // ctx2.fillStyle = "white";
-    // ctx2.fill();
-    // ctx2.drawImage(canvas, 0, 0);
-
     const url = canvas.toDataURL();
 
     // eslint-disable-next-line no-console
     console.log('[imageSrcFromImageData][toDataURL][time][ms]', new Date() - startTime);
 
     return url;
+  }
+
+  static async imageBlobFromImageData(imageData) {
+    const startTime = new Date();
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+
+    canvas.width = imageData.width;
+    canvas.height = imageData.height;
+    
+    ctx.putImageData(imageData, 0, 0);
+    
+    const blob = await new Promise(resolve => {
+      try {
+        canvas.toBlob(blob => resolve(blob), 'image/png', 1);
+      }
+      catch(error) {
+        // eslint-disable-next-line no-console
+        console.log('[imageBlobFromImageData][toBlob][Error]', error);
+        resolve(null);
+      }
+    });
+
+    // eslint-disable-next-line no-console
+    console.log('[imageBlobFromImageData][toBlob][time][ms]', new Date() - startTime);
+
+    return blob;
   }
 }

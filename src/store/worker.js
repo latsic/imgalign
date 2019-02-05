@@ -1,4 +1,6 @@
 
+import { saveAs } from 'file-saver';
+import { ImageDataConversion } from '@/utilities/ImageDataConversion';
 import { WorkerClient } from '@/workers/WorkerClient';
 import { matchName, compareName, stitchName, multiStitchName } from '@/models/constants/images';
 import { fixedImageName, movingImageName } from '@/models/constants/images';
@@ -200,13 +202,10 @@ const actions = {
       context.commit('currentActionInfo', 'Stitching');
       const stitchingStartTime = new Date();
 
+      const previewMaxPixelsN = context.rootGetters['settings/param'](paramTypes.multiStitch_limitLiveStitchingPreview.id);
+
       const { imageData, stitchedImagesN } = await WorkerClient.instance.multiStitch(
-            images, fieldsOfView, settings.getIdValueArrExcludingDefaults());
-      // const { imageData, stitchedImagesN } = !context.getters['results/imageDataValid'](multiStitchName)
-      //   ? await WorkerClient.instance.multiStitch(
-      //       images, fieldsOfView, settings.getIdValueArrExcludingDefaults())
-      //   : await WorkerClient.instance.multiStitchRecompute(
-      //       fieldsOfView, settings.getIdValueArrExcludingDefaults());
+            images, fieldsOfView, settings.getIdValueArrExcludingDefaults(), previewMaxPixelsN);
       
       context.commit('results/imageData', { name: multiStitchName, imageData});   
       context.commit('results/time', { name: multiStitchName, time: new Date() - stitchingStartTime });
@@ -236,9 +235,16 @@ const actions = {
       context.commit('currentActionInfo', 'Detecting Features');
       const stitchingStartTime = new Date();
 
+      const previewMaxPixelsN = context.rootGetters['settings/param'](paramTypes.multiStitch_limitResultPreview.id);
+
       const { imageData, stitchIndices } = await WorkerClient.instance.multiStitchStart(
-        images, fieldsOfView, settings.getIdValueArrExcludingDefaults());
+        images, fieldsOfView, settings.getIdValueArrExcludingDefaults(), previewMaxPixelsN);
       
+      const freeImageData = context.rootGetters['settings/param'](paramTypes.multiStitch_disposeInputImages.id);
+      if(freeImageData) {
+        context.commit('multiInput/freeImageData', null, { root: true });
+      }
+
       const noMatches = [];
       for(let i = 0; i < images.length; ++i) {
         if(!stitchIndices.some(imageIndex => imageIndex == i)) {
@@ -260,9 +266,7 @@ const actions = {
       let imagesRemainingN = stitchIndices.length - 1;
       while(imagesRemainingN > 0) {
 
-        //context.commit('currentActionInfo', `Stitching, ${imagesRemainingN} images remaining`);
-
-        const { imageData, stitchedImagesN } = await WorkerClient.instance.multiStitchNext();
+        const { imageData, imageDataSmall, stitchedImagesN } = await WorkerClient.instance.multiStitchNext();
         if(stitchedImagesN == 0) {
           imagesRemainingN = 0;
           // eslint-disable-next-line no-console
@@ -271,7 +275,7 @@ const actions = {
         }
         else {
           imagesRemainingN = stitchIndices.length - stitchedImagesN;
-          context.commit('results/imageData', { name: multiStitchName, imageData});
+          context.commit('results/imageData', { name: multiStitchName, imageData, imageDataSmall });
         }
       }
       context.commit('results/time', { name: multiStitchName, time: new Date() - stitchingStartTime });
@@ -647,7 +651,7 @@ const actions = {
 
       const imageData = await WorkerClient.instance.requestResizedImageAsync(imageDataSrc, width, height);
       context.commit('_busyImage', false);
-      context.dispatch('multiInput/imageData', imageData, { root: true });
+      await context.dispatch('multiInput/imageData', imageData, { root: true });
     }
     catch(error) {
       // eslint-disable-next-line no-console
@@ -658,7 +662,53 @@ const actions = {
       context.commit('currentActionInfo', '');
       context.commit('_busyImage', false);
     }
+  },
+
+  async setMultiInputImageUrlResized(context, { imageDataSrc, width, height }) {
+    if(context.getters['busy']) {
+      // return;
+      throw new Error('Already busy with another task');
+    }
+    try {
+      context.commit('_busyImage', true);
+      context.commit('currentActionInfo', 'Resizing image (base64)');
+
+      const imageData = await WorkerClient.instance.requestResizedImageAsync(imageDataSrc, width, height);
+      context.commit('_busyImage', false);
+      await context.dispatch('multiInput/imageDataUrl', imageData, { root: true });
+    }
+    catch(error) {
+      // eslint-disable-next-line no-console
+      console.log('[store][worker][setMultiInputImageUrlResized][Error]', error);
+      context.commit('error', error);
+    }
+    finally {
+      context.commit('currentActionInfo', '');
+      context.commit('_busyImage', false);
+    }
+  },
+
+  async saveResultImage(context, { name, imageFileName }) {
+    if(context.getters['busyImage']) {
+      return;
+    }
+    
+    try {
+      context.commit('_busyImage', true);
+      // setTimeout(() => {
+      //   saveAs(context.getters['results/imageDataUrl'](name), imageFileName);
+      // }, 10);
+
+      const blob = await ImageDataConversion.imageBlobFromImageData(context.getters['results/imageData'](name));
+      saveAs(blob, imageFileName);
+    }
+    finally {
+      setTimeout(() => {
+        context.commit('_busyImage', false);
+      }, 500);
+    }
   }
+
 
 };
 const modules = {

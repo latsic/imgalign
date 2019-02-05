@@ -131,7 +131,7 @@ dnn = {'dnn_Net': ['setInput', 'forward'],
 
 features2d = {'Feature2D': ['detect', 'compute', 'detectAndCompute', 'descriptorSize', 'descriptorType', 'defaultNorm', 'empty', 'getDefaultName'],
               'ImgAlign': ['create', 'set', 'match', 'match_getAlignedImage', 'match_getTransMatrix', 'match_getExtData', 'getImageAligned', 'getImageBlended', 'getFixedImageWithMatchedPoints', 'getMovingImageWithMatchedPoints', 'getSideBySideImage', 'compare', 'getImageBlendedPolygonFixedImage', 'getImageBlendedPolygonMovingImage', 'getImageFloodFillFixedImage', 'getImageFloodFillMovingImage', 'getStitchedImage', 'stitch'], 
-              'ImgStitch': ['create', 'set', 'stitch', 'stitchStart', 'stitchNext'],
+              'ImgStitch': ['create', 'setImages', 'set', 'stitch', 'stitchStart', 'stitchNext'],
               'BRISK': ['create', 'getDefaultName'],
               'ORB': ['create', 'setMaxFeatures', 'setScaleFactor', 'setNLevels', 'setEdgeThreshold', 'setFirstLevel', 'setWTA_K', 'setScoreType', 'setPatchSize', 'getFastThreshold', 'getDefaultName'],
               'SIFT': ['create'],

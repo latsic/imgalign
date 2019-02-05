@@ -342,8 +342,8 @@ export class Settings {
       {
         id: paramTypes.multiStitch_rectifyPerspective.id,
         type: valueTypes.bool,
-        value: 1,
-        defaultValue: 1,
+        value: 0,
+        defaultValue: 0,
       },
       {
         id: paramTypes.multiStitch_rectifyStretch.id,
@@ -429,8 +429,32 @@ export class Settings {
         defaultValue: 0.2,
         value: 0.2,
         range: { min: 0, max: 1 }
+      },
+
+      { id: paramTypes.multiStitch_limitResultPreview.id,
+        type: valueTypes.rangeSquareRoot,
+        defaultValue: 800000,
+        value: 800000,
+        range: { min: 10000, max: 4000000 }
+      },
+      { id: paramTypes.multiStitch_limitInputView.id,
+        type: valueTypes.rangeSquareRoot,
+        defaultValue: 100000,
+        value: 100000,
+        range: { min: 10000, max: 1000000 }
+      },
+      {
+        id: paramTypes.multiStitch_disposeInputImages.id,
+        type: valueTypes.bool,
+        value: 0,
+        defaultValue: 0
+      },
+      { id: paramTypes.multiStitch_limitLiveStitchingPreview.id,
+        type: valueTypes.rangeSquareRoot,
+        defaultValue: 200000,
+        value: 200000,
+        range: { min: 10000, max: 1000000 }
       }
-      
       
     ];
   }

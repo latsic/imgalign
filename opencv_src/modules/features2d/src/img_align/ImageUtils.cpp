@@ -209,13 +209,15 @@ inline void blend(
   for(size_t i = 0; i < images.size(); ++i) {
     
     cv::cvtColor(images[i], images_16S3C[i], CV_RGBA2RGB);
-    images_16S3C[i].convertTo(images_16S3C[i], CV_16S);
+    //images_16S3C[i].convertTo(images_16S3C[i], CV_16S);
 
     blender.feed(images_16S3C[i], masks[i], tlCorners[i]);
   }
 
   TMat dst, dstMask;
   blender.blend(dst, dstMask);
+
+  images_16S3C.clear();
 
   dst.convertTo(dst, CV_8U);
   TMat dst_rgba;
@@ -596,7 +598,7 @@ void ImageUtils::floodFillMask(
 double ImageUtils::resize(
 	const cv::Mat &image,
   cv::Mat &matOut,
-  double maxPixelsN)
+  int maxPixelsN)
 {
   FUNCLOGTIMEL("ImageUtils::resize");
 
@@ -606,7 +608,7 @@ double ImageUtils::resize(
     return 1.0;
   }
 
-  double resizeFactor = std::sqrt(maxPixelsN / (image.cols * image.rows));
+  double resizeFactor = std::sqrt((double)maxPixelsN / (image.cols * image.rows));
   cv::resize(
     image,
     matOut,
@@ -616,6 +618,21 @@ double ImageUtils::resize(
     cv::INTER_AREA);
 
 	return resizeFactor;
+}
+
+double ImageUtils::resizeIf(TMat &ioImage, int maxPixelsN)
+{
+  FUNCLOGTIMEL("ImageUtils::resizeIf");
+
+  if(ioImage.cols * ioImage.rows <= maxPixelsN)
+  {
+    return 1.0;
+  }
+  
+  TMat dst;
+  auto scaleF = resize(ioImage, dst, maxPixelsN);
+  ioImage = dst;
+  return scaleF;
 }
 
 void ImageUtils::blendNone(

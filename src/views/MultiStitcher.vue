@@ -55,8 +55,11 @@
         :result-valid="$store.getters['worker/results/imageDataValid'](multiStitchName)"
         :multiple="true"
         :delete-disabled="$store.getters['multiInput/imageCount'] == 0"
+        :enable-save-image="true"
         @delete-result="deleteResult"
         @delete-click="deleteAllOrSelectedInputImages"
+        @save-result="saveImage"
+        @multi-input-files-changed="multiInputFilesChanged"
       />
     
       <div
@@ -66,7 +69,6 @@
         
           :value="$store.getters['settings/activeTabIndexMultiStitcher'] || 0"
           height="30px"
-          show-arrows
           color="#eeeeee"
           @change="index => $store.dispatch('settings/activeTabIndexMultiStitcher', index)"
         >
@@ -110,6 +112,12 @@
               :params="params(groupKey)"
               @change="paramChanged"
             />
+
+            <app-multi-stitcher-memory-settings
+              v-if="groupKey == 'multiStitcherMemory'"
+              :params="params(groupKey)"
+              @change="paramChanged"
+            />
             
           </v-tab-item>
         </v-tabs>
@@ -144,7 +152,6 @@
 
 <script>
 
-
 import ViewLayout from '@/components/layout/ViewLayout';
 import ViewSpacer from '@/components/layout/ViewSpacer';
 import ActionBar from '@/components/common/ActionBar';
@@ -154,6 +161,7 @@ import MultiStitcherCameraSettings from '@/components/settings/MultiStitcherCame
 import MultiStitcherImageSettings from '@/components/settings/MultiStitcherImageSettings';
 import MultiStitcherStitchSettings from '@/components/settings/MultiStitcherStitchSettings';
 import MultiStitcherSeamsSettings from '@/components/settings/MultiStitcherSeamsSettings';
+import MultiStitcherMemorySettings from '@/components/settings/MultiStitcherMemorySettings';
 import { multiStitchName } from '@/models/constants/images';
 import { paramTypes, paramGroups, ParamUtils } from '@/models/constants/params';
 
@@ -167,7 +175,8 @@ export default {
     'AppMultiStitcherImageSettings': MultiStitcherImageSettings,
     'AppMultiStitcherCameraSettings': MultiStitcherCameraSettings,
     'AppMultiStitcherStitchSettings': MultiStitcherStitchSettings,
-    'AppMultiStitcherSeamsSettings': MultiStitcherSeamsSettings
+    'AppMultiStitcherSeamsSettings': MultiStitcherSeamsSettings,
+    'AppMultiStitcherMemorySettings': MultiStitcherMemorySettings
   },
   created() {
     //this.$store.dispatch('input/init');
@@ -212,12 +221,15 @@ export default {
         'multiStitcherCamera',
         'multiStitcherSeams',
         'multiStitcherImage',
-        'multiStitcherStitchOrder'
+        'multiStitcherStitchOrder',
+        'multiStitcherMemory'
       ]
     }
   },
   methods: {
     async multiStitch() {
+
+      await this.$store.dispatch('multiInput/reloadFilesFromDiscIf');
 
       await this.$store.dispatch(
         'worker/computeMultiStitchImageInSteps', {
@@ -238,6 +250,13 @@ export default {
     swapImagesInputImages({ indexFrom, indexTo }) {
       this.$store.commit('multiInput/swap', { indexFrom, indexTo });
       this.deleteResult();
+    },
+    saveImage() {
+      this.$store.dispatch('worker/saveResultImage', { name:  multiStitchName, imageFileName: "MultiStitcherImage.png" });
+    },
+    async multiInputFilesChanged(files) {
+      this.deleteResult();
+      await this.$store.dispatch('multiInput/imageFiles', files);
     },
     params(groupKey) {
       return this.$store.getters['settings/settings'].paramsByGroupKey(groupKey);

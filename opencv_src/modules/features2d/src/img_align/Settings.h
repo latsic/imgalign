@@ -147,7 +147,12 @@ namespace imgalign
     eMultiStitch_exposureCompensator = 590,
     //eMultiStitch_blendType = 591,
     eMultiStitch_blendStrength = 592,
-    eMultiStitch_rectifyStretch = 593
+    eMultiStitch_rectifyStretch = 593,
+
+    eMultiStitch_limitResultPreview = 596,
+    eMultiStitch_limitInputView = 597,
+    eMultiStitch_disposeInputImages = 598,
+    eMultiStitch_limitLiveStitchingPreview = 599
   };
 
   class Settings {
