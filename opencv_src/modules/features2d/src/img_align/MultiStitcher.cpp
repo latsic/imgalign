@@ -301,9 +301,9 @@ MultiStitcher::initStiching(
 
   logStitchOrder(globalScale, srcImagesSizes, stitchOrder, stitchInfoFirstLast);
 
-  descriptors.clear();
+  //descriptors.clear();
   srcImagesScaled.clear();
-  keyPoints.clear();
+  //keyPoints.clear();
   points.clear();
   dismissDetailedMatchInfoData(stitchInfos);
   

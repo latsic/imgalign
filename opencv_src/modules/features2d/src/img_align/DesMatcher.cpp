@@ -282,7 +282,7 @@ void MatchInfo::dismissDetailData()
   filteredMatches.clear();
   allMatchInfos.clear();
   filteredMatchInfos.clear();
-  inlierMatchInfos.clear();
+  //inlierMatchInfos.clear();
   outlierMatchInfos.clear();
   filteredPts1.clear();
   filteredPts2.clear();
