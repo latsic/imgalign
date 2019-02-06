@@ -643,7 +643,7 @@ void ImageUtils::blendNone(
 {
   FUNCLOGTIMEL("ImageUtils::blendNone");
 
-  cv::detail::Blender blender;
+  cv::detail::Blender8 blender;
   imgalign::blend(blender, images, masks, tlCorners, outImage);
 }
 

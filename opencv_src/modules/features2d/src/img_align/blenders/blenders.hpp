@@ -65,7 +65,7 @@ class CV_EXPORTS Blender
 public:
     virtual ~Blender() {}
 
-    enum { NO, FEATHER, MULTI_BAND };
+    enum { NO, NO8, FEATHER, MULTI_BAND };
     static Ptr<Blender> createDefault(int type, bool try_gpu = false);
 
     /** @brief Prepares the blender for blending.
@@ -93,6 +93,14 @@ public:
 protected:
     UMat dst_, dst_mask_;
     Rect dst_roi_;
+};
+
+class CV_EXPORTS Blender8 : public Blender
+{
+public:
+    void prepare(Rect dst_roi) CV_OVERRIDE;
+    void feed(InputArray img, InputArray mask, Point tl) CV_OVERRIDE;
+    void blend(InputOutputArray dst, InputOutputArray dst_mask) CV_OVERRIDE;
 };
 
 /** @brief Simple blender which mixes images at its borders.

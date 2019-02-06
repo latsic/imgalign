@@ -70,6 +70,8 @@ Ptr<Blender> Blender::createDefault(int type, bool try_gpu)
 {
     if (type == NO)
         return makePtr<Blender>();
+    if (type == NO8)
+        return makePtr<Blender8>();
     if (type == FEATHER)
         return makePtr<FeatherBlender>();
     if (type == MULTI_BAND)
@@ -133,6 +135,58 @@ void Blender::blend(InputOutputArray dst, InputOutputArray dst_mask)
     dst_.release();
     dst_mask_.release();
 }
+
+void Blender8::prepare(Rect dst_roi)
+{
+    dst_.create(dst_roi.size(), CV_8UC3);
+    dst_.setTo(Scalar::all(0));
+    dst_mask_.create(dst_roi.size(), CV_8U);
+    dst_mask_.setTo(Scalar::all(0));
+    dst_roi_ = dst_roi;
+}
+
+
+void Blender8::feed(InputArray _img, InputArray _mask, Point tl)
+{
+    Mat img = _img.getMat();
+    Mat mask = _mask.getMat();
+    Mat dst = dst_.getMat(ACCESS_RW);
+    Mat dst_mask = dst_mask_.getMat(ACCESS_RW);
+
+    CV_Assert(img.type() == CV_8UC3);
+    CV_Assert(mask.type() == CV_8U);
+    int dx = tl.x - dst_roi_.x;
+    int dy = tl.y - dst_roi_.y;
+
+    for (int y = 0; y < img.rows; ++y)
+    {
+        const Point3_<uint8_t> *src_row = img.ptr<Point3_<uint8_t> >(y);
+        Point3_<uint8_t> *dst_row = dst.ptr<Point3_<uint8_t> >(dy + y);
+        const uchar *mask_row = mask.ptr<uchar>(y);
+        uchar *dst_mask_row = dst_mask.ptr<uchar>(dy + y);
+
+        for (int x = 0; x < img.cols; ++x)
+        {
+            if (mask_row[x])
+                dst_row[dx + x] = src_row[x];
+            dst_mask_row[dx + x] |= mask_row[x];
+        }
+    }
+}
+
+
+void Blender8::blend(InputOutputArray dst, InputOutputArray dst_mask)
+{
+    UMat mask;
+    compare(dst_mask_, 0, mask, CMP_EQ);
+    dst_.setTo(Scalar::all(0), mask);
+    dst.assign(dst_);
+    dst_mask.assign(dst_mask_);
+    dst_.release();
+    dst_mask_.release();
+}
+
+
 
 
 void FeatherBlender::prepare(Rect dst_roi)
