@@ -99,7 +99,8 @@ namespace imgalign
       { eMultiStitch_limitResultPreview, { 800000.0f, "MultiStitch_limitResultPreview" } },
       { eMultiStitch_limitInputView, { 100000.0f, "MultiStitch_limitInputView" } },
       { eMultiStitch_disposeInputImages, { 0.0f, "MultiStitch_disposeInputImages" } },
-      { eMultiStitch_limitLiveStitchingPreview, { 200000.0f, "MultiStitch_limitLiveStitchingPreview" } }
+      { eMultiStitch_limitLiveStitchingPreview, { 200000.0f, "MultiStitch_limitLiveStitchingPreview" } },
+      { eMultiStitch_preserveAlphaChannelValue, { 0.0f, "MultiStitch_preserveAlphaChannelValue" } }
 
     };
   }

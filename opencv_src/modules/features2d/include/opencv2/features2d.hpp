@@ -150,8 +150,7 @@ class CV_EXPORTS_W ImgStitch
       CV_IN_OUT std::vector<int> &stitchIndices);
     CV_WRAP virtual int stitchNext(
         OutputArray stitchedImage,
-        OutputArray stitchedImageSmall,
-        int maxPixelsN);
+        OutputArray stitchedImageSmall);
 
     CV_WRAP static Ptr<ImgStitch> create(InputArrayOfArrays images);
 };

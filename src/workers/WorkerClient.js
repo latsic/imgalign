@@ -100,12 +100,11 @@ export class WorkerClient {
     });
   }
 
-  async _multiStitchInitAsync(images, previewMaxPixelsN) {
+  async _multiStitchInitAsync(images) {
     return await this.postWorkerMessageAsync({
       msg: msgMultiStitchInit,
       payload: {
-        images,
-        previewMaxPixelsN
+        images
       }
     });
   }
@@ -209,8 +208,8 @@ export class WorkerClient {
     return await this._matchAsync(fixedImagePolygonPts, movingImagePolygonPts);
   }
 
-  async multiStitch(images, fieldsOfView, paramsArr, previewMaxPixelsN) {
-    await this._multiStitchInitAsync(images, previewMaxPixelsN);
+  async multiStitch(images, fieldsOfView, paramsArr) {
+    await this._multiStitchInitAsync(images);
     await this._multiStitchSetParams(paramsArr);
     return await this._multiStitch(fieldsOfView);
   }
@@ -220,8 +219,8 @@ export class WorkerClient {
     return await this._multiStitch(fieldsOfView);
   }
 
-  async multiStitchStart(images, fieldsOfView, paramsArr, previewMaxPixelsN) {
-    await this._multiStitchInitAsync(images, previewMaxPixelsN);
+  async multiStitchStart(images, fieldsOfView, paramsArr) {
+    await this._multiStitchInitAsync(images);
     await this._multiStitchSetParams(paramsArr);
     return await this._multiStitchStart(fieldsOfView);
   }

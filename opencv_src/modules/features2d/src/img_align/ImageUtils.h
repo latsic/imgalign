@@ -65,23 +65,26 @@ class ImageUtils{
 			TMat& outMask);
 
 		static void blendMultiBand(
-			const std::vector<TMat> &images,
-			const std::vector<TMat> &masks,
+			std::vector<TMat> &images,
+			std::vector<TMat> &masks,
 			const std::vector<cv::Point> &tlCorners,
 			double blendWidth,
+			bool saveMemory,
 			TMat &outImage);
 
 		static void featherBlend(
-			const std::vector<TMat> &images,
-			const std::vector<TMat> &masks,
+			std::vector<TMat> &images,
+			std::vector<TMat> &masks,
 			const std::vector<cv::Point> &tlCorners,
 			double blendWidth,
+			bool saveMemory,
 			TMat &outImage);
 
 		static void blendNone(
-			const std::vector<TMat> &images,
-			const std::vector<TMat> &masks,
+			std::vector<TMat> &images,
+			std::vector<TMat> &masks,
 			const std::vector<cv::Point> &tlCorners,
+			bool saveMemory,
 			TMat &outImage);
 
 		static void compensateExposure(
@@ -115,6 +118,7 @@ class ImageUtils{
 			BlendType blendType,
 			double blendStrength,
 			SeamFinderType seamFinderType,
+			bool saveMemory,
 			TMat &outDst);
 
 		static void stitchFast(
@@ -122,7 +126,7 @@ class ImageUtils{
 			const std::vector<TMat> &masks,
 			const std::vector<cv::Point> &tlCorners,
 			TMat &outDst);
-			
+
 		static cv::Point crop(
 			TConstMat &src,
 			TMat &outDst);

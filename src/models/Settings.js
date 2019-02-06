@@ -454,8 +454,13 @@ export class Settings {
         defaultValue: 200000,
         value: 200000,
         range: { min: 10000, max: 1000000 }
+      },
+      {
+        id: paramTypes.multiStitch_preserveAlphaChannelValue.id,
+        type: valueTypes.bool,
+        value: 0,
+        defaultValue: 0
       }
-      
     ];
   }
 

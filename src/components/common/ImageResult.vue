@@ -18,7 +18,7 @@
           'margin': 'auto',
           'padding': '0'
         }"
-        :class="{'cursor-drag-zoom': canShowDialog, 'cursor-drag': !canShowDialog}"
+        :class="imgClasses"
         class="transparent-pattern"
         :id="imageName"
         :ref="imageName"
@@ -79,6 +79,19 @@ export default {
     fieldOfView: {
       type: Number,
       default: 0
+    },
+    canDrag: {
+      type: Boolean,
+      default: true
+    }
+  },
+  computed: {
+    imgClasses() {
+      return {
+        'cursor-drag-zoom': this.canShowDialog && this.canDrag,
+        'cursor-drag': !this.canShowDialog && this.canDrag,
+        'cursor-zoom-in': this.canShowDialog && !this.canDrag
+      }
     }
   },
   data() {
@@ -324,6 +337,9 @@ export default {
   }
   .cursor-drag {
     cursor: move;
+  }
+  .cursor-zoom-in {
+    cursor: zoom-in;
   }
   .transparent-pattern {
     background: 

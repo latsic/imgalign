@@ -202,10 +202,8 @@ const actions = {
       context.commit('currentActionInfo', 'Stitching');
       const stitchingStartTime = new Date();
 
-      const previewMaxPixelsN = context.rootGetters['settings/param'](paramTypes.multiStitch_limitLiveStitchingPreview.id);
-
       const { imageData, stitchedImagesN } = await WorkerClient.instance.multiStitch(
-            images, fieldsOfView, settings.getIdValueArrExcludingDefaults(), previewMaxPixelsN);
+            images, fieldsOfView, settings.getIdValueArrExcludingDefaults());
       
       context.commit('results/imageData', { name: multiStitchName, imageData});   
       context.commit('results/time', { name: multiStitchName, time: new Date() - stitchingStartTime });
@@ -235,10 +233,8 @@ const actions = {
       context.commit('currentActionInfo', 'Detecting Features');
       const stitchingStartTime = new Date();
 
-      const previewMaxPixelsN = context.rootGetters['settings/param'](paramTypes.multiStitch_limitResultPreview.id);
-
       const { imageData, stitchIndices } = await WorkerClient.instance.multiStitchStart(
-        images, fieldsOfView, settings.getIdValueArrExcludingDefaults(), previewMaxPixelsN);
+        images, fieldsOfView, settings.getIdValueArrExcludingDefaults());
       
       const freeImageData = context.rootGetters['settings/param'](paramTypes.multiStitch_disposeInputImages.id);
       if(freeImageData) {

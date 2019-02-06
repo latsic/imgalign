@@ -134,6 +134,7 @@
         <app-image-result
           :image-url="$store.getters['worker/results/imageDataUrl'](multiStitchName)"
           :image-name="multiStitchName"
+          :canDrag="false"
         />
       </v-layout>
 
@@ -239,23 +240,27 @@ export default {
         }
       );      
     },
+    deleteWorkerData() {
+      //this.$store.commit('worker/results/imageData', { name: multiStitchName, imageData: null });
+      this.$store.dispatch('worker/multiStitchResetWorkerData');
+    },
     deleteResult() {
       this.$store.commit('worker/results/imageData', { name: multiStitchName, imageData: null });
-      this.$store.dispatch('worker/multiStitchResetWorkerData');
+      //this.$store.dispatch('worker/multiStitchResetWorkerData');
     },
     deleteAllOrSelectedInputImages() {
       this.$store.dispatch('multiInput/removeAllOrSelected');
-      this.deleteResult();
+      this.deleteWorkerData();
     },
     swapImagesInputImages({ indexFrom, indexTo }) {
       this.$store.commit('multiInput/swap', { indexFrom, indexTo });
-      this.deleteResult();
+      this.deleteWorkerData();
     },
     saveImage() {
       this.$store.dispatch('worker/saveResultImage', { name:  multiStitchName, imageFileName: "MultiStitcherImage.png" });
     },
     async multiInputFilesChanged(files) {
-      this.deleteResult();
+      this.deleteWorkerData();
       await this.$store.dispatch('multiInput/imageFiles', files);
     },
     params(groupKey) {

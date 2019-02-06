@@ -186,11 +186,12 @@ export const paramTypes = Object.freeze({
   multiStitch_calcCenterImage: { id: 588, name: 'Estimate start image', groupId: paramGroups.multiStitcherStitchOrder.id },
   multiStitch_confidenceThresh: { id: 589, name: 'Confidence thresh', groupId: paramGroups.multiStitcherStitchOrder.id },
 
-
+  multiStitch_preserveAlphaChannelValue: { id: 600, name: 'Preserve Alpha Channel', groupId: paramGroups.multiStitcherMemory.id },
+  multiStitch_disposeInputImages: { id: 598, name: 'Dispose input before stitching', groupId: paramGroups.multiStitcherMemory.id },
   multiStitch_limitResultPreview: { id: 596, name: 'Max result view size', groupId: paramGroups.multiStitcherMemory.id },
   multiStitch_limitInputView: { id: 597, name: 'Max input view size', groupId: paramGroups.multiStitcherMemory.id },
-  multiStitch_disposeInputImages: { id: 598, name: 'Dispose input before stitching', groupId: paramGroups.multiStitcherMemory.id },
-  multiStitch_limitLiveStitchingPreview: { id: 599, name: 'Max temp result size', groupId: paramGroups.multiStitcherMemory.id },
+  multiStitch_limitLiveStitchingPreview: { id: 599, name: 'Max temp result size', groupId: paramGroups.multiStitcherMemory.id }
+  
 
   
 });
@@ -427,7 +428,15 @@ export const paramTexts = Object.freeze([
   { id: paramTypes.multiStitch_limitLiveStitchingPreview.id,
     text: 'To save memory and increase performance, the preview during stitching can be reduces in size.'
         + 'This has no influence on the final stitching result.' 
+  },
+  { id: paramTypes.multiStitch_preserveAlphaChannelValue.id,
+    text: 'To save memory while blending, preserving of alpha channel values can be disabled.' 
+        + 'The final stitching result is only influeces if images containing non opaque areas are stitched together.' 
   }
+
+
+
+  
 
 
 ]);

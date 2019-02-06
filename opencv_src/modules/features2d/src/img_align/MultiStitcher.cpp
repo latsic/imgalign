@@ -13,6 +13,7 @@
 #include "opencv2/imgproc/types_c.h"
 
 #include <numeric>
+#include <memory>
 
 
 using namespace cv;
@@ -114,6 +115,49 @@ namespace
       spStitchInfo->matchInfoInverse.dismissDetailData();
     }
   }
+
+  void setScaledImages(
+    const TImages &srcImages, TImages &imagesScaled, std::vector<double> &scaleFactors, int maxPixelsN)
+  {
+    FUNCLOGTIMEL("MultiStitcher::setScaledImages");
+
+    imagesScaled.resize(srcImages.size());
+    scaleFactors.clear();
+    size_t imageIndex = 0;
+    for(const auto &image : srcImages) {
+
+      Mat srcImageGray;
+		  cvtColor(image, srcImageGray, CV_RGBA2GRAY);
+
+      scaleFactors.push_back(
+        1.0 / ImageUtils::resize(srcImageGray, imagesScaled[imageIndex], maxPixelsN));
+
+      ++imageIndex;
+    }
+  }
+
+  bool camDataUpToDate(
+    const Settings &settingsNew, const Settings *settingsLast,
+    std::vector<double> &fieldsOfViewNew, const std::vector<double> *fieldsOfViewLast)
+  {
+    if(settingsLast == nullptr) return false;
+    if(fieldsOfViewLast == nullptr) return false;
+
+    if(settingsNew.getValue(eMultiStitch_bundleAdjustType) != settingsLast->getValue(eMultiStitch_bundleAdjustType)) return false;
+    if(settingsNew.getValue(eMultiStitch_camEstimate) != settingsLast->getValue(eMultiStitch_camEstimate)) return false;
+    if(settingsNew.getValue(eMultiStitch_calcImageOrder) != settingsLast->getValue(eMultiStitch_calcImageOrder)) return false;
+    if(settingsNew.getValue(eMultiStitch_calcCenterImage) != settingsLast->getValue(eMultiStitch_calcCenterImage)) return false;
+    if(settingsNew.getValue(eMultiStitch_confidenceThresh) != settingsLast->getValue(eMultiStitch_confidenceThresh)) return false;
+
+
+    if(fieldsOfViewNew.size() != fieldsOfViewLast->size()) return false;
+    for(size_t i = 0; i < fieldsOfViewNew.size(); ++i) {
+      if(fieldsOfViewNew[i] != (*fieldsOfViewLast)[i]) return false;
+    }
+
+    return true;
+  }
+
 }
 
 MultiStitcher::MultiStitcher(
@@ -132,21 +176,9 @@ MultiStitcher::MultiStitcher(
     throw std::logic_error("No src image input");
   }
   
-  int maxPixelsN = (int)settings.getValue(eImageCap);
-  srcImagesScaled.resize(inSrcImages.size());
   srcImagesSizes.resize(inSrcImages.size());
-  size_t imageIndex = 0;
-  for(const auto &image : inSrcImages) {
-
-    Mat srcImageGray;
-		cvtColor(image, srcImageGray, CV_RGBA2GRAY);
-
-    scaleFactors.push_back(
-      1.0 / ImageUtils::resize(srcImageGray, srcImagesScaled[imageIndex], maxPixelsN));
-  
-    srcImagesSizes[imageIndex] = image.size();
-
-    ++imageIndex;
+  for(size_t i = 0; i < inSrcImages.size(); ++i) {
+    srcImagesSizes[i] = inSrcImages[i].size();
   }
 }
 
@@ -155,7 +187,7 @@ MultiStitcher::getStitchedImage()
 {
   FUNCLOGTIMEL("MultiStitcher::getStitchedImage");
   stitchedImage.stitch(compensateExposure, rectifyPerspective,
-    rectifyStretch, blendType, blendStrength, seamFinderType);
+    rectifyStretch, blendType, blendStrength, seamFinderType, !preserveAlphaChannelValue);
   stitchedImage.imageSizeOrig = stitchedImage.image.size();
   WarperHelper::rotateIf(stitchedImage.image, settings.getValue(eMultiStitch_projection));
   return stitchedImage.image;
@@ -168,7 +200,7 @@ MultiStitcher::getStitchedImageCurrent(bool update)
 
   if(update) {
 
-    int maxPixelsN = (int)settings.getValue(eMultiStitch_limitLiveStitchingPreview);
+    int maxPixelsN = currentStitchedImageMaxPixelsN;
     stitchedImage.stitchFast();
     stitchedImage.imageSizeOrig = stitchedImage.image.size();
     ImageUtils::resizeIf(stitchedImage.image, maxPixelsN);
@@ -213,24 +245,26 @@ MultiStitcher::initStiching(
   }
   fieldsOfView.assign(inFieldsOfView.begin(), inFieldsOfView.end());
 
-  projectionType = settings.getValue(eMultiStitch_projection);
-  rectifyPerspective = settings.getValue(eMultiStitch_rectifyPerspective);
-  rectifyStretch = settings.getValue(eMultiStitch_rectifyStretch);
-  camEstimate = settings.getValue(eMultiStitch_camEstimate);
+  projectionType = (int)settings.getValue(eMultiStitch_projection);
+  featureDetectionMaxPixelsN = (int)settings.getValue(eImageCap);
+  rectifyPerspective = (bool)settings.getValue(eMultiStitch_rectifyPerspective);
+  rectifyStretch = (bool)settings.getValue(eMultiStitch_rectifyStretch);
+  camEstimate = (bool)settings.getValue(eMultiStitch_camEstimate);
   bundleAdjustType = settings.getBundleAdjustType();
-  colorTransfer = settings.getValue(eMultiStitch_colorTransfer);
-  seamBlend = settings.getValue(eMultiStitch_seamBlend);
+  colorTransfer = (bool)settings.getValue(eMultiStitch_colorTransfer);
+  seamBlend = (bool)settings.getValue(eMultiStitch_seamBlend);
   seamFinderType = settings.getSeamFinderType();
-  compensateExposure = settings.getValue(eMultiStitch_exposureCompensator);
-  calcImageOrder = settings.getValue(eMultiStitch_calcImageOrder);
+  compensateExposure = (bool)settings.getValue(eMultiStitch_exposureCompensator);
+  calcImageOrder = (bool)settings.getValue(eMultiStitch_calcImageOrder);
   confidenceThresh = settings.getValue(eMultiStitch_confidenceThresh);
-  // blendType = settings.getBlendType();
   blendStrength = settings.getValue(eMultiStitch_blendStrength);
-  globalScale = 0.0;
+  preserveAlphaChannelValue = (bool)settings.getValue(eMultiStitch_preserveAlphaChannelValue);
+  //globalScale = 0.0;
   wcType = settings.getValue(eMultiStitch_waveCorrection) > 0.0
     ? WaveCorrectType::WCT_AUTO
     : WaveCorrectType::WCT_NONE;
-  calcCenterImage = settings.getValue(eMultiStitch_calcCenterImage);
+  calcCenterImage = (bool)settings.getValue(eMultiStitch_calcCenterImage);
+  currentStitchedImageMaxPixelsN = (int)settings.getValue(eMultiStitch_limitLiveStitchingPreview);
   stitchInfoFirstLast = nullptr;
 
   tfType = settings.getTransformFinderType();
@@ -241,6 +275,7 @@ MultiStitcher::initStiching(
     : BlendType::BT_NONE;
 
   LogUtils::getLog() << "projectionType " << projectionType << std::endl;
+  LogUtils::getLog() << "featureDetectionMaxPixelsN " << featureDetectionMaxPixelsN << std::endl;
   LogUtils::getLog() << "rectifyPerspective " << rectifyPerspective << std::endl;
   LogUtils::getLog() << "rectifyStretch " << rectifyStretch << std::endl;
   LogUtils::getLog() << "camEstimate " << camEstimate << std::endl;
@@ -253,19 +288,30 @@ MultiStitcher::initStiching(
   LogUtils::getLog() << "calcCenterImage " << calcCenterImage << std::endl;
   LogUtils::getLog() << "confidenceThresh " << confidenceThresh << std::endl;
   LogUtils::getLog() << "seamFinderType " << (int)(settings.getValue(eMultiStitch_seamFinderType)) << std::endl;
+  LogUtils::getLog() << "preserveAlphaChannelValue " << preserveAlphaChannelValue << std::endl;
+  LogUtils::getLog() << "livePreviewMaxPixelsN " << currentStitchedImageMaxPixelsN << std::endl;
+  LogUtils::getLog() << "resultPreviewMaxPixelsN " << (int)(settings.getValue(eMultiStitch_limitResultPreview)) << std::endl;
+
 
   computeKeyPoints();
 
-  for(auto &stitchInfo : stitchInfos) {
-    stitchInfo->resetCamData();
+  bool isCamDataUpToDate = camDataUpToDate(settings, lastSettings.get(), fieldsOfView, lastFieldsOfView.get());
+  
+  if(!isCamDataUpToDate) {
+    for(auto &stitchInfo : stitchInfos) {
+      stitchInfo->resetCamData();
+    }
   }
 
-  centerImageIndex = 0;
-  if(calcCenterImage) {
-    centerImageIndex = getCenterImage();
-  }
+  if(!isCamDataUpToDate) {
+    
+    centerImageIndex = 0;
+    if(calcCenterImage) {
+      centerImageIndex = getCenterImage();
+    }
 
-  stitchOrder = computeStitchOrder();
+    stitchOrder = computeStitchOrder();
+  }
   //stitchInfoFirstLast = computeStitchInfoFirstLast(stitchOrder);
 
   for(auto *stitchInfo : stitchOrder) {
@@ -277,32 +323,62 @@ MultiStitcher::initStiching(
   }
   centerImageIndex = stitchOrder[0]->srcImageIndex;
 
-  computeRelativeRotation(stitchOrder);
-  computeAbsRotation(stitchOrder);
-  setCamMatrices(stitchOrder);
-  //logCameras(stitchOrder);
+  
+  if(!isCamDataUpToDate) {
+    computeRelativeRotation(stitchOrder);
+    computeAbsRotation(stitchOrder);
+    setCamMatrices(stitchOrder);
+    //logCameras(stitchOrder);
+  
+    camEstimateOrBundleAdjustSuccessfull = false;
+    bool estimateCamParams = bundleAdjustType != BundleAdjustType::BAT_NONE || camEstimate;
 
-  auto resetRotMatrices = [&](){
-    TMat eye = TMat::eye(3, 3, CV_64F);
-    for(auto *stitchInfo : stitchOrder) {
-      eye.copyTo(stitchInfo->matR);
+    if(estimateCamParams) {
+      camEstimateOrBundleAdjustSuccessfull =
+        camEstimateAndBundleAdjust(stitchOrder, stitchInfoFirstLast, globalScale);
     }
-  };
 
-  if( (bundleAdjustType == BundleAdjustType::BAT_NONE && !camEstimate)
-    || !camEstimateAndBundleAdjust(stitchOrder, stitchInfoFirstLast, globalScale)) {
-    
-    globalScale = 0.0;
-    resetRotMatrices();
+    if(!camEstimateOrBundleAdjustSuccessfull) {
+
+      auto resetRotMatrices = [&](){
+        TMat eye = TMat::eye(3, 3, CV_64F);
+        for(auto *stitchInfo : stitchOrder) {
+          eye.copyTo(stitchInfo->matR);
+        }
+      };
+
+      globalScale = 0.0;
+      resetRotMatrices();
+    }
   }
-  else {
+  if(camEstimateOrBundleAdjustSuccessfull && wcType != WaveCorrectType::WCT_NONE) {
     waveCorrection(stitchOrder);
   }
+
+
+  // camEstimateOrBundleAdjustSuccessfull = true;
+  // if( (bundleAdjustType == BundleAdjustType::BAT_NONE && !camEstimate)
+  //   || !camEstimateAndBundleAdjust(stitchOrder, stitchInfoFirstLast, globalScale)) {
+    
+  //   globalScale = 0.0;
+  //   resetRotMatrices();
+  //   camEstimateOrBundleAdjustSuccessfull = false;
+  // }
+  // else {
+  //   camEstimateOrBundleAdjustSuccessfull = true;
+  //   if(wcType != WaveCorrectType::WCT_NONE) {
+  //     waveCorrection(stitchOrder);
+  //   }
+  // }
+
+  // if(camEstimateOrBundleAdjustSuccessfull && wcType != WaveCorrectType::WCT_NONE) {
+  //   waveCorrection(stitchOrder);
+  // }
+
 
   logStitchOrder(globalScale, srcImagesSizes, stitchOrder, stitchInfoFirstLast);
 
   //descriptors.clear();
-  srcImagesScaled.clear();
   //keyPoints.clear();
   points.clear();
   dismissDetailedMatchInfoData(stitchInfos);
@@ -313,6 +389,10 @@ MultiStitcher::initStiching(
     stitchOrder,
     globalScale == 0.0 ? nullptr : &globalScale);
   
+  lastSettings = std::unique_ptr<Settings>(new Settings(settings));
+  lastFieldsOfView = std::unique_ptr<std::vector<double>>(
+    new std::vector<double>(fieldsOfView.begin(), fieldsOfView.end()));
+
   return true;
 }
 
@@ -583,37 +663,42 @@ MultiStitcher::computeKeyPoints()
     return;
   }
 
-  cv::Ptr<cv::Feature2D> featureDet;
-  cv::Ptr<cv::Feature2D> featureDes;
+  setScaledImages(srcImages, srcImagesScaled, scaleFactors, featureDetectionMaxPixelsN);
+  try {
+    cv::Ptr<cv::Feature2D> featureDet;
+    cv::Ptr<cv::Feature2D> featureDes;
 
-  FeatureFactory::CreateFeatureDetector(featureDet, settings);
-  FeatureFactory::CreateDescriptorComputer(featureDes, settings);
+    FeatureFactory::CreateFeatureDetector(featureDet, settings);
+    FeatureFactory::CreateDescriptorComputer(featureDes, settings);
 
-  size_t imageIndex = 0;
-  keyPoints.resize(srcImagesScaled.size());
-  descriptors.resize(srcImagesScaled.size());
-  for(auto &image : srcImagesScaled) {
+    size_t imageIndex = 0;
+    keyPoints.resize(srcImagesScaled.size());
+    descriptors.resize(srcImagesScaled.size());
+    for(auto &image : srcImagesScaled) {
 
-    featureDet->detect(image, keyPoints[imageIndex]);
-    featureDes->compute(image, keyPoints[imageIndex], descriptors[imageIndex]);
+      featureDet->detect(image, keyPoints[imageIndex]);
+      featureDes->compute(image, keyPoints[imageIndex], descriptors[imageIndex]);
 
-    auto ptIndex = 0;
-    points[imageIndex].resize(keyPoints[imageIndex].size());
-    for(auto &keyPoint : keyPoints[imageIndex]) {
-      keyPoint.pt.x *= scaleFactors[imageIndex];
-      keyPoint.pt.y *= scaleFactors[imageIndex];
-      points[imageIndex][ptIndex].x = keyPoint.pt.x;
-      points[imageIndex][ptIndex].y = keyPoint.pt.y;
+      auto ptIndex = 0;
+      points[imageIndex].resize(keyPoints[imageIndex].size());
+      for(auto &keyPoint : keyPoints[imageIndex]) {
+        keyPoint.pt.x *= scaleFactors[imageIndex];
+        keyPoint.pt.y *= scaleFactors[imageIndex];
+        points[imageIndex][ptIndex].x = keyPoint.pt.x;
+        points[imageIndex][ptIndex].y = keyPoint.pt.y;
 
-      ++ptIndex;
+        ++ptIndex;
+      }
+      ++imageIndex;
+
+      LogUtils::getLogUserInfo() << "keypoints image "
+        << imageIndex << "/" << srcImagesScaled.size() << std::endl;
     }
-    ++imageIndex;
-
-    LogUtils::getLogUserInfo() << "keypoints image "
-      << imageIndex << "/" << srcImagesScaled.size() << std::endl;
+    keyPointsComputed = true;
   }
-  srcImagesScaled.clear();
-  keyPointsComputed = true;
+  catch(...) {
+    srcImagesScaled.clear();
+  }
 }
 
 const StitchInfo *
@@ -1367,7 +1452,8 @@ StitchedImage::stitch(
   bool rectifyStretch,
   BlendType blendType,
   double blendStrength,
-  SeamFinderType seamFinderType)
+  SeamFinderType seamFinderType,
+  bool saveMemory)
 {
   FUNCLOGTIMEL("StitchedImage::stitch");
 
@@ -1395,6 +1481,7 @@ StitchedImage::stitch(
     blendType,
     blendStrength,
     seamFinderType,
+    saveMemory,
     tempImage);
 
   images.clear();

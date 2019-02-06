@@ -78,7 +78,8 @@ namespace imgalign
       bool rectifyStretch,
       BlendType blendType,
       double blendStrength,
-      SeamFinderType seamFinderType);
+      SeamFinderType seamFinderType,
+      bool saveMemory);
 
     void stitchFast();
     // void stitchFastLatest();
@@ -147,7 +148,10 @@ namespace imgalign
       StitchedImage stitchedImage;
       std::vector<std::shared_ptr<StitchInfo>> stitchInfos;
       const Settings &settings;
+      std::unique_ptr<Settings> lastSettings;
       std::vector<double> fieldsOfView;
+      std::unique_ptr<std::vector<double>> lastFieldsOfView;
+      bool camEstimateOrBundleAdjustSuccessfull = false;
       int projectionType;
       bool rectifyPerspective = true;
       bool rectifyStretch = false;
@@ -165,6 +169,9 @@ namespace imgalign
       bool calcImageOrder = true;
       double confidenceThresh = 0.2;
       WaveCorrectType wcType = WaveCorrectType::WCT_AUTO;
+      bool preserveAlphaChannelValue = false;
+      int featureDetectionMaxPixelsN = 500000;
+      int currentStitchedImageMaxPixelsN = 200000;
       size_t centerImageIndex = 0;
       bool keyPointsComputed = false;
       DesMatcher matcher;

@@ -57,8 +57,7 @@ void ImgStitch::stitchStart(
 
 int ImgStitch::stitchNext(
   OutputArray /*stitchedImage*/,
-  OutputArray /*stitchedImageSmall*/,
-  int /*maxPixelsN*/)
+  OutputArray /*stitchedImageSmall*/)
 {
   CV_Error(Error::StsNotImplemented, "");
 }
@@ -94,8 +93,7 @@ class ImgStitch_Impl : public cv::ImgStitch
 
     int stitchNext(
       cv::OutputArray stitchedImage,
-      cv::OutputArray stitchedImageSmall,
-      int maxPixelsN) CV_OVERRIDE;
+      cv::OutputArray stitchedImageSmall) CV_OVERRIDE;
   
   private:
     void createStitcher();
@@ -127,28 +125,9 @@ namespace imgalign
 ImgStitch_Impl::ImgStitch_Impl(InputArrayOfArrays images)
 {
 	FUNCLOGTIMEL("ImgStitch_Impl::ImgStitch_Impl");
-	try {
+  LogUtils::getLog() << std::setprecision(5);
 
-    LogUtils::getLog() << std::setprecision(8);
-
-    auto imagesN = (int)images.total();  
-    for(auto i = 0; i < imagesN; ++i) {
-      TMat image;
-      images.getMat(i).copyTo(image);
-      srcImages.push_back(image);
-    }
-  }
-  catch(cv::Exception &e) {
-    if(e.code == CV_StsNoMem) {
-      LogUtils::getLogUserError() << "Insufficent memory" << std::endl;
-    }
-    LogUtils::getLog() << e.what() << std::endl;
-    throw e;
-  }
-	catch(std::exception &e) {
-		LogUtils::getLogUserError() << e.what() << std::endl;
-		throw e;
-	}
+  setImages(images);
 }
 
 ImgStitch_Impl::~ImgStitch_Impl()
@@ -275,8 +254,7 @@ void ImgStitch_Impl::stitchStart(
 
 int ImgStitch_Impl::stitchNext(
   OutputArray stitchedImage,
-  OutputArray stitchedImageSmall,
-  int maxPixelsN)
+  OutputArray stitchedImageSmall)
 {
   FUNCLOGTIMEL("ImgStitch_Impl::stitchNext");
   
@@ -331,6 +309,8 @@ int ImgStitch_Impl::stitchNext(
     }
 
     if(allStitchesDone) {
+
+      int maxPixelsN = (int)settings.getValue(eMultiStitch_limitResultPreview);
 
       if(  maxPixelsN > 0
         && maxPixelsN < stitchedImageRef.size().width * stitchedImageRef.size().height) {

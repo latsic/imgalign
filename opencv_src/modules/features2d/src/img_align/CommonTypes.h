@@ -13,6 +13,7 @@ namespace imgalign {
   typedef const TKeyPoint                         TConstKeyPoint;
   typedef const TMat                              TConstMat;
   typedef const std::vector<TConstMat>            TConstImages;
+  typedef std::vector<TMat>                       TImages;
   typedef cv::Rect                                TRect;                                             
   typedef std::vector<TRect>                      TRects;
   typedef const std::vector<TRect>							  TConstRects;

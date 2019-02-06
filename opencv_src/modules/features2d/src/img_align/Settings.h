@@ -152,7 +152,8 @@ namespace imgalign
     eMultiStitch_limitResultPreview = 596,
     eMultiStitch_limitInputView = 597,
     eMultiStitch_disposeInputImages = 598,
-    eMultiStitch_limitLiveStitchingPreview = 599
+    eMultiStitch_limitLiveStitchingPreview = 599,
+    eMultiStitch_preserveAlphaChannelValue = 600
   };
 
   class Settings {

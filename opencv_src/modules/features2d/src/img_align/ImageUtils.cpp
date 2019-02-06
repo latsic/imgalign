@@ -10,6 +10,7 @@
 #include <limits>
 
 #include "blenders/blenders.hpp"
+//#include "blenders/blendersT.hpp"
 #include "seamfinders/seam_finders.hpp"
 #include "exposure_compensator/exposure_compensate.hpp"
 
@@ -195,9 +196,10 @@ inline void restoreAlphaChannel(
 
 inline void blend(
   cv::detail::Blender &blender,
-  const std::vector<TMat> &images,
-	const std::vector<TMat> &masks,
+  std::vector<TMat> &images,
+	std::vector<TMat> &masks,
 	const std::vector<cv::Point> &tlCorners,
+  bool saveMemory,
 	TMat &outImage)
 {
   FUNCLOGTIMEL("ImageUtils::blend");
@@ -210,14 +212,23 @@ inline void blend(
     
     cv::cvtColor(images[i], images_16S3C[i], CV_RGBA2RGB);
     //images_16S3C[i].convertTo(images_16S3C[i], CV_16S);
-
+    if(saveMemory) {
+      images[i].release();
+    }
     blender.feed(images_16S3C[i], masks[i], tlCorners[i]);
+    
+    images_16S3C[i].release();
+    masks[i].release();
   }
+
+  if(saveMemory) {
+    images.clear();
+  }
+
+  images_16S3C.clear();
 
   TMat dst, dstMask;
   blender.blend(dst, dstMask);
-
-  images_16S3C.clear();
 
   dst.convertTo(dst, CV_8U);
   TMat dst_rgba;
@@ -226,7 +237,9 @@ inline void blend(
   outImage = TMat::zeros(dst_rgba.size(), dst_rgba.type());
   dst_rgba.copyTo(outImage, dstMask);
 
-  restoreAlphaChannel(outImage, dstMask, images, tlCorners);
+  if(!saveMemory) {
+    restoreAlphaChannel(outImage, dstMask, images, tlCorners);
+  }
 }
 
 void ImageUtils::blendImages(
@@ -636,42 +649,45 @@ double ImageUtils::resizeIf(TMat &ioImage, int maxPixelsN)
 }
 
 void ImageUtils::blendNone(
-  const std::vector<TMat> &images,
-  const std::vector<TMat> &masks,
+  std::vector<TMat> &images,
+  std::vector<TMat> &masks,
   const std::vector<cv::Point> &tlCorners,
+  bool saveMemory,
   TMat &outImage)
 {
   FUNCLOGTIMEL("ImageUtils::blendNone");
 
   cv::detail::Blender8 blender;
-  imgalign::blend(blender, images, masks, tlCorners, outImage);
+  imgalign::blend(blender, images, masks, tlCorners, saveMemory, outImage);
 }
 
 void ImageUtils::featherBlend(
-  const std::vector<TMat> &images,
-  const std::vector<TMat> &masks,
+  std::vector<TMat> &images,
+  std::vector<TMat> &masks,
   const std::vector<cv::Point> &tlCorners,
   double blendWidth,
+  bool saveMemory,
   TMat &outImage)
 {
   FUNCLOGTIMEL("ImageUtils::featherBlend");
 
   cv::detail::FeatherBlender blender((float)(1.0 / blendWidth));
-  imgalign::blend(blender, images, masks, tlCorners, outImage);
+  imgalign::blend(blender, images, masks, tlCorners, saveMemory, outImage);
 }
 
 void ImageUtils::blendMultiBand(
-  const std::vector<TMat> &images,
-  const std::vector<TMat> &masks,
+  std::vector<TMat> &images,
+  std::vector<TMat> &masks,
   const std::vector<cv::Point> &tlCorners,
   double blendWidth,
+  bool saveMemory,
   TMat &outImage)
 {
   FUNCLOGTIMEL("ImageUtils::blendMultiBand");
 
   int numBands = ceil(log(blendWidth) / log(2.0)) - 1.0;
-  cv::detail::MultiBandBlender blender(false, numBands);
-  imgalign::blend(blender, images, masks, tlCorners, outImage);
+  cv::detail::MultiBandBlender blender(false, numBands, CV_16S);
+  imgalign::blend(blender, images, masks, tlCorners, saveMemory, outImage);
 }
 
 void
@@ -735,7 +751,7 @@ void ImageUtils::stitch(
   std::vector<TMat> masks{ mask1, mask2};
   std::vector<cv::Point> tlCorners(2, cv::Point(0, 0));
   stitch(images, masks, tlCorners,
-    exposureCompensate, blendType, blendStrength, seamFinderType, outDst);
+    exposureCompensate, blendType, blendStrength, seamFinderType, false, outDst);
 }
 
 void ImageUtils::stitch(
@@ -746,6 +762,7 @@ void ImageUtils::stitch(
   BlendType blendType,
   double blendStrength,
   SeamFinderType seamFinderType,
+  bool saveMemory,
   TMat &outDst)
 {
   FUNCLOGTIMEL("ImageUtils::stitch");
@@ -805,16 +822,16 @@ void ImageUtils::stitch(
   switch(_blendType) {
     
     case BlendType::BT_FEATHER: {
-      featherBlend(images, masks, tlCorners, blendWidth, outDst);
+      featherBlend(images, masks, tlCorners, blendWidth, saveMemory, outDst);
       break;
     }
     case BlendType::BT_NONE: {
-      blendNone(images, masks, tlCorners, outDst);
+      blendNone(images, masks, tlCorners, saveMemory, outDst);
       break;
     }
     case BlendType::BT_MULTIBAND:
     default: {
-      blendMultiBand(images, masks, tlCorners, blendWidth, outDst); 
+      blendMultiBand(images, masks, tlCorners, blendWidth, saveMemory, outDst); 
     }
   }
 }

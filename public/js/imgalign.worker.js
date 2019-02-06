@@ -47,10 +47,6 @@ let mMovingPtsInlier = null;
 let mImgStitch = null;
 let mMultiStitchImages = null;
 
-let previewMaxPixelsN = 10000000;
-
-
-
 function postMessageConsoleFromExtern(msg, args) {
   postMessage({
     msg: msg,
@@ -264,10 +260,6 @@ function multiStitchInit(payload) {
   if(!cv || !cv.Mat) {
     throw new Error('No data available, forgot to call load?');
   }
-
-    if(payload.previewMaxPixelsN) {
-      previewMaxPixelsN = payload.previewMaxPixelsN;
-    }
 
     if(mImgStitch == null) {
       _multiStitchReset();
@@ -502,10 +494,9 @@ function multiStitchNext() {
 
   let stitchedImage = new cv.Mat();
   let stitchedImageSmall = new cv.Mat();
-  let maxPixelsN = previewMaxPixelsN;
-
+  
   try {
-    const imagesN = mImgStitch.stitchNext(stitchedImage, stitchedImageSmall, maxPixelsN);
+    const imagesN = mImgStitch.stitchNext(stitchedImage, stitchedImageSmall);
 
     if(imagesN == -1) {
       throw new Error("failed to stitch image");
