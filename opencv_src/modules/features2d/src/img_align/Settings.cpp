@@ -49,8 +49,8 @@ namespace imgalign
 
       { eMatchFilterSpreadAuto, { 1.0f, "MatchFilterSpreadAuto" } },
       { eMatchFilterSpreadFactor, { 2.2f, "MatchFilterSpreadFactor" } },
-      { eMatchFilterMinMatchesToRetain, { 30.0f, "MatchFilterMinMatchesToRetain" } },
-      { eMatchFilterMaxMatchesToRetain, { 300.0f, "MatchFilterMaxMatchesToRetain" } },
+      { eMatchFilterMinMatchesToRetain, { 300.0f, "MatchFilterMinMatchesToRetain" } },
+      { eMatchFilterMaxMatchesToRetain, { 800.0f, "MatchFilterMaxMatchesToRetain" } },
 
       { eFloodFillTolerance, { 10.0f, "FloodFillTolerance" } },
       { eAlignSelectionOverlay, { (float)0.0f, "AlignSelectionOverlay" } },
@@ -90,7 +90,11 @@ namespace imgalign
       { eMultiStitch_colorTransfer, { 0.0f, "MultiStitch_colorTransfer" } },
       { eMultiStitch_calcImageOrder, { 1.0f, "MultiStitch_calcImageOrder" } },
       { eMultiStitch_calcCenterImage, { 1.0f, "MultiStitch_calcCenterImage" } },
-      { eMultiStitch_confidenceThresh, { 0.2f, "MultiStitch_confidenceThresh" } },
+      { eMultiStitch_warpFirst, { 0.0f, "MultiStitch_warpFirst" } },
+
+      { eMultiStitch_confidenceThresh, { 0.5f, "MultiStitch_confidenceThresh" } },
+      { eMultiStitch_confidenceThreshCam, { 1.2f, "MultiStitch_confidenceThreshCam" } },
+      { eMultiStitch_confidenceThreshCamManual, { 0.0f, "MultiStitch_confidenceThreshCamAuto" } },
       { eMultiStitch_exposureCompensator, { 0.0f, "MultiStitch_exposureCompensator" } },
       //{ eMultiStitch_blendType, { (float)eBlendType_multiBand, "MultiStitch_blendType"}},
       { eMultiStitch_blendStrength, { 5.0f, "MultiStitch_blendStrength" } },
@@ -100,7 +104,8 @@ namespace imgalign
       { eMultiStitch_limitInputView, { 100000.0f, "MultiStitch_limitInputView" } },
       { eMultiStitch_disposeInputImages, { 0.0f, "MultiStitch_disposeInputImages" } },
       { eMultiStitch_limitLiveStitchingPreview, { 200000.0f, "MultiStitch_limitLiveStitchingPreview" } },
-      { eMultiStitch_preserveAlphaChannelValue, { 0.0f, "MultiStitch_preserveAlphaChannelValue" } }
+      { eMultiStitch_preserveAlphaChannelValue, { 0.0f, "MultiStitch_preserveAlphaChannelValue" } },
+      { eMultiStitch_liveUpdateCycle, { 5.0f, "MultiStitch_liveUpdateCycle" } }
 
     };
   }
@@ -161,6 +166,11 @@ namespace imgalign
       case eBundleAdjustType_none: return BundleAdjustType::BAT_NONE;
       case eBundleAdjustType_ray: return BundleAdjustType::BAT_RAY;
       case eBundleAdjustType_reproj: return BundleAdjustType::BAT_REPROJ;
+      case eBundleAdjustType_rayretry: return BundleAdjustType::BAT_RAYRETRY;
+      case eBundleAdjustType_ray2: return BundleAdjustType::BAT_RAY2;
+      case eBundleAdjustType_reproj2: return BundleAdjustType::BAT_REPROJ2;
+      case eBundleAdjustType_reprojcap: return BundleAdjustType::BAT_REPROJCAP;
+      case eBundleAdjustType_ray3: return BundleAdjustType::BAT_RAY3;
       case eBundleAdjustType_auto:
       default: return BundleAdjustType::BAT_AUTO;
     }

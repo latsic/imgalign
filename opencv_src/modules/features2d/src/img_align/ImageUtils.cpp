@@ -17,6 +17,27 @@
 namespace imgalign
 {
 
+std::vector<cv::Point> moveToLg0(const std::vector<cv::Point> &rPts)  
+{
+  FUNCLOGTIMEL("ImageUtils::moveToLg0");
+
+  int xMin = 0;
+  int yMin = 0;
+
+  for(const auto &pt : rPts) {
+    if(pt.x < xMin) xMin = pt.x;
+    if(pt.y < yMin) yMin = pt.y;
+  }
+
+  std::vector<cv::Point> ptsLg0(rPts.size());
+  for(size_t i = 0; i < rPts.size(); ++i) {
+    ptsLg0[i].x = rPts[i].x - xMin;
+    ptsLg0[i].y = rPts[i].y - yMin;
+  }
+  
+  return ptsLg0;
+}
+
 inline cv::Size getSize(
   const std::vector<cv::Point> &tlCorners,
   const std::vector<cv::Size> &sizes)
@@ -806,6 +827,8 @@ void ImageUtils::stitch(
   imagesU.clear();
 
 
+  auto tlCornersLg0 = moveToLg0(tlCorners);
+
   for(size_t i = 0; i < images.size(); ++i) {
     masksU[i].copyTo(masks[i]);
   }
@@ -813,7 +836,7 @@ void ImageUtils::stitch(
 
   LogUtils::getLogUserInfo() << "Blending" << std::endl;
 
-  auto blendWidth = getBlendWidth(blendStrength, tlCorners, images);
+  auto blendWidth = getBlendWidth(blendStrength, tlCornersLg0, images);
 
   auto _blendType = blendWidth < 1.0
     ? BlendType::BT_NONE
@@ -822,16 +845,16 @@ void ImageUtils::stitch(
   switch(_blendType) {
     
     case BlendType::BT_FEATHER: {
-      featherBlend(images, masks, tlCorners, blendWidth, saveMemory, outDst);
+      featherBlend(images, masks, tlCornersLg0, blendWidth, saveMemory, outDst);
       break;
     }
     case BlendType::BT_NONE: {
-      blendNone(images, masks, tlCorners, saveMemory, outDst);
+      blendNone(images, masks, tlCornersLg0, saveMemory, outDst);
       break;
     }
     case BlendType::BT_MULTIBAND:
     default: {
-      blendMultiBand(images, masks, tlCorners, blendWidth, saveMemory, outDst); 
+      blendMultiBand(images, masks, tlCornersLg0, blendWidth, saveMemory, outDst); 
     }
   }
 }
@@ -843,14 +866,15 @@ void ImageUtils::stitchFast(
   TMat &outDst)
 {
   FUNCLOGTIMEL("ImageUtils::stitchFast");
-
   if(images.empty()) return;
 
-  auto box = bbox(images, tlCorners);
+  auto tlCornersLg0 = moveToLg0(tlCorners);
+
+  auto box = bbox(images, tlCornersLg0);
   outDst = TMat::zeros(box, images[0].type());
 
   for(size_t i = 0; i < images.size(); ++i) {
-    cv::Rect rRoi(tlCorners[i].x, tlCorners[i].y,
+    cv::Rect rRoi(tlCornersLg0[i].x, tlCornersLg0[i].y,
       images[i].size().width, images[i].size().height);
 
     TMat mRoi(outDst, rRoi);

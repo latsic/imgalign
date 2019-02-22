@@ -293,8 +293,18 @@ void WarperHelper::getRelativeRotation(
   const auto tx = ct2.x - ct1.x;
   const auto ty = ct2.y - ct1.y;
 
+  double diagBox1 = std::sqrt(w1 * w1 + h1 * h1);
+  double diagBox2 = std::sqrt(
+                    (bBox2Warped[2].x - bBox2Warped[0].x) * (bBox2Warped[2].x - bBox2Warped[0].x) 
+                  + (bBox2Warped[2].y - bBox2Warped[0].y) * (bBox2Warped[2].y - bBox2Warped[0].y));
+
+  double vDiag = diagBox1 / diagBox2;
+
   outYaw = tx * fieldOfViewX1 / w1;
   outPitch = -(ty * fieldOfViewX1 / w1);
+
+  outYaw *= vDiag;
+  outPitch *= vDiag;
 }
 
 void WarperHelper::warpPoints(
@@ -345,8 +355,8 @@ cv::Point WarperHelper::warpImage(
   TMat &outMat,
   double fieldOfView,
   TConstMat &rotMat,
-  bool useLinear,
-  bool useBorderReflect)
+  bool useBorderReflect,
+  bool useLinear)
 {
   FUNCLOGTIMEL("WarperHelper::warpImage  with fieldOfView");
 
@@ -437,8 +447,6 @@ cv::Point WarperHelper::warpImage(
   double *globalScale)
 {
   FUNCLOGTIMEL("WarperHelper::warpImage");
-
-  //useLinear = true;
 
   CV_Assert(kMat.type() == CV_64F);
   CV_Assert(rotMat.type() == CV_64F);
@@ -580,40 +588,30 @@ void WarperHelper::getBox(
     bBoxWarped[0], bBoxWarped[1], bBoxWarped[2], bBoxWarped[3]
   };
 
-  auto xMin = std::min(ptsAll,
-			[](const Point &pt1, const Point &pt2) {
-				return pt1.x < pt2.x;
-			});
+  auto xCompare = [](const Point &pt1, const Point &pt2) {
+    return pt1.x < pt2.x;
+  };
+  auto yCompare = [](const Point &pt1, const Point &pt2) {
+    return pt1.y < pt2.y;
+  };
 
-		auto xMax = std::max(ptsAll,
-			[](const Point &pt1, const Point &pt2) {
-				return pt1.x < pt2.x;
-			});
+  auto xMin = std::min(ptsAll, xCompare);
+  auto xMax = std::max(ptsAll, xCompare);
+  auto yMin = std::min(ptsAll, yCompare);
+  auto yMax = std::max(ptsAll, yCompare);
 
-		auto yMin = std::min(ptsAll,
-			[](const Point &pt1, const Point &pt2) {
-				return pt1.y < pt2.y;
-			});
+  outTx = -xMin.x;
+  outTy = -yMin.y;
 
-		auto yMax = std::max(ptsAll,
-			[](const Point &pt1, const Point &pt2) {
-				return pt1.y < pt2.y;
-			});	
-	
-		outTx = -xMin.x;
-		outTy = -yMin.y;
+  Mat tM = Mat::eye(3,3,CV_64F);
+  tM.at<double>(0,2) = outTx;
+  tM.at<double>(1,2)= outTy;
+  ioHomography = tM * ioHomography;
 
-
-    Mat tM = Mat::eye(3,3,CV_64F);
-    tM.at<double>(0,2) = outTx;
-    tM.at<double>(1,2)= outTy;
-    ioHomography = tM * ioHomography;
-    
-
-    outL = xMin.x;
-    outT = yMin.y;
-    outR = xMax.x;
-    outB = yMax.y;
+  outL = xMin.x;
+  outT = yMin.y;
+  outR = xMax.x;
+  outB = yMax.y;
 }
 
 double WarperHelper::fieldOfView(

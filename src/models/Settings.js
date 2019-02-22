@@ -244,14 +244,14 @@ export class Settings {
       {
         id: paramTypes.matchFilterMinMatchesToRetain.id,
         type: valueTypes.number,
-        value: 30,
-        defaultValue: 30
+        value: 300,
+        defaultValue: 300
       },
       {
         id: paramTypes.matchFilterMaxMatchesToRetain.id,
         type: valueTypes.number,
-        value: 300,
-        defaultValue: 300
+        value: 800,
+        defaultValue: 800
       },
 
       { id: paramTypes.stitch_projection.id,
@@ -424,11 +424,30 @@ export class Settings {
         value: 1,
         defaultValue: 1
       },
+      {
+        id: paramTypes.multiStitch_warpFirst.id,
+        type: valueTypes.bool,
+        value: 0,
+        defaultValue: 0
+      },
       { id: paramTypes.multiStitch_confidenceThresh.id,
         type: valueTypes.range,
-        defaultValue: 0.2,
-        value: 0.2,
-        range: { min: 0, max: 1 }
+        defaultValue: 0.5,
+        value: 0.5,
+        range: { min: 0.0, max: 4.0 }
+      },
+
+      { id: paramTypes.multiStitch_confidenceThreshCam.id,
+        type: valueTypes.range,
+        defaultValue: 1.2,
+        value: 1.2,
+        range: { min: 0.0, max: 4.0 }
+      },
+      {
+        id: paramTypes.multiStitch_confidenceThreshCamManual.id,
+        type: valueTypes.bool,
+        value: 0,
+        defaultValue: 0
       },
 
       { id: paramTypes.multiStitch_limitResultPreview.id,
@@ -460,6 +479,12 @@ export class Settings {
         type: valueTypes.bool,
         value: 0,
         defaultValue: 0
+      },
+      { id: paramTypes.multiStitch_liveUpdateCycle.id,
+        type: valueTypes.range,
+        defaultValue: 5,
+        value: 5,
+        range: { min: 1, max: 20 }
       }
     ];
   }

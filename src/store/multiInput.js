@@ -133,6 +133,11 @@ const mutations = {
   },
   removeAll(state) {
     state.imageDataArray = [];
+
+    // for(let imageUrl of state.imageDataUrlsArray) {
+    //   URL.revokeObjectURL(imageUrl);
+    // }
+
     state.imageDataUrlsArray = [];
     state.imageFileArray = [];
     state.imageFieldOfViewArray = [];
@@ -215,6 +220,7 @@ const actions = {
       img.onload = async () => {
         try {
           const imageData = ImageDataConversion.imageDataFromImageSrc(img);
+          
           await context.dispatch('imageData', imageData);
           context.commit('_imageFile', file);
           
@@ -229,6 +235,7 @@ const actions = {
           }
 
           img.onload = null;
+          URL.revokeObjectURL(img.src);
         }
         finally {
           if(!wasBusy) context.commit('busy', false);

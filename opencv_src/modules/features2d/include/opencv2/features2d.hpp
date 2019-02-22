@@ -144,13 +144,15 @@ class CV_EXPORTS_W ImgStitch
     CV_WRAP virtual int stitch(
         CV_IN_OUT std::vector<float> &fieldsOfView,
         OutputArray stitchedImage);
-    CV_WRAP virtual void stitchStart(
+    CV_WRAP virtual int stitchStart(
       CV_IN_OUT std::vector<float> &fieldsOfView,
       OutputArray stitchedImage,
       CV_IN_OUT std::vector<int> &stitchIndices);
     CV_WRAP virtual int stitchNext(
         OutputArray stitchedImage,
         OutputArray stitchedImageSmall);
+
+    CV_WRAP virtual void signalAbort();
 
     CV_WRAP static Ptr<ImgStitch> create(InputArrayOfArrays images);
 };

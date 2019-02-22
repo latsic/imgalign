@@ -393,19 +393,42 @@ export default {
     },
     timeStr(timeMs) {
       if(timeMs <= 0) return '';
-      if(timeMs < 1000) {
-        return timeMs + ' ms';
+      
+      const timeM = Math.floor(timeMs / 60000.0);
+      const timeS = timeMs / 1000.0 - timeM * 60.0;
+
+      if(timeM >= 1) {
+        return `${timeM} m ${Math.floor(timeS)} s`
       }
-      if(timeMs < 10000) {
-        return (timeMs / 1000.0).toFixed(3) + ' s';
+      if(timeS > 10) {
+        return `${timeS.toFixed(1)} s`
       }
-      if(timeMs < 100000) {
-        return (timeMs / 1000.0).toFixed(2) + ' s';
-      }
-      if(timeMs < 600000) {
-        return (timeMs / 1000.0).toFixed(1) + ' s';
-      }
-      return `${(timeMs / 600000).toFixed(0)} m, ${(timeMs % 600000)} s`;
+    
+      return `${timeS.toFixed(2)} s`
+
+
+      // const timeS = timeMs / 1000.0;
+      // const timeM = timeMs / 60000.0;
+      
+      // if(timeMs < 1000) {
+      //   return timeMs + ' ms';
+      // }
+      // if(timeMs < 10000) {
+      //   return (timeMs / 1000.0).toFixed(3) + ' s';
+      // }
+      // if(timeMs < 100000) {
+      //   return (timeMs / 1000.0).toFixed(2) + ' s';
+      // }
+      // if(timeMs < 600000) {
+      //   return (timeMs / 1000.0).toFixed(1) + ' s';
+      // }
+
+
+
+      // const m = (timeMs / 600000).toFixed(0);
+      // const s = ((timeMs - (600000 * m)) / 1000.0).toFixed(0);
+
+      // return `${m} m, ${s} s`;
     },
     setCurrentComputeTime(value) {
       this.$store.commit('worker/currentComputeTime', value);

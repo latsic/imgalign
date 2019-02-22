@@ -3,7 +3,7 @@
     row
     justify-start
     wrap
-    align-baseline
+    align-center
   >
     <v-flex
       v-for="param of params"
@@ -22,11 +22,6 @@
         hide-details
         @change="value => changed(param.id, value ? 1 : 0 )"
       />
-      <app-select
-        v-if="param.type == valueTypes.discrete"
-        :param="param"
-        @change="changedDiscrete"
-      />
       <v-slider
         v-if="param.type == valueTypes.range"  
         always-dirty
@@ -40,56 +35,18 @@
         @change="value => $emit('change', { id: param.id, value })"
       />
     </v-flex>
-    <v-flex
-      xs6
-      sm6
-      pa-2
-      v-if="showFieldOfView"
-    >
-      <v-text-field
-        :name="'fieldOfView'"
-        :label="'Field of view'"
-        :hint="'Select input images'"
-        persistent-hint
-        :placeholder="fieldOfViewDefaultValue"
-        :value="showFieldOfView && enableFieldOfView ? fieldOfView : ''"
-        :type="'number'"
-        :disabled="!enableFieldOfView"
-        @change="value => fieldOfViewChanged(value)"
-      />
-    </v-flex>
   </v-layout>
 </template>
 
 <script>
 
 import { valueTypes, ParamUtils } from '@/models/constants/params';
-import Select from '@/components/settings/Select';
 
 export default {
-  components: {
-    'AppSelect': Select
-  },
   props: {
     params: {
       type: Array,
       required: true
-    },
-    showFieldOfView: {
-      type: Boolean,
-      default: false
-    },
-    enableFieldOfView: {
-      type: Boolean,
-      default: false
-    },
-    fieldOfView: {
-      type: String,
-      default: null
-    },
-    fieldOfViewDefaultValue: {
-      type: String,
-      default: '45'
     }
   },
   data() {
@@ -105,17 +62,12 @@ export default {
     paramName(id) {
       return ParamUtils.getParamName(id);
     },
-    changedDiscrete(obj) {
-      this.$emit('change', obj);
-    },
+   
     changed(id, value) {
       const valueNumber = Number(value);
       if(!isNaN(valueNumber)) {
         this.$emit('change', { id, value: valueNumber });
       }
-    },
-    fieldOfViewChanged(value) {
-      this.$emit('fieldOfViewChange', value);
     },
     isDisabled(param) {
 

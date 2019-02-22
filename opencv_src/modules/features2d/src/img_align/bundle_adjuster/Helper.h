@@ -29,11 +29,18 @@ namespace bundle
       const std::vector<TMat> &descriptors,
       const std::vector<cv::Size> &imageSizes,
       const std::vector<double> &fieldOfViews,
-      const std::vector<const StitchInfo *> &stitchInfos,
-      const StitchInfo *stitchInfoFirstLast,
+      const std::vector<const StitchInfo *> &rStitchOrder,
+      const std::vector<const StitchInfo *> &rStitchInfos,
+      double confidenceThreshCam,
       std::vector<MatchesInfo> &matchesInfoV,
       std::vector<CameraParams> &cameraParamsV,
       std::vector<ImageFeatures> &imageFeaturesV);
+
+    static bool getMatchInfo(
+      size_t srcImageIndex, size_t dstImageIndex,
+      double confidenceThresh,
+      double sumDeltaHV,
+      const MatchInfo &matchInfo, MatchesInfo &outMatchesInfo);
   };
 
 }

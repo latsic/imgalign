@@ -211,6 +211,11 @@ function _multiStitchReset()
     mImgStitch = null;
   }
   if(mMultiStitchImages) {
+
+    for(let i = 0; i < mMultiStitchImages.size(); ++i) {
+      mMultiStitchImages.get(i).delete();
+    }
+
     mMultiStitchImages.delete();
     mMultiStitchImages = null;
   }
@@ -267,8 +272,11 @@ function multiStitchInit(payload) {
     try {
 
       mMultiStitchImages = new cv.MatVector();
+      let mMultiStitchImages2 = [];
       for(const image of payload.images) {
-        mMultiStitchImages.push_back(cv.matFromImageData(image));
+        let mat = cv.matFromImageData(image); 
+        mMultiStitchImages.push_back(mat);
+        mMultiStitchImages2.push(mat);
       }   
 
       if(mImgStitch == null) {
@@ -276,6 +284,11 @@ function multiStitchInit(payload) {
       }
       else {
         mImgStitch.setImages(mMultiStitchImages);
+      }
+      
+      for(let i = 0; i < mMultiStitchImages.size(); ++i) {
+        mMultiStitchImages2[i].delete();
+        mMultiStitchImages.get(i).delete();
       }
       
       mMultiStitchImages.delete();
@@ -291,7 +304,7 @@ function multiStitchInit(payload) {
 
 function _setParams(paramsArr, dstInstance) {
 
-  if(paramsArr && paramsArr.length > 0) {
+  //if(paramsArr && paramsArr.length > 0) {
    
     let paramTypes = new cv.IntVector();
     let paramValues = new cv.FloatVector();
@@ -308,7 +321,7 @@ function _setParams(paramsArr, dstInstance) {
       paramTypes.delete();
       paramValues.delete();
     }
-  }
+  //}
 }
 
 function setParams(paramsArr) {
@@ -469,7 +482,11 @@ function multiStitchStart(payload) {
       fieldsOfView.push_back(fieldOfView);
     }
     
-    mImgStitch.stitchStart(fieldsOfView, stitchedImage, stitchIndices); 
+    const result = mImgStitch.stitchStart(fieldsOfView, stitchedImage, stitchIndices); 
+
+    if(result == -1) {
+      throw new Error("Check log for more info");
+    }
     
     const stitchIndicesResult = [];
     for(let i = 0; i < stitchIndices.size(); ++i) {
@@ -499,7 +516,7 @@ function multiStitchNext() {
     const imagesN = mImgStitch.stitchNext(stitchedImage, stitchedImageSmall);
 
     if(imagesN == -1) {
-      throw new Error("failed to stitch image");
+      throw new Error("Check log for more info");
     }
 
     if(imagesN == 0) {
@@ -595,6 +612,7 @@ function resize(payload) {
   finally {
     image.delete();
     resizeImage.delete();
+    //dims.delete();
   }
 }
 

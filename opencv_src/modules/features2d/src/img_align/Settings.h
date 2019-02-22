@@ -125,6 +125,11 @@ namespace imgalign
     eBundleAdjustType_ray = 571,
     eBundleAdjustType_reproj = 572,
     eBundleAdjustType_auto = 573,
+    eBundleAdjustType_rayretry = 569,
+    eBundleAdjustType_ray2 = 568,
+    eBundleAdjustType_reproj2 = 567,
+    eBundleAdjustType_reprojcap = 566,
+    eBundleAdjustType_ray3 = 602,
 
     eBlendType_none = 574,
     eBlendType_multiBand = 575,
@@ -148,12 +153,17 @@ namespace imgalign
     //eMultiStitch_blendType = 591,
     eMultiStitch_blendStrength = 592,
     eMultiStitch_rectifyStretch = 593,
+    eMultiStitch_warpFirst = 580,
+
+    eMultiStitch_confidenceThreshCam = 594,
+    eMultiStitch_confidenceThreshCamManual = 595,
 
     eMultiStitch_limitResultPreview = 596,
     eMultiStitch_limitInputView = 597,
     eMultiStitch_disposeInputImages = 598,
     eMultiStitch_limitLiveStitchingPreview = 599,
-    eMultiStitch_preserveAlphaChannelValue = 600
+    eMultiStitch_preserveAlphaChannelValue = 600,
+    eMultiStitch_liveUpdateCycle = 601
   };
 
   class Settings {

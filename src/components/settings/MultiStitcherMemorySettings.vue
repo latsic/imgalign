@@ -32,6 +32,17 @@
         :style="{'margin-top': '0', 'margin-bottom': '0'}"
         @change="value => $emit('change', { id: param.id, value: value * value })"
       />
+      <v-slider
+        v-if="param.type == valueTypes.range"
+        always-dirty
+        v-bind="additionalSliderAttributes(param, '')"
+        :value="param.value"
+        :max="param.range.max"
+        :min="param.range.min"
+        :step="1"
+        :style="{'margin-top': '0', 'margin-bottom': '0'}"
+        @change="value => $emit('change', { id: param.id, value })"
+      />
     </v-flex>
   </v-layout>
 </template>

@@ -184,7 +184,9 @@ MatchInfo DesMatcher::match(
 
   getMatchingPoints(matchInfo.inlierMatchInfos, matchInfo.inlierPts1, matchInfo.inlierPts2);
   
-  matchInfo.confidence = ((double)matchInfo.inlierMatchInfos.size()) / matchInfo.filteredMatchInfos.size();
+  //matchInfo.confidence = ((double)matchInfo.inlierMatchInfos.size()) / matchInfo.filteredMatchInfos.size();
+  matchInfo.confidence = matchInfo.inlierMatchInfos.size() / (0.8 + 0.3 * matchInfo.filteredMatchInfos.size());
+
   matchInfo.success = true;
   matchInfo.determinant = Homography::determinant(matchInfo.homography);
   matchInfo.preservesOrientation = matchInfo.determinant > 0.0;
@@ -197,7 +199,9 @@ MatchInfo DesMatcher::match(
 
 bool MatchInfo::isHomographyGood() const
 {
-  FUNCLOGTIMEL("DesMatcher::isHomographyGood");
+  //FUNCLOGTIMEL("DesMatcher::isHomographyGood");
+
+  
 
   return success
       && determinant > 0.01
@@ -279,7 +283,7 @@ void MatchInfo::dismissDetailData()
   FUNCLOGTIMEL("DesMatcher::dismissAdvancedData");
 
   allMatches.clear();
-  filteredMatches.clear();
+  //filteredMatches.clear();
   allMatchInfos.clear();
   filteredMatchInfos.clear();
   //inlierMatchInfos.clear();

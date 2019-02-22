@@ -22,6 +22,12 @@ struct MatchesInfo
   int num_inliers;                    //!< Number of geometrically consistent matches
   cv::Mat H;                          //!< Estimated transformation
   double confidence;                  //!< Confidence two images are from the same panorama
+
+  double sumDeltaHV;
+
+  int num_filtered;
+  int num_all;
+  int num_outlier;
 };
 
 }

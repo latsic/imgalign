@@ -107,6 +107,11 @@
               @change="paramChanged"
             />
 
+            <app-multi-stitcher-confidence-settings
+              v-if="groupKey == 'multiStitcherConfidence'"
+              :params="params(groupKey)"
+              @change="paramChanged"
+            />
             <app-multi-stitcher-stitch-settings
               v-if="groupKey == 'multiStitcherStitchOrder'"
               :params="params(groupKey)"
@@ -163,6 +168,7 @@ import MultiStitcherImageSettings from '@/components/settings/MultiStitcherImage
 import MultiStitcherStitchSettings from '@/components/settings/MultiStitcherStitchSettings';
 import MultiStitcherSeamsSettings from '@/components/settings/MultiStitcherSeamsSettings';
 import MultiStitcherMemorySettings from '@/components/settings/MultiStitcherMemorySettings';
+import MultiStitcherConfidenceSettings from '@/components/settings/MultiStitcherConfidenceSettings';
 import { multiStitchName } from '@/models/constants/images';
 import { paramTypes, paramGroups, ParamUtils } from '@/models/constants/params';
 
@@ -177,7 +183,8 @@ export default {
     'AppMultiStitcherCameraSettings': MultiStitcherCameraSettings,
     'AppMultiStitcherStitchSettings': MultiStitcherStitchSettings,
     'AppMultiStitcherSeamsSettings': MultiStitcherSeamsSettings,
-    'AppMultiStitcherMemorySettings': MultiStitcherMemorySettings
+    'AppMultiStitcherMemorySettings': MultiStitcherMemorySettings,
+    'AppMultiStitcherConfidenceSettings': MultiStitcherConfidenceSettings
   },
   created() {
     //this.$store.dispatch('input/init');
@@ -222,6 +229,7 @@ export default {
         'multiStitcherCamera',
         'multiStitcherSeams',
         'multiStitcherImage',
+        'multiStitcherConfidence',
         'multiStitcherStitchOrder',
         'multiStitcherMemory'
       ]

@@ -24,6 +24,7 @@ public:
 	static std::ostream& getLogUserError();
 
 	static void logMat(std::string name, TConstMat &mat);
+	static void logMat(TConstMat &mat, std::ostream &oStream);
 
 	static bool isDebug;
 };

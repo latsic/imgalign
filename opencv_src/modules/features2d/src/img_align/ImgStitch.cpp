@@ -18,6 +18,8 @@
 #include <memory>
 #include <limits>
 #include <iomanip>
+#include <exception>
+#include <stdexcept>
 
 
 namespace cv
@@ -47,7 +49,7 @@ int ImgStitch::stitch(
   CV_Error(Error::StsNotImplemented, "");
 }
 
-void ImgStitch::stitchStart(
+int ImgStitch::stitchStart(
   CV_IN_OUT std::vector<float> &/*fieldsOfView*/,
   OutputArray /*stitchedImage*/,
   CV_IN_OUT std::vector<int> &/*stitchIndices*/)
@@ -58,6 +60,11 @@ void ImgStitch::stitchStart(
 int ImgStitch::stitchNext(
   OutputArray /*stitchedImage*/,
   OutputArray /*stitchedImageSmall*/)
+{
+  CV_Error(Error::StsNotImplemented, "");
+}
+
+void ImgStitch::signalAbort()
 {
   CV_Error(Error::StsNotImplemented, "");
 }
@@ -86,7 +93,7 @@ class ImgStitch_Impl : public cv::ImgStitch
       CV_IN_OUT std::vector<float> &fieldsOfView,
       cv::OutputArray stitchedImage) CV_OVERRIDE;
 
-    void stitchStart(
+    int stitchStart(
       CV_IN_OUT std::vector<float> &fieldsOfView,
       cv::OutputArray stitchedImage,
       CV_IN_OUT std::vector<int> &stitchIndices) CV_OVERRIDE;
@@ -94,9 +101,12 @@ class ImgStitch_Impl : public cv::ImgStitch
     int stitchNext(
       cv::OutputArray stitchedImage,
       cv::OutputArray stitchedImageSmall) CV_OVERRIDE;
+
+    void signalAbort() CV_OVERRIDE;
   
   private:
     void createStitcher();
+    void handleException(std::exception_ptr eptr);
 
     std::unique_ptr<MultiStitcher> spMultiStitcher;
     std::vector<TMat> srcImages;
@@ -147,17 +157,9 @@ void ImgStitch_Impl::setImages(InputArrayOfArrays images)
       srcImages.push_back(image);
     }
   }
-  catch(cv::Exception &e) {
-    if(e.code == CV_StsNoMem) {
-      LogUtils::getLogUserError() << "Insufficent memory" << std::endl;
-    }
-    LogUtils::getLog() << e.what() << std::endl;
-    throw e;
+  catch(...) {
+    handleException(std::current_exception());
   }
-	catch(std::exception &e) {
-		LogUtils::getLogUserError() << e.what() << std::endl;
-		throw e;
-	}
 }
 
 void ImgStitch_Impl::set(
@@ -174,17 +176,9 @@ void ImgStitch_Impl::set(
       LogUtils::isDebug = true;
     }
 	}
-	catch(cv::Exception &e) {
-    if(e.code == CV_StsNoMem) {
-      LogUtils::getLogUserError() << "Insufficent memory" << std::endl;
-    }
-    LogUtils::getLog() << e.what() << std::endl;
-    throw e;
+	catch(...) {
+    handleException(std::current_exception());
   }
-	catch(std::exception &e) {
-		LogUtils::getLogUserError() << e.what() << std::endl;
-		throw e;
-	}
 }
 
 int ImgStitch_Impl::stitch(
@@ -206,20 +200,13 @@ int ImgStitch_Impl::stitch(
     spMultiStitcher->getStitchedImage().copyTo(stitchedImage.getMatRef());
     return stitchCount;
   }
-  catch(cv::Exception &e) {
-    if(e.code == CV_StsNoMem) {
-      LogUtils::getLogUserError() << "Insufficent memory" << std::endl;
-    }
-    LogUtils::getLog() << e.what() << std::endl;
-    throw e;
+  catch(...) {
+    handleException(std::current_exception());
+    return false;
   }
-	catch(std::exception &e) {
-		LogUtils::getLogUserError() << e.what() << std::endl;
-		throw e;
-	}
 }
 
-void ImgStitch_Impl::stitchStart(
+int ImgStitch_Impl::stitchStart(
   CV_IN_OUT std::vector<float> &fieldsOfView,
   OutputArray stitchedImage,
   CV_IN_OUT std::vector<int> &stitchIndices)
@@ -236,20 +223,14 @@ void ImgStitch_Impl::stitchStart(
     if(spMultiStitcher->initStiching(fieldsOfViewdD, stitchIndices)) {
       currentStitchIndex = 0;
       //spMultiStitcher->getStitchedImageCurrent().copyTo(stitchedImage.getMatRef());
-      stitchedImage.getMatRef() = spMultiStitcher->getStitchedImageCurrent(); 
+      stitchedImage.getMatRef() = spMultiStitcher->getStitchedImageCurrent();
+      return 1;
     }
   }
-  catch(cv::Exception &e) {
-    if(e.code == CV_StsNoMem) {
-      LogUtils::getLogUserError() << "Insufficent memory" << std::endl;
-    }
-    LogUtils::getLog() << e.what() << std::endl;
-    throw e;
+  catch(...) {
+    handleException(std::current_exception());
   }
-	catch(std::exception &e) {
-		LogUtils::getLogUserError() << e.what() << std::endl;
-		throw e;
-	}
+  return -1;
 }
 
 int ImgStitch_Impl::stitchNext(
@@ -264,26 +245,46 @@ int ImgStitch_Impl::stitchNext(
 
     const auto &stitchOrder = spMultiStitcher->getStitchOrder();
 
-    int modulaF = 1;
-    if(currentStitchIndex > 6) modulaF = 2;
-    else if(currentStitchIndex > 15) modulaF= 3;
-
     if(currentStitchIndex >= (int)stitchOrder.size() - 1) {
       return 0;
     }
 
-    const StitchInfo &stitchInfo = *stitchOrder[++currentStitchIndex];
-    if(!spMultiStitcher->stitchNext(stitchInfo)) {
-      return -1;
+    int oldStitchIndex = currentStitchIndex;
+
+    int liveUpdateCyle = (int)settings.getValue(eMultiStitch_liveUpdateCycle);
+    if(liveUpdateCyle < 1) liveUpdateCyle = 1;
+    
+    int step = liveUpdateCyle;
+    if(currentStitchIndex >= (int)stitchOrder.size() - 3) {
+      ++currentStitchIndex;
+    }
+    else{
+      if(currentStitchIndex + step > (int)stitchOrder.size() - 2) {
+        currentStitchIndex = (int)stitchOrder.size() - 2;
+      }
+      else {
+        currentStitchIndex += step;
+      }
     }
 
-    bool doUpdate = (int)(stitchOrder.size() - 2) == currentStitchIndex ||
-                    currentStitchIndex % modulaF == 0;
+    for(size_t i = oldStitchIndex + 1; i <= (size_t)currentStitchIndex; ++i) {
+
+      const StitchInfo &stitchInfo = *stitchOrder[i];
+
+      LogUtils::getLogUserInfo() << "Warping "
+        << stitchInfo.srcImageIndex << "->" << stitchInfo.dstImageIndex << ", "
+        << i << "/" << stitchOrder.size()
+        << std::endl;
+
+      if(!spMultiStitcher->stitchNext(stitchInfo)) {
+        return -1;
+      }
+    }
 
     auto allStitchesDone = (int)(stitchOrder.size() - 1) == currentStitchIndex;
     TConstMat &stitchedImageRef = allStitchesDone
       ? spMultiStitcher->getStitchedImage()
-      : spMultiStitcher->getStitchedImageCurrent(doUpdate);
+      : spMultiStitcher->getStitchedImageCurrent(true);
 
     if(allStitchesDone) {
       spMultiStitcher->releaseStitchedData();
@@ -294,12 +295,15 @@ int ImgStitch_Impl::stitchNext(
       stitchedImage.getMatRef() = stitchedImageRef;
     }
 
+    auto &imgSize = spMultiStitcher->getStitchImageCurrentOrigSize();
     if(currentStitchIndex == (int)stitchOrder.size() - 1) {
-      LogUtils::getLogUserInfo() << "Finalizing" << std::endl;
+      LogUtils::getLogUserInfo() << "Finalizing, "
+        << "w/h: " << imgSize.width << "/" << imgSize.height
+        << std::endl;
     }
     else {
       
-      auto &imgSize = spMultiStitcher->getStitchImageCurrentOrigSize();
+      const StitchInfo &stitchInfo = *stitchOrder[currentStitchIndex];
 
       LogUtils::getLogUserInfo() << "Stitching "
       << stitchInfo.srcImageIndex << "->" << stitchInfo.dstImageIndex << ", "
@@ -321,19 +325,24 @@ int ImgStitch_Impl::stitchNext(
       spMultiStitcher->releaseStitchedImage();
     }
 
+    // TMat m = TMat::zeros(2, 2, 24);
+    // m.copyTo(stitchedImage.getMatRef());
+    // m.copyTo(stitchedImageSmall.getMatRef());
+
     return currentStitchIndex + 1;
   }
-  catch(cv::Exception &e) {
-    if(e.code == CV_StsNoMem) {
-      LogUtils::getLogUserError() << "Insufficent memory" << std::endl;
-    }
-    LogUtils::getLog() << e.what() << std::endl;
-    throw e;
+  catch(...) {
+    handleException(std::current_exception());
   }
-	catch(std::exception &e) {
-		LogUtils::getLogUserError() << e.what() << std::endl;
-		throw e;
-	}
+  return -1;
+}
+
+void ImgStitch_Impl::signalAbort()
+{
+  FUNCLOGTIMEL("ImgStitch_Impl::signalAbort");
+  if(spMultiStitcher != nullptr) {
+    spMultiStitcher->signalAbort();
+  }
 }
 
 void ImgStitch_Impl::createStitcher()
@@ -343,6 +352,26 @@ void ImgStitch_Impl::createStitcher()
   if(spMultiStitcher != nullptr) return;
   spMultiStitcher = std::unique_ptr<MultiStitcher>(
     new MultiStitcher(srcImages, settings));
+}
+
+void ImgStitch_Impl::handleException(std::exception_ptr eptr)
+{
+  if(eptr != nullptr) {
+    try {
+      std::rethrow_exception(eptr);
+    }
+    catch(cv::Exception &e) {
+      if(e.code == CV_StsNoMem) {
+        LogUtils::getLogUserError() << "Insufficent memory" << std::endl;
+      }
+      LogUtils::getLog() << e.what() << std::endl;
+      throw e;
+    }
+    catch(std::exception &e) {
+      LogUtils::getLogUserError() << e.what() << std::endl;
+      throw e;
+    }
+  }
 }
 
 }

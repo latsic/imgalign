@@ -8,7 +8,18 @@ namespace imgalign
 namespace bundle
 {
 
-MatchesInfo::MatchesInfo() : src_img_idx(-1), dst_img_idx(-1), num_inliers(0), confidence(0) {}
+MatchesInfo::MatchesInfo()
+    : src_img_idx(-1)
+    , dst_img_idx(-1)
+    , num_inliers(0)
+    , confidence(0)
+    , num_filtered(0)
+    , num_all(0)
+    , num_outlier(0)
+    , sumDeltaHV(0)
+{
+
+}
 
 MatchesInfo::MatchesInfo(const MatchesInfo &other) { *this = other; }
 
@@ -21,6 +32,12 @@ MatchesInfo& MatchesInfo::operator =(const MatchesInfo &other)
     num_inliers = other.num_inliers;
     H = other.H.clone();
     confidence = other.confidence;
+
+    num_filtered = other.num_filtered;
+    num_all = other.num_all;
+    num_outlier = other.num_outlier;
+    sumDeltaHV = other.sumDeltaHV;
+
     return *this;
 }
 

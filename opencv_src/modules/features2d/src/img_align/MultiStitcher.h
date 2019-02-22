@@ -4,23 +4,23 @@
 #include "CommonTypes.h"
 #include "EnumTypes.h"
 #include "DesMatcher.h"
+#include "Settings.h"
 #include <map>
 
 namespace imgalign
 {
-  class Settings;
   struct MatchInfo;
 
   struct StitchInfo {
 
     StitchInfo(size_t srcI, size_t dstI);
     void resetCamData();
-
+  
     size_t srcImageIndex;
     size_t dstImageIndex;
 
     MatchInfo matchInfo;
-    MatchInfo matchInfoInverse;
+    // MatchInfo matchInfoInverse;
 
     mutable double deltaH = 0.0;
     mutable double deltaV = 0.0;
@@ -30,6 +30,8 @@ namespace imgalign
 
     mutable TMat matR;
     mutable TMat matK;
+
+    ~StitchInfo();
   };
 
   struct StitchedImage {
@@ -43,12 +45,17 @@ namespace imgalign
       TMat warpedImage, warpedMask;
       cv::Point tlCorner;
       cv::Point tlCornerRoi; 
+
+      ~StitchedInfo();
+
     };
+    ~StitchedImage();
 
     void init(
       const TMat &inImage,
       int inProjType,
       std::vector<const StitchInfo *> &stitchOrder,
+      bool warpFirst,
       double *globalScale = nullptr);
 
     void addTranslation(double tx, double ty);
@@ -82,14 +89,29 @@ namespace imgalign
       bool saveMemory);
 
     void stitchFast();
-    // void stitchFastLatest();
-   
+    
     TMat image;
     cv::Size imageSize;
     cv::Size imageSizeOrig;
     int projType;
     std::vector<size_t> imageIndices;
     std::map<size_t, StitchedInfo> stitchedInfos;
+  };
+
+  struct LastRunData {
+
+    LastRunData(
+      const Settings &inSettings,
+      const std::vector<double> inFieldsOfView,
+      const std::vector<const StitchInfo *> &inStitchOrder,
+      double inGlobalScale);
+
+    Settings settings;
+    std::vector<double> fieldsOfView;
+    std::vector<TMat> stitchOrderMatKs;
+    std::vector<TMat> stitchOrderMatRs;
+    double globalScale;
+    bool aborted = false;
   };
 
   class MultiStitcher
@@ -102,6 +124,8 @@ namespace imgalign
       MultiStitcher(
         std::vector<TMat> &inSrcImages,
         const Settings &inSettings);
+
+      ~MultiStitcher();
       
       bool initStiching(
         const std::vector<double> &inFieldsOfView,
@@ -117,26 +141,35 @@ namespace imgalign
       
       bool stitchNext(const StitchInfo &stitchInfo);
 
+      void signalAbort();
+
     private:
       void computeKeyPoints();
       size_t getCenterImage();
       const StitchInfo *findNextMatch(const TStitchOrder &rStitchOrder);
-      const StitchInfo *findNextMatch(
-        TConstIndices &dstI, TConstIndices &srcI,
-        const TStitchOrder *pStitchOrder = nullptr);
+      const StitchInfo *findNextMatch(TConstIndices &dstI, TConstIndices &srcI);
+      void calcAndStoreAllMatches();
       bool stitch(const StitchInfo &stitchInfo);
-      const StitchInfo *getStitchInfo(size_t dstI, size_t srcI);
-
+      bool stitch2(const StitchInfo &stitchInfo);
+      const StitchInfo *getStitchInfo(size_t dstI, size_t srcI, bool createIf = true);
+      bool hasStitchInfo(size_t dstI, size_t srcI);
+      
       TStitchOrder computeStitchOrder(size_t startIndex);
       TStitchOrder computeStitchOrder();
-      const StitchInfo *computeStitchInfoFirstLast(TStitchOrder &rStitchOrder);
-      bool camEstimateAndBundleAdjust(
-        TStitchOrder &rStitchOrder, const StitchInfo *pStitchInfoFirstLast, double &rGlobalScale);
+      bool camEstimateAndBundleAdjustIf(TStitchOrder &rStitchOrder, double &rGlobalScale);
+      
+
       void computeRelativeRotation(TStitchOrder &rStitchOrder);
+      void computeRelativeRotation(std::vector<std::shared_ptr<StitchInfo>> &rStitchInfos);
       void computeRelativeRotation(const StitchInfo &stitchInfo);
+      bool deltaAngleSumInRange(const StitchInfo &stitchInfo);
+      bool matchesMinCriterias(const StitchInfo &stitchInfo);
       void computeAbsRotation(TStitchOrder &rStitchOrder);
       void setCamMatrices(TStitchOrder &rStitchOrder);
       void waveCorrection(TStitchOrder &rStitchOrder);
+
+      void applyLastRunData();
+      bool isCamBasicDataUpToDate();
 
       std::vector<TMat> &srcImages;
       std::vector<cv::Size> srcImagesSizes;
@@ -148,10 +181,7 @@ namespace imgalign
       StitchedImage stitchedImage;
       std::vector<std::shared_ptr<StitchInfo>> stitchInfos;
       const Settings &settings;
-      std::unique_ptr<Settings> lastSettings;
       std::vector<double> fieldsOfView;
-      std::unique_ptr<std::vector<double>> lastFieldsOfView;
-      bool camEstimateOrBundleAdjustSuccessfull = false;
       int projectionType;
       bool rectifyPerspective = true;
       bool rectifyStretch = false;
@@ -167,7 +197,9 @@ namespace imgalign
       TransformFinderType tfType;
       bool calcCenterImage = true;
       bool calcImageOrder = true;
+      bool warpFirst = false;
       double confidenceThresh = 0.2;
+      double confidenceThreshCam = 1.0;
       WaveCorrectType wcType = WaveCorrectType::WCT_AUTO;
       bool preserveAlphaChannelValue = false;
       int featureDetectionMaxPixelsN = 500000;
@@ -176,9 +208,12 @@ namespace imgalign
       bool keyPointsComputed = false;
       DesMatcher matcher;
       TStitchOrder stitchOrder;
-      const StitchInfo *stitchInfoFirstLast = nullptr;
       double estimatedFieldOfViewH = 0.0;
       double estimatesFieldOfViewV = 0.0;
+
+      bool abort = false;
+
+      std::unique_ptr<LastRunData> lastRunData;
   };
 
 }

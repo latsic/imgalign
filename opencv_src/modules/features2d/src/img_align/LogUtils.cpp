@@ -102,20 +102,28 @@ LogUtils::doLogMatches(TConstMatchInfos& matchInfos, int maxMatches)
 	getLog() << "-------------------------------" << std::endl;
 }
 
-void LogUtils::logMat(std::string name, TConstMat &mat)
+void LogUtils::logMat(TConstMat &mat, std::ostream &oStream)
 {
 	TMat a;
 	mat.convertTo(a, CV_64F);
-
-	getLog() << name << ": ";
 	for(int y = 0; y < a.cols; ++y) {
+	
 		for(int x = 0; x < a.rows; ++x) {
-			
-
-			LogUtils::getLog() << " " << a.at<double>(y, x);
+		
+			oStream << "|" << a.at<double>(y, x);
+		}
+		oStream << "|";
+		if(y != a.cols - 1) {
+			oStream << "-";
 		}
 	}
-	LogUtils::getLog() << std::endl;
+}
+
+void LogUtils::logMat(std::string name, TConstMat &mat)
+{	
+	getLog() << name << ": ";
+	logMat(mat, getLog());
+	getLog() << std::endl;
 }
 
 void

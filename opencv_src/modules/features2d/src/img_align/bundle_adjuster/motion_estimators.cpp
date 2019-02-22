@@ -59,6 +59,9 @@ using namespace imgalign::bundle;
 
 namespace
 {
+
+    static bool fError = false;
+
     void focalsFromHomography(const Mat& H, double &f0, double &f1, bool &f0_ok, bool &f1_ok)
     {
         FUNCLOGTIMEL("motion_estimators: focalsFromHomography");
@@ -316,11 +319,21 @@ bool AffineBasedEstimator::estimate(const std::vector<ImageFeatures> &features,
 
 //////////////////////////////////////////////////////////////////////////////
 
+
+
 bool BundleAdjusterBase::estimate(const std::vector<ImageFeatures> &features,
                                   const std::vector<MatchesInfo> &pairwise_matches,
                                   std::vector<CameraParams> &cameras)
 {
     FUNCLOGTIMEL("BundleAdjusterBase::estimate");
+
+    fError = false;
+    maxIterationsReached = false;
+    errorNotChangingAnymore = false;
+    edgeSrc = -1;
+    edgeDst = -1;
+    edgeArrayIndexSrc = -1;
+    edgeArrayIndexDst = -1;
     
     num_images_ = static_cast<int>(features.size());
     features_ = &features[0];
@@ -335,8 +348,9 @@ bool BundleAdjusterBase::estimate(const std::vector<ImageFeatures> &features,
         for (int j = i + 1; j < num_images_; ++j)
         {
             const MatchesInfo& matches_info = pairwise_matches_[i * num_images_ + j];
-            if (matches_info.confidence > conf_thresh_)
+            if (matches_info.confidence > conf_thresh_) {
                 edges_.push_back(std::make_pair(i, j));
+            }
         }
     }
 
@@ -345,9 +359,6 @@ bool BundleAdjusterBase::estimate(const std::vector<ImageFeatures> &features,
     for (size_t i = 0; i < edges_.size(); ++i)
         total_num_matches_ += static_cast<int>(pairwise_matches[edges_[i].first * num_images_ +
                                                                 edges_[i].second].num_inliers);
-
-    // LogUtils::getLog() << "total_num_matches_" << total_num_matches_ << std::endl;
-    // LogUtils::getLog() << "edges_ count " << edges_.size() << std::endl;
 
     CvLevMarq solver(num_images_ * num_params_per_cam_,
                      total_num_matches_ * num_errs_per_measurement_,
@@ -360,16 +371,25 @@ bool BundleAdjusterBase::estimate(const std::vector<ImageFeatures> &features,
     auto startTime = imgalign::milliseconds();
 
     int iter = 0;
+    int loopIter = 0;
+
+    double lastError = -1;
+    double lastErrorEqualCount = 0;
+    double maxEqualCount = 20;
+    
     for(;;)
     {
+        if(rAbortFlag) return false;
+
         const CvMat* _param = 0;
         CvMat* _jac = 0;
         CvMat* _err = 0;
-
+        
         bool proceed = solver.update(_param, _jac, _err);
 
+
         cvCopy(_param, &matParams);
-        if(iter > 500) return false;
+        //if(iter > 500) return false;
 
         if (!proceed || !_err)
             break;
@@ -381,35 +401,69 @@ bool BundleAdjusterBase::estimate(const std::vector<ImageFeatures> &features,
             cvCopy(&tmp, _jac);
         }
 
+        if (fError) {
+            return false;
+        }
+
         if (_err)
         {
             calcError(err);
+            
             iter++;
             CvMat tmp = cvMat(err);
             cvCopy(&tmp, _err);
-        }
-        
-        if(iter % 20 == 0) {
+
             auto time = imgalign::milliseconds();
-            if(time - startTime > 5000) {
-                auto currError = std::sqrt(err.dot(err) / total_num_matches_);
-                if(cvIsNaN(currError)) {
+            if(time - startTime > 500) {
+                auto currErrSqr = err.dot(err) / total_num_matches_;
+                //auto currError = std::sqrt(currErrSqr);
+                LogUtils::getLogUserInfo()
+                    << "BA current sqr rms err " << currErrSqr << ", " << iter << std::endl;
+                startTime = time;
+                
+                if(cvIsNaN(currErrSqr)) {
                     break;
                 }
                 
-                LogUtils::getLogUserInfo()
-                    << "BA current rms err " << currError << ", " << iter << "(max 500)" << std::endl;
-                startTime = time;
+                double currErrorSqrR = std::round(currErrSqr * 100) / 100.0;
+
+                if(currErrorSqrR != lastError) {
+                    lastError = currErrorSqrR;
+                    lastErrorEqualCount = 0;
+                }
+                else {
+                    ++lastErrorEqualCount;
+                    if(lastErrorEqualCount > maxEqualCount) {
+                        errorNotChangingAnymore = true;
+                        break;
+                    }
+                }
+
+                if(maxIterations > 0 && iter > maxIterations) {
+                    maxIterationsReached = true;
+                    break;
+                }
             }
-            
         }
+        else if (loopIter % 20 == 0) {
+            auto time = imgalign::milliseconds();
+            if(time - startTime > 500) {
+                LogUtils::getLogUserInfo()
+                    << "BA current no curr err, " << iter << "/" << loopIter << std::endl;
+            }
+            startTime = time;
+        }
+        loopIter++;
+    }
+    
+    auto currError = std::sqrt(err.dot(err) / total_num_matches_);
+    LogUtils::getLogUserInfo()
+        << "BA final rms err " << currError << ", " << iter << std::endl;
+
+    if(cvIsNaN(currError)) {
+        return false;
     }
 
-    if(LogUtils::isDebug) {
-        auto currError = std::sqrt(err.dot(err) / total_num_matches_);
-        LogUtils::getLog() << "Bundle adjustment, " << iter << " iterations, "
-                           << "final RMS error: " << currError << std::endl;
-    }
 
     // Check if all camera parameters are valid
     bool ok = true;
@@ -472,6 +526,10 @@ bool BundleAdjusterBase::estimate(const std::vector<ImageFeatures> &features,
                 }
             }
         }
+    }
+
+    if(maxIterationsReached) {
+        return false;
     }
 
     return true;
@@ -749,6 +807,9 @@ void BundleAdjusterRay::calcError(Mat &err)
         const ImageFeatures& features2 = features_[j];
         const MatchesInfo& matches_info = pairwise_matches_[i * num_images_ + j];
 
+        
+
+
         Mat_<double> K1 = Mat::eye(3, 3, CV_64F);
         K1(0,0) = f1; K1(0,2) = features1.img_size.width * 0.5;
         K1(1,1) = f1; K1(1,2) = features1.img_size.height * 0.5;
@@ -759,6 +820,53 @@ void BundleAdjusterRay::calcError(Mat &err)
 
         Mat_<double> H1 = R1_ * K1.inv();
         Mat_<double> H2 = R2_ * K2.inv();
+
+        double mult = 1.0;
+        if(f1 < 0 && f2 > 0 && !fError) {
+            //LogUtils::getLogUserError() << "BA f1 < 0 && f2 > 0 f1/f2 " << f1 << "/" << f2 << std::endl;
+
+            const auto &p = pairwise_matches_[edges_[edge_idx].first * num_images_ + edges_[edge_idx].second];
+
+            edgeSrc = p.src_img_idx;
+            edgeDst = p.dst_img_idx;
+            edgeArrayIndexSrc = i;
+            edgeArrayIndexDst = j;
+            std::stringstream sStream;
+            sStream << "BA ray error edge src/dst " << p.src_img_idx << "->" << p.dst_img_idx << "(" << i << "->" << j << ")" << std::endl;
+            if(reportError) {
+                LogUtils::getLogUserError() << sStream.str();
+                LogUtils::getLogUserInfo() << "Advice: Try other bundle adjustement type" << std::endl;
+            }
+            else {
+                LogUtils::getLog() << sStream.str();
+            }
+            fError = true;
+            //return;
+        }
+        else if(f1 > 0 && f2 < 0 && !fError) {
+            //LogUtils::getLogUserInfo() << "BA f2 < 0 && f1 > 0 f1/f2 " << f1 << "/" << f2 << std::endl;
+
+            const auto &p = pairwise_matches_[edges_[edge_idx].first * num_images_ + edges_[edge_idx].second];
+
+            edgeSrc = p.src_img_idx;
+            edgeDst = p.dst_img_idx;
+            edgeArrayIndexSrc = i;
+            edgeArrayIndexDst = j;
+            std::stringstream sStream;
+            sStream << "BA ray error edge src/dst " << p.src_img_idx << "->" << p.dst_img_idx << "(" << i << "->" << j << ")" << std::endl;
+            if(reportError) {
+                LogUtils::getLogUserError() << sStream.str();
+                LogUtils::getLogUserInfo() << "Advice: Try other bundle adjustement type" << std::endl;
+            }
+            else {
+                LogUtils::getLog() << sStream.str();
+            }
+            fError = true;
+            //return;
+        }
+        else {
+            mult = std::sqrt(f1 * f2);
+        }
 
         for (size_t k = 0; k < matches_info.matches.size(); ++k)
         {
@@ -780,12 +888,12 @@ void BundleAdjusterRay::calcError(Mat &err)
             double z2 = H2(2,0)*p2.x + H2(2,1)*p2.y + H2(2,2);
             len = std::sqrt(x2*x2 + y2*y2 + z2*z2);
             x2 /= len; y2 /= len; z2 /= len;
-
-            double mult = std::sqrt(f1 * f2);
+            
+            
             err.at<double>(3 * match_idx, 0) = mult * (x1 - x2);
             err.at<double>(3 * match_idx + 1, 0) = mult * (y1 - y2);
             err.at<double>(3 * match_idx + 2, 0) = mult * (z1 - z2);
-
+            
             match_idx++;
         }
     }
@@ -806,12 +914,16 @@ void BundleAdjusterRay::calcJacobian(Mat &jac)
             val = cam_params_.at<double>(i * 4 + j, 0);
             cam_params_.at<double>(i * 4 + j, 0) = val - step;
             calcError(err1_);
+            
             cam_params_.at<double>(i * 4 + j, 0) = val + step;
             calcError(err2_);
+            
             calcDeriv(err1_, err2_, 2 * step, jac.col(i * 4 + j));
             cam_params_.at<double>(i * 4 + j, 0) = val;
         }
     }
+
+    
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1273,6 +1385,7 @@ void findMaxSpanningTree(int num_images, const std::vector<MatchesInfo> &pairwis
             if (pairwise_matches[i * num_images + j].H.empty())
                 continue;
             float conf = static_cast<float>(pairwise_matches[i * num_images + j].num_inliers);
+            //float conf = static_cast<float>(pairwise_matches[i * num_images + j].confidence);
             graph.addEdge(i, j, conf);
             edges.push_back(GraphEdge(i, j, conf));
         }

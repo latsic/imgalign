@@ -20,7 +20,8 @@ export const paramGroups = Object.freeze({
   multiStitcherSeams:       { id: 1018, name: 'Seams'},
   multiStitcherImage:       { id: 1019, name: 'Image'},
   multiStitcherStitchOrder: { id: 1020, name: 'Stitch Order'},
-  multiStitcherMemory:      { id: 1021, name: 'Memory'}
+  multiStitcherMemory:      { id: 1021, name: 'Memory'},
+  multiStitcherConfidence:  { id: 1022, name: 'Confidence'}
 });
 
 const detTypeId = 200;
@@ -152,8 +153,14 @@ export const paramTypes = Object.freeze({
 
   bundleAdjustType_none: { id: 570, name: 'None', groupId: bundleAdjustTypeId },
   bundleAdjustType_ray: { id: 571, name: 'Ray', groupId: bundleAdjustTypeId },
+  bundleAdjustType_reprojCap: { id: 566, name: 'Reprojection Cap', groupId: bundleAdjustTypeId },
   bundleAdjustType_reproj: { id: 572, name: 'Reprojection', groupId: bundleAdjustTypeId },
   bundleAdjustType_auto: { id: 573, name: 'Auto', groupId: bundleAdjustTypeId },
+  bundleAdjustType_rayretry: { id: 569, name: 'Ray retry', groupId: bundleAdjustTypeId },
+  bundleAdjustType_ray2: { id: 568, name: 'Ray2', groupId: bundleAdjustTypeId },
+  bundleAdjustType_reproj2: { id: 567, name: 'Reprojection2', groupId: bundleAdjustTypeId },
+  bundleAdjustType_ray3: { id: 602, name: 'Ray3', groupId: bundleAdjustTypeId },
+  
 
   blendType_none: { id: 574, name: 'None', groupId: blendTypeId },
   blendType_multiBand: { id: 575, name: 'Multiband', groupId: blendTypeId },
@@ -184,15 +191,20 @@ export const paramTypes = Object.freeze({
 
   multiStitch_calcImageOrder: { id: 587, name: 'Calc stitch order', groupId: paramGroups.multiStitcherStitchOrder.id },
   multiStitch_calcCenterImage: { id: 588, name: 'Estimate start image', groupId: paramGroups.multiStitcherStitchOrder.id },
-  multiStitch_confidenceThresh: { id: 589, name: 'Confidence thresh', groupId: paramGroups.multiStitcherStitchOrder.id },
+  multiStitch_warpFirst: { id: 580, name: 'Warp first', groupId: paramGroups.multiStitcherStitchOrder.id },
+  
+  multiStitch_confidenceThreshCamManual: { id: 595, name: 'Thresh camera', groupId: 0 },
+  multiStitch_confidenceThreshCam: { id: 594, name: 'Thresh camera', groupId: 0 },
+  // multiStitch_confidenceThreshCamManual: { id: 595, name: 'Thresh camera', groupId: paramGroups.multiStitcherConfidence.id },
+  // multiStitch_confidenceThreshCam: { id: 594, name: 'Thresh camera', groupId: paramGroups.multiStitcherConfidence.id, enabledIfId: 595 },
+  multiStitch_confidenceThresh: { id: 589, name: 'Thresh stitching', groupId: paramGroups.multiStitcherConfidence.id },
 
   multiStitch_preserveAlphaChannelValue: { id: 600, name: 'Preserve Alpha Channel', groupId: paramGroups.multiStitcherMemory.id },
   multiStitch_disposeInputImages: { id: 598, name: 'Dispose input before stitching', groupId: paramGroups.multiStitcherMemory.id },
   multiStitch_limitResultPreview: { id: 596, name: 'Max result view size', groupId: paramGroups.multiStitcherMemory.id },
   multiStitch_limitInputView: { id: 597, name: 'Max input view size', groupId: paramGroups.multiStitcherMemory.id },
-  multiStitch_limitLiveStitchingPreview: { id: 599, name: 'Max temp result size', groupId: paramGroups.multiStitcherMemory.id }
-  
-
+  multiStitch_limitLiveStitchingPreview: { id: 599, name: 'Max temp result size', groupId: paramGroups.multiStitcherMemory.id },
+  multiStitch_liveUpdateCycle: { id: 601, name: 'Live update cycle', groupId: paramGroups.multiStitcherMemory.id }
   
 });
 

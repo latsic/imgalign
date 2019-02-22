@@ -71,7 +71,21 @@ rotations in respect to the first camera, for instance. :
 class CV_EXPORTS Estimator
 {
 public:
-    virtual ~Estimator() {}
+
+    Estimator()  : rAbortFlag(abortFlag ) {}
+
+    virtual ~Estimator(){}
+
+    void setAbortFlag(bool &inAbortFlag) { rAbortFlag = inAbortFlag; }
+
+    int edgeSrc = -1;
+    int edgeDst = -1;
+    int edgeArrayIndexSrc = -1;
+    int edgeArrayIndexDst = -1;
+    bool reportError = false;
+    int maxIterations = -1;
+    bool maxIterationsReached = false;
+    bool errorNotChangingAnymore = false;
 
     /** @brief Estimates camera parameters.
 
@@ -97,6 +111,9 @@ protected:
     virtual bool estimate(const std::vector<imgalign::bundle::ImageFeatures> &features,
                           const std::vector<imgalign::bundle::MatchesInfo> &pairwise_matches,
                           std::vector<imgalign::bundle::CameraParams> &cameras) = 0;
+
+    bool abortFlag = false;
+    bool &rAbortFlag;
 };
 
 /** @brief Homography based rotation estimator.
@@ -135,6 +152,7 @@ private:
 class CV_EXPORTS BundleAdjusterBase : public Estimator
 {
 public:
+
     const Mat refinementMask() const { return refinement_mask_.clone(); }
     void setRefinementMask(const Mat &mask)
     {
