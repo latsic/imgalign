@@ -18,10 +18,12 @@
         :input-value="param.value > 0 ? true : false"
         :label="paramName(param.id)"
         :style="{margin: '0', padding: '0'}"
+        :disabled="isDisabled(param)"
         hide-details
         @change="value => changed(param.id, value ? 1 : 0 )"
+        class="switch-text-small"
       />
-      <v-slider
+      <!-- <v-slider
         v-if="param.type == valueTypes.range"  
         always-dirty
         v-bind="additionalSliderAttributes(param)"
@@ -31,7 +33,7 @@
         :step="0.01"
         :style="{'margin-top': '0', 'margin-bottom': '0'}"
         @change="value => $emit('change', { id: param.id, value })"
-      />
+      /> -->
     </v-flex>
   </v-layout>
 </template>
@@ -66,27 +68,43 @@ export default {
         this.$emit('change', { id, value: valueNumber });
       }
     },
-    additionalSliderAttributes(param) {
-      if(this.$vuetify.breakpoint.name == "xs") {
-        return {
-          hint: `${this.paramName(param.id)} ${param.value}`,
-          'persistent-hint': true,
-          label: '',
-          'hide-details': false
+    // additionalSliderAttributes(param) {
+    //   if(this.$vuetify.breakpoint.name == "xs") {
+    //     return {
+    //       hint: `${this.paramName(param.id)} ${param.value}`,
+    //       'persistent-hint': true,
+    //       label: '',
+    //       'hide-details': false
+    //     }
+    //   }
+    //   else {
+    //     return {
+    //       label: `${this.paramName(param.id)} ${param.value}`,
+    //       'persistent-hint': false,
+    //       hint: null,
+    //       'hide-details': true
+    //     }
+    //   }
+    // },
+    isDisabled(param) {
+
+      const enabledIfId = ParamUtils.getParamEnabledIfId(param.id);
+      if(!enabledIfId) return false;
+
+      for(const p of this.params) {
+        if(p.id == enabledIfId) {
+          return p.value == 0;
         }
       }
-      else {
-        return {
-          label: `${this.paramName(param.id)} ${param.value}`,
-          'persistent-hint': false,
-          hint: null,
-          'hide-details': true
-        }
-      }
+      return false;
     }
   }
 }
 </script>
 
 <style scoped>
+  .switch-text-small >>> label {
+    font-size: 0.7em;
+    font-weight: 600; 
+  }
 </style>

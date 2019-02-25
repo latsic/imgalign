@@ -54,4 +54,8 @@ export default {
 </script>
 
 <style scoped>
+  .switch-text-small >>> label {
+    font-size: 0.7em;
+    font-weight: 600; 
+  }
 </style>

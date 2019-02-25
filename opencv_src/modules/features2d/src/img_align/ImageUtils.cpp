@@ -8,6 +8,7 @@
 #include "LogUtils.h"
 #include <math.h>
 #include <limits>
+#include <stack>
 
 #include "blenders/blenders.hpp"
 //#include "blenders/blendersT.hpp"
@@ -17,7 +18,8 @@
 namespace imgalign
 {
 
-std::vector<cv::Point> moveToLg0(const std::vector<cv::Point> &rPts)  
+inline std::vector<cv::Point>
+moveToLg0(const std::vector<cv::Point> &rPts)  
 {
   FUNCLOGTIMEL("ImageUtils::moveToLg0");
 
@@ -1036,7 +1038,6 @@ class ColorTransfer {
     }
 };
 
-
 TMat ImageUtils::colorTransfer(
   TConstMat &src,
   TConstMat &dst)
@@ -1054,6 +1055,94 @@ void ImageUtils::createMaskFor(TConstMat &srcImage, TMat &outMask)
     (*itMask) = (*it)[3];
   }
 }
+
+cv::Rect ImageUtils::maxRect(TConstMat &rMat)
+{
+  // Algorithm from: 
+  // http://www.drdobbs.com/database/the-maximal-rectangle-problem/184410529
+
+  FUNCLOGTIMEL("ImageUtils::maxRect");
+
+  std::vector<int> c(rMat.rows, 0);
+  std::stack<std::tuple<int, int>> s;
+  cv::Point tl(0, 0);
+  cv::Point br(-1, -1);
+
+  auto isFilled = [&](int x, int y) -> bool {
+    return rMat.at<cv::Vec4b>(y, x)[3] != 0;
+  };
+
+  auto updateCache = [&](int x) {
+    for(int y = 0; y < rMat.rows; ++y) {
+      if(isFilled(x, y)) c[y] = c[y] + 1;
+      else c[y] = 0;
+    }
+  };
+
+  auto area = [&]() -> int {
+    if(tl.x > br.x || tl.y > br.y) return 0;
+    else return (br.x - tl.x + 1) * (br.y - tl.y + 1);
+  };
+
+  auto stackPush = [&](int y, int width) {
+    s.push(std::make_tuple(y, width));
+  };
+
+  auto stackPop = [&](int &y0, int &w0) {
+    if(s.empty()) {
+      LogUtils::getLogUserInfo() << "Top but no elem " << std::endl;
+      y0 = 0;
+      w0 = 0;
+    }
+    else {
+      y0 = std::get<0>(s.top());
+      w0 = std::get<1>(s.top());
+      s.pop();
+    }
+  }; 
+
+  auto stackEmpty = [&]() -> bool {
+    return s.empty();
+  };
+  
+  for(int x = rMat.cols - 1; x >= 0; --x) {
+    updateCache(x);
+    int width = 0;
+    for(int y = 0; y < rMat.rows; ++y) {
+      
+      if(c[y] > width) {
+        stackPush(y, width);
+        width = c[y];
+      }
+       
+      if(c[y] < width) {
+        
+        int y0 = y;
+        
+        while(c[y] < width && !stackEmpty()) {
+          int w0;
+          stackPop(y0, w0);
+
+          if(width * (y - y0) > area()) {
+            tl.x = x;
+            tl.y = y0;
+            br.x = x + width - 1;
+            br.y = y - 1;
+          }
+          width = w0;
+        }
+        width = c[y];
+        if(width != 0) {
+          stackPush(y0, width);
+        }
+      }
+    }
+  }
+  return cv::Rect(tl, br);
+}
+
+
+
 
 
 } // imgalign

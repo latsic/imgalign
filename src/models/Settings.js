@@ -276,8 +276,8 @@ export class Settings {
       {
         id: paramTypes.stitch_colorTransfer.id,
         type: valueTypes.bool,
-        value: 1,
-        defaultValue: 1,
+        value: 0,
+        defaultValue: 0,
       },
       
       {
@@ -352,6 +352,12 @@ export class Settings {
         defaultValue: 0,
       },
       {
+        id: paramTypes.multiStitch_maxRectangle.id,
+        type: valueTypes.bool,
+        value: 0,
+        defaultValue: 0,
+      },
+      {
         id: paramTypes.multiStitch_camEstimate.id,
         type: valueTypes.bool,
         value: 1,
@@ -360,15 +366,15 @@ export class Settings {
       {
         id: paramTypes.multiStitch_bundleAdjust.id,
         type: valueTypes.discrete,
-        value: paramTypes.bundleAdjustType_auto.id,
-        defaultValue: paramTypes.bundleAdjustType_auto.id,
+        value: paramTypes.bundleAdjustType_ray.id,
+        defaultValue: paramTypes.bundleAdjustType_ray.id,
         values: getDiscreteParams(paramTypes.multiStitch_bundleAdjust.id)
       },
       {
         id: paramTypes.multiStitch_waveCorrection.id,
         type: valueTypes.bool,
-        value: 0,
-        defaultValue: 0,
+        value: 1,
+        defaultValue: 1,
       },
       {
         id: paramTypes.multiStitch_seamBlend.id,
@@ -432,8 +438,8 @@ export class Settings {
       },
       { id: paramTypes.multiStitch_confidenceThresh.id,
         type: valueTypes.range,
-        defaultValue: 0.5,
-        value: 0.5,
+        defaultValue: 0.4,
+        value: 0.4,
         range: { min: 0.0, max: 4.0 }
       },
 

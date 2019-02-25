@@ -112,14 +112,15 @@
               :params="params(groupKey)"
               @change="paramChanged"
             />
-            <app-multi-stitcher-stitch-settings
-              v-if="groupKey == 'multiStitcherStitchOrder'"
+
+            <app-multi-stitcher-memory-settings
+              v-if="groupKey == 'multiStitcherMemory'"
               :params="params(groupKey)"
               @change="paramChanged"
             />
 
-            <app-multi-stitcher-memory-settings
-              v-if="groupKey == 'multiStitcherMemory'"
+            <app-multi-stitcher-stitch-settings
+              v-if="groupKey == 'multiStitcherStitchOrder'"
               :params="params(groupKey)"
               @change="paramChanged"
             />
@@ -230,8 +231,8 @@ export default {
         'multiStitcherSeams',
         'multiStitcherImage',
         'multiStitcherConfidence',
-        'multiStitcherStitchOrder',
-        'multiStitcherMemory'
+        'multiStitcherMemory',
+        'multiStitcherStitchOrder'
       ]
     }
   },
@@ -312,6 +313,6 @@ export default {
 }
 </script>
 
-<style scoped>
-  
+<style>
+
 </style>

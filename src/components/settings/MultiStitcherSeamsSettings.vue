@@ -20,6 +20,7 @@
         :style="{margin: '0', padding: '0'}"
         hide-details
         @change="value => changed(param.id, value ? 1 : 0 )"
+        class="switch-text-small"
       />
       <v-slider
         v-if="param.type == valueTypes.range"  
@@ -115,4 +116,8 @@ export default {
 </script>
 
 <style scoped>
+  .switch-text-small >>> label {
+    font-size: 0.7em;
+    font-weight: 600; 
+  }
 </style>

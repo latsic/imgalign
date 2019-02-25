@@ -153,6 +153,7 @@ namespace imgalign
     //eMultiStitch_blendType = 591,
     eMultiStitch_blendStrength = 592,
     eMultiStitch_rectifyStretch = 593,
+    eMultiStitch_maxRectangle = 603,
     eMultiStitch_warpFirst = 580,
 
     eMultiStitch_confidenceThreshCam = 594,

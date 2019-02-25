@@ -457,7 +457,7 @@ MultiStitcher::getStitchedImage()
 {
   FUNCLOGTIMEL("MultiStitcher::getStitchedImage");
   stitchedImage.stitch(compensateExposure, rectifyPerspective,
-    rectifyStretch, blendType, blendStrength, seamFinderType, !preserveAlphaChannelValue);
+    rectifyStretch, maxRectangle, blendType, blendStrength, seamFinderType, !preserveAlphaChannelValue);
   stitchedImage.imageSizeOrig = stitchedImage.image.size();
   WarperHelper::rotateIf(stitchedImage.image, settings.getValue(eMultiStitch_projection));
   return stitchedImage.image;
@@ -550,6 +550,7 @@ MultiStitcher::initStiching(
   } 
 
   warpFirst = (bool)settings.getValue(eMultiStitch_warpFirst);
+  maxRectangle = (bool)settings.getValue(eMultiStitch_maxRectangle);
 
   if(LogUtils::isDebug) {
     LogUtils::getLog() << "projectionType " << projectionType << std::endl;
@@ -573,6 +574,7 @@ MultiStitcher::initStiching(
     LogUtils::getLog() << "livePreviewMaxPixelsN " << currentStitchedImageMaxPixelsN << std::endl;
     LogUtils::getLog() << "resultPreviewMaxPixelsN " << (int)(settings.getValue(eMultiStitch_limitResultPreview)) << std::endl;
     LogUtils::getLog() << "liveUpdateCycle " << (int)(settings.getValue(eMultiStitch_liveUpdateCycle)) << std::endl;
+    LogUtils::getLog() << "maxRectangle " << maxRectangle << std::endl;
   }
 
   computeKeyPoints();
@@ -1312,8 +1314,8 @@ MultiStitcher::computeAbsRotation(TStitchOrder &rStitchOrder)
   if(rStitchOrder.size() < 2) return;
 
   double minH, maxH, minV, maxV;
-  minH = minV = -std::numeric_limits<double>::max();
-  maxH = maxV = std::numeric_limits<double>::max();
+  minH = minV = std::numeric_limits<double>::max();
+  maxH = maxV = -std::numeric_limits<double>::max();
 
   auto itLast = rStitchOrder.begin();
   for(auto it = ++rStitchOrder.begin(); it != rStitchOrder.end(); ++it, ++itLast) {
@@ -1416,8 +1418,6 @@ MultiStitcher::camEstimateAndBundleAdjustIf(
   logPairwiseMatches(matchesInfoV, false);
   logCameraParams(cameraParamsV, srcImagesSizes, rStitchOrder);
 
-  logStitchOrder(globalScale, srcImagesSizes, rStitchOrder);
-
   if(camEstimate) {
 
     double cf = confidenceThreshCam;
@@ -1426,18 +1426,6 @@ MultiStitcher::camEstimateAndBundleAdjustIf(
       try {
         std::vector<CameraParams> estimatedCamParamsV;
         if(runCamEstimate(matchesInfoV, imageFeaturesV, estimatedCamParamsV)) {
-          
-          // sanity check
-          //double f = std::min(rStitchOrder[0]->matK.at<double>(0, 0), rStitchOrder[0]->matK.at<double>(1, 1));
-
-          //size_t srcI = rStitchOrder[0]->srcImageIndex;
-          //auto w = srcImagesSizes[srcI].width;
-          //auto h = srcImagesSizes[srcI].height;
-          //auto fv = WarperHelper::getFieldOfView(w, h, f);
-          // if(fv > 64) {
-          //   LogUtils::getLogUserError() << "Initial cam focal estimation ("
-          //     << fv << "°) suspicious. Consider deactivating it." << std::endl;
-          // }
           
           cameraParamsV.assign(estimatedCamParamsV.begin(), estimatedCamParamsV.end());
           logCameraParams(cameraParamsV, srcImagesSizes, rStitchOrder);
@@ -1585,6 +1573,13 @@ MultiStitcher::camEstimateAndBundleAdjustIf(
   }
   else {
     LogUtils::getLogUserError() << "Bundle adjust failed" << std::endl;
+
+    LogUtils::getLogUserError()
+      << "Advice: "
+      << "1. Increase confidence value, "
+      << "2. Choose a difference bundle adjustement type."
+      << std::endl;
+
     applyCamParams(cameraParamsV, false, camEstimate, rStitchOrder, rGlobalScale);
   }
   return baSuccess;
@@ -1928,6 +1923,7 @@ StitchedImage::stitch(
   bool compensateExposure,
   bool rectifyPerspective,
   bool rectifyStretch,
+  bool maxRectangle, 
   BlendType blendType,
   double blendStrength,
   SeamFinderType seamFinderType,
@@ -1972,37 +1968,117 @@ StitchedImage::stitch(
 
   LogUtils::getLogUserInfo() << "Cropping" << std::endl;
 
-  if(!rectifyPerspective) {
-    ImageUtils::crop(tempImage, image);
-    return;
-  }
-
-  TMat croppedImage;
-  ImageUtils::crop(tempImage, croppedImage);
-
-  tempImage.release();
-
-  LogUtils::getLogUserInfo() << "Rectifying perspective" << std::endl;
-
-  if(!rectifyStretch) {
-    if(!WarperHelper::rectifyPerspective(croppedImage, image)) {
-      //croppedImage.copyTo(image);
-      image = croppedImage;
-    }
-    return;
-  }
+  TMat dstImage;
+  ImageUtils::crop(tempImage, dstImage);
+  tempImage = dstImage;
   
-  TMat temp;
-  if(!WarperHelper::rectifyPerspective(croppedImage, temp)) {
-    //croppedImage.copyTo(image);
-    image = croppedImage;
-    return;
+  if(rectifyPerspective) {
+    LogUtils::getLogUserInfo() << "Rectifying perspective" << std::endl;
+  }
+  if(!rectifyPerspective || !WarperHelper::rectifyPerspective(tempImage, dstImage)) {
+    dstImage = tempImage;
+  }
+  tempImage = dstImage;
+
+  if(rectifyPerspective && rectifyStretch) {
+    LogUtils::getLogUserInfo() << "Rectifying stretch" << std::endl;
+    WarperHelper::rectifyStretch(tempImage, dstImage);
+    tempImage = dstImage;
   }
 
-  croppedImage.release();
+  if(maxRectangle) {
+    LogUtils::getLogUserInfo() << "Cropping to max rectangle" << std::endl;
+    auto maxRectRoi = ImageUtils::maxRect(tempImage);
+
+    LogUtils::getLogUserInfo() << "l/r/t/b "
+      << maxRectRoi.tl().x << "/" << maxRectRoi.br().x << "/"
+      << maxRectRoi.tl().y << "/" << maxRectRoi.br().y
+      << std::endl;
+
+    TMat matRoi(tempImage, maxRectRoi);
+    tempImage = matRoi;
+  }
+  image = tempImage;
+
+
+  // auto getImage = [&](TMat &dstImage) {
+
+  //   if(!rectifyPerspective) {
+  //     ImageUtils::crop(tempImage, dstImage);
+  //     return;
+  //   }
+
+  //   TMat croppedImage;
+  //   ImageUtils::crop(tempImage, croppedImage);
+
+  //   tempImage.release();
+
+  //   LogUtils::getLogUserInfo() << "Rectifying perspective" << std::endl;
+
+  //   if(!rectifyStretch) {
+  //     if(!WarperHelper::rectifyPerspective(croppedImage, dstImage)) {
+  //       dstImage = croppedImage;
+  //     }
+  //     return;
+  //   }
+
+  //   TMat temp;
+  //   if(!WarperHelper::rectifyPerspective(croppedImage, temp)) {
+  //     //croppedImage.copyTo(image);
+  //     dstImage = croppedImage;
+  //     return;
+  //   }
+
+  //   croppedImage.release();
+
+  //   LogUtils::getLogUserInfo() << "Rectifying stretch" << std::endl;
+  //   WarperHelper::rectifyStretch(temp, dstImage);
+  // };
+
+  // if(maxRectangle) {
+  //   TMat img;
+  //   getImage(img);
+
+  //   auto maxRectRoi = ImageUtils::maxRect(img);
+
+  //   TMat matRoi(img, maxRectRoi);
+  //   matRoi.copyTo(image);
+  // }
+  // else {
+  //   getImage(image);
+  // }
+
+  // if(!rectifyPerspective) {
+  //   ImageUtils::crop(tempImage, image);
+  //   return;
+  // }
+
+  // TMat croppedImage;
+  // ImageUtils::crop(tempImage, croppedImage);
+
+  // tempImage.release();
+
+  // LogUtils::getLogUserInfo() << "Rectifying perspective" << std::endl;
+
+  // if(!rectifyStretch) {
+  //   if(!WarperHelper::rectifyPerspective(croppedImage, image)) {
+  //     //croppedImage.copyTo(image);
+  //     image = croppedImage;
+  //   }
+  //   return;
+  // }
   
-  LogUtils::getLogUserInfo() << "Rectifying stretch" << std::endl;
-  WarperHelper::rectifyStretch(temp, image);
+  // TMat temp;
+  // if(!WarperHelper::rectifyPerspective(croppedImage, temp)) {
+  //   //croppedImage.copyTo(image);
+  //   image = croppedImage;
+  //   return;
+  // }
+
+  // croppedImage.release();
+  
+  // LogUtils::getLogUserInfo() << "Rectifying stretch" << std::endl;
+  // WarperHelper::rectifyStretch(temp, image);
 }
 
 StitchInfo::StitchInfo(size_t srcI, size_t dstI)

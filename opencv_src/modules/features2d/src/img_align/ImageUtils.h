@@ -141,7 +141,9 @@ class ImageUtils{
 
 		static void createMaskFor(TConstMat &srcImage, TMat &outMask);
 
-		
+		static cv::Rect maxRect(TConstMat &rMat);
+
+
 };
 
 } //imgalign

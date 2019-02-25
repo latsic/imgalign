@@ -273,7 +273,8 @@ int ImgStitch_Impl::stitchNext(
 
       LogUtils::getLogUserInfo() << "Warping "
         << stitchInfo.srcImageIndex << "->" << stitchInfo.dstImageIndex << ", "
-        << i << "/" << stitchOrder.size()
+        << i << "/" << stitchOrder.size() << ", "
+        << "w/h: " << srcImages[stitchInfo.srcImageIndex].size().width << "/" << srcImages[stitchInfo.srcImageIndex].size().height
         << std::endl;
 
       if(!spMultiStitcher->stitchNext(stitchInfo)) {
@@ -282,37 +283,30 @@ int ImgStitch_Impl::stitchNext(
     }
 
     auto allStitchesDone = (int)(stitchOrder.size() - 1) == currentStitchIndex;
+    const StitchInfo &stitchInfo = *stitchOrder[currentStitchIndex];
+    auto &imgSize = spMultiStitcher->getStitchImageCurrentOrigSize();
+    LogUtils::getLogUserInfo() << "Stitching "
+      << stitchInfo.srcImageIndex << "->" << stitchInfo.dstImageIndex << ", "
+      << currentStitchIndex << "/" << stitchOrder.size() << ", "
+      << "w/h: " << imgSize.width << "/" << imgSize.height
+      << std::endl;
+
     TConstMat &stitchedImageRef = allStitchesDone
       ? spMultiStitcher->getStitchedImage()
       : spMultiStitcher->getStitchedImageCurrent(true);
-
-    if(allStitchesDone) {
-      spMultiStitcher->releaseStitchedData();
-    }
 
     if(!stitchedImageRef.empty()) {
       //stitchedImageRef.copyTo(stitchedImage.getMatRef());
       stitchedImage.getMatRef() = stitchedImageRef;
     }
 
-    auto &imgSize = spMultiStitcher->getStitchImageCurrentOrigSize();
-    if(currentStitchIndex == (int)stitchOrder.size() - 1) {
+    if(allStitchesDone) {
+
       LogUtils::getLogUserInfo() << "Finalizing, "
         << "w/h: " << imgSize.width << "/" << imgSize.height
         << std::endl;
-    }
-    else {
-      
-      const StitchInfo &stitchInfo = *stitchOrder[currentStitchIndex];
 
-      LogUtils::getLogUserInfo() << "Stitching "
-      << stitchInfo.srcImageIndex << "->" << stitchInfo.dstImageIndex << ", "
-      << currentStitchIndex << "/" << stitchOrder.size() << ", "
-      << "w/h: " << imgSize.width << "/" << imgSize.height
-      << std::endl;
-    }
-
-    if(allStitchesDone) {
+      spMultiStitcher->releaseStitchedData();
 
       int maxPixelsN = (int)settings.getValue(eMultiStitch_limitResultPreview);
 
@@ -324,10 +318,6 @@ int ImgStitch_Impl::stitchNext(
 
       spMultiStitcher->releaseStitchedImage();
     }
-
-    // TMat m = TMat::zeros(2, 2, 24);
-    // m.copyTo(stitchedImage.getMatRef());
-    // m.copyTo(stitchedImageSmall.getMatRef());
 
     return currentStitchIndex + 1;
   }
@@ -364,7 +354,7 @@ void ImgStitch_Impl::handleException(std::exception_ptr eptr)
       if(e.code == CV_StsNoMem) {
         LogUtils::getLogUserError() << "Insufficent memory" << std::endl;
       }
-      LogUtils::getLog() << e.what() << std::endl;
+      LogUtils::getLog() << "Error code: " << e.code << ",  " << e.what() << std::endl;
       throw e;
     }
     catch(std::exception &e) {

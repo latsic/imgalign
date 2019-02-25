@@ -83,6 +83,7 @@ namespace imgalign
       bool compensateExposure,
       bool rectifyPerspective,
       bool rectifyStretch,
+      bool maxRectangle,
       BlendType blendType,
       double blendStrength,
       SeamFinderType seamFinderType,
@@ -185,6 +186,7 @@ namespace imgalign
       int projectionType;
       bool rectifyPerspective = true;
       bool rectifyStretch = false;
+      bool maxRectangle = false;
       bool camEstimate = true;
       BundleAdjustType bundleAdjustType;
       double globalScale = 0.0;

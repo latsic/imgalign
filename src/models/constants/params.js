@@ -19,7 +19,7 @@ export const paramGroups = Object.freeze({
   multiStitcherCamera:      { id: 1017, name: 'Camera'},
   multiStitcherSeams:       { id: 1018, name: 'Seams'},
   multiStitcherImage:       { id: 1019, name: 'Image'},
-  multiStitcherStitchOrder: { id: 1020, name: 'Stitch Order'},
+  multiStitcherStitchOrder: { id: 1020, name: 'Experimental'},
   multiStitcherMemory:      { id: 1021, name: 'Memory'},
   multiStitcherConfidence:  { id: 1022, name: 'Confidence'}
 });
@@ -168,7 +168,7 @@ export const paramTypes = Object.freeze({
 
   
   seamFinderType_Vornoi: { id: 578, name: 'Vornoi', groupId: seamFinderTypeId },
-  seamFinderType_Graphcut: { id: 579, name: 'Graphcut', groupId: seamFinderTypeId },
+  seamFinderType_Graphcut: { id: 579, name: 'Graphcut (slow)', groupId: seamFinderTypeId },
 
   multiStitch_projectionType: { id: projection3Id, name: 'Surface projection', groupId: paramGroups.multiStitcherCamera.id },
   multiStitch_bundleAdjust: { id: bundleAdjustTypeId, name: 'Bundle adjustement type', groupId: paramGroups.multiStitcherCamera.id },
@@ -176,28 +176,32 @@ export const paramTypes = Object.freeze({
   multiStitch_camEstimate: { id: 582, name: 'Cam estimation', groupId: paramGroups.multiStitcherCamera.id },
   
  
-  multiStitch_seamBlend: { id: 585, name: 'Seam blend', groupId: paramGroups.multiStitcherSeams.id },
+  multiStitch_maxRectangle: { id: 603, name: 'Crop to max rect', groupId: paramGroups.multiStitcherImage.id },
+  multiStitch_exposureCompensator: { id: 590, name: 'Exp compens. (slow)', groupId: paramGroups.multiStitcherImage.id },
   multiStitch_rectifyPerspective: { id: 581, name: 'Rectify perspective', groupId: paramGroups.multiStitcherImage.id },
   multiStitch_rectifyStretch: { id: 593, name: 'Rectify stretch', groupId: paramGroups.multiStitcherImage.id, enabledIfId: 581 },
-  
+  multiStitch_colorTransfer: { id: 586, name: 'Color transfer', groupId: paramGroups.multiStitcherImage.id },
+
   
   //multiStitch_blendType: { id: blendTypeId, name: 'Blend type', groupId: paramGroups.multiStitcherImage.id },
+  multiStitch_seamBlend: { id: 585, name: 'Seam blend', groupId: paramGroups.multiStitcherSeams.id },
   multiStitch_blendStrength: { id: 592, name: 'Blend strength', groupId: paramGroups.multiStitcherSeams.id, enabledIfId: 585 },
   multiStitch_seamFinderType: { id: seamFinderTypeId, name: 'Seam finder', groupId: paramGroups.multiStitcherSeams.id },
   
   
-  multiStitch_exposureCompensator: { id: 590, name: 'Exposure compens.', groupId: paramGroups.multiStitcherImage.id },
-  multiStitch_colorTransfer: { id: 586, name: 'Color transfer', groupId: paramGroups.multiStitcherImage.id },
+  
 
-  multiStitch_calcImageOrder: { id: 587, name: 'Calc stitch order', groupId: paramGroups.multiStitcherStitchOrder.id },
-  multiStitch_calcCenterImage: { id: 588, name: 'Estimate start image', groupId: paramGroups.multiStitcherStitchOrder.id },
+  
   multiStitch_warpFirst: { id: 580, name: 'Warp first', groupId: paramGroups.multiStitcherStitchOrder.id },
+  multiStitch_calcCenterImage: { id: 588, name: 'Estimate start image', groupId: paramGroups.multiStitcherStitchOrder.id, enabledIfId: 580 },
+  
   
   multiStitch_confidenceThreshCamManual: { id: 595, name: 'Thresh camera', groupId: 0 },
   multiStitch_confidenceThreshCam: { id: 594, name: 'Thresh camera', groupId: 0 },
   // multiStitch_confidenceThreshCamManual: { id: 595, name: 'Thresh camera', groupId: paramGroups.multiStitcherConfidence.id },
   // multiStitch_confidenceThreshCam: { id: 594, name: 'Thresh camera', groupId: paramGroups.multiStitcherConfidence.id, enabledIfId: 595 },
   multiStitch_confidenceThresh: { id: 589, name: 'Thresh stitching', groupId: paramGroups.multiStitcherConfidence.id },
+  multiStitch_calcImageOrder: { id: 587, name: 'Calc stitch order', groupId: paramGroups.multiStitcherConfidence.id },
 
   multiStitch_preserveAlphaChannelValue: { id: 600, name: 'Preserve Alpha Channel', groupId: paramGroups.multiStitcherMemory.id },
   multiStitch_disposeInputImages: { id: 598, name: 'Dispose input before stitching', groupId: paramGroups.multiStitcherMemory.id },

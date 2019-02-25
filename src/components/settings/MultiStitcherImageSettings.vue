@@ -21,6 +21,7 @@
         :disabled="isDisabled(param)"
         hide-details
         @change="value => changed(param.id, value ? 1 : 0 )"
+        class="switch-text-small"
       />
     </v-flex>
   </v-layout>
@@ -70,4 +71,8 @@ export default {
 </script>
 
 <style scoped>
+  .switch-text-small >>> label {
+    font-size: 0.7em;
+    font-weight: 600; 
+  }
 </style>
