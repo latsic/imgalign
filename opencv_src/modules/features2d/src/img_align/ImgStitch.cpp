@@ -202,7 +202,7 @@ int ImgStitch_Impl::stitch(
   }
   catch(...) {
     handleException(std::current_exception());
-    return false;
+    return 0;
   }
 }
 
@@ -229,6 +229,7 @@ int ImgStitch_Impl::stitchStart(
   }
   catch(...) {
     handleException(std::current_exception());
+    stitchIndices.clear();
   }
   return -1;
 }
@@ -355,11 +356,11 @@ void ImgStitch_Impl::handleException(std::exception_ptr eptr)
         LogUtils::getLogUserError() << "Insufficent memory" << std::endl;
       }
       LogUtils::getLog() << "Error code: " << e.code << ",  " << e.what() << std::endl;
-      throw e;
+      //throw e;
     }
     catch(std::exception &e) {
       LogUtils::getLogUserError() << e.what() << std::endl;
-      throw e;
+      //throw e;
     }
   }
 }

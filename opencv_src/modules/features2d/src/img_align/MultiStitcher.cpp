@@ -531,9 +531,7 @@ MultiStitcher::initStiching(
   confidenceThresh = settings.getValue(eMultiStitch_confidenceThresh);
   blendStrength = settings.getValue(eMultiStitch_blendStrength);
   preserveAlphaChannelValue = (bool)settings.getValue(eMultiStitch_preserveAlphaChannelValue);
-  wcType = settings.getValue(eMultiStitch_waveCorrection) > 0.0
-    ? WaveCorrectType::WCT_AUTO
-    : WaveCorrectType::WCT_NONE;
+  wcType = settings.getWaveCorrectType();
   calcCenterImage = (bool)settings.getValue(eMultiStitch_calcCenterImage);
   currentStitchedImageMaxPixelsN = (int)settings.getValue(eMultiStitch_limitLiveStitchingPreview);
   
@@ -559,7 +557,7 @@ MultiStitcher::initStiching(
     LogUtils::getLog() << "rectifyStretch " << rectifyStretch << std::endl;
     LogUtils::getLog() << "camEstimate " << camEstimate << std::endl;
     LogUtils::getLog() << "bundleAdjust " << (int)(settings.getValue(eMultiStitch_bundleAdjustType)) << std::endl;
-    LogUtils::getLog() << "waveCorrection " << (wcType != WaveCorrectType::WCT_NONE ? "on" : "off") << std::endl;
+    LogUtils::getLog() << "waveCorrection " << (int)(settings.getValue(eMultiStitch_waveCorrection)) << std::endl;
     LogUtils::getLog() << "colorTransfer " << colorTransfer << std::endl;
     LogUtils::getLog() << "seamBlend " << seamBlend << std::endl;
     LogUtils::getLog() << "compensateExposure " << compensateExposure << std::endl;

@@ -131,6 +131,11 @@ namespace imgalign
     eBundleAdjustType_reprojcap = 566,
     eBundleAdjustType_ray3 = 602,
 
+    eWaveCorrectionType_A = 611, 
+    eWaveCorrectionType_N = 612,
+    eWaveCorrectionType_H = 613,
+    eWaveCorrectionType_V = 614,
+
     eBlendType_none = 574,
     eBlendType_multiBand = 575,
     eBlendType_feather = 576,
@@ -143,7 +148,7 @@ namespace imgalign
     eMultiStitch_rectifyPerspective = 581,
     eMultiStitch_camEstimate = 582,
     eMultiStitch_bundleAdjustType = 583,
-    eMultiStitch_waveCorrection = 584,
+    eMultiStitch_waveCorrection = 610,
     eMultiStitch_seamBlend = 585,
     eMultiStitch_colorTransfer = 586,
     eMultiStitch_calcImageOrder = 587,
@@ -184,6 +189,7 @@ namespace imgalign
       BundleAdjustType getBundleAdjustType() const;
       // BlendType getBlendType() const;
       SeamFinderType getSeamFinderType() const;
+      WaveCorrectType getWaveCorrectType() const;
 
       
       void init();

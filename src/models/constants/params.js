@@ -36,6 +36,7 @@ const projection3Id = 305;
 const bundleAdjustTypeId = 583;
 const blendTypeId = 591;
 const seamFinderTypeId = 577;
+const waveCorrectionTypeId = 610;
 
 export const paramTypes = Object.freeze({
 
@@ -160,7 +161,11 @@ export const paramTypes = Object.freeze({
   bundleAdjustType_ray2: { id: 568, name: 'Ray2', groupId: bundleAdjustTypeId },
   bundleAdjustType_reproj2: { id: 567, name: 'Reprojection2', groupId: bundleAdjustTypeId },
   bundleAdjustType_ray3: { id: 602, name: 'Ray3', groupId: bundleAdjustTypeId },
-  
+
+  waveCorrectionType_A: { id: 611, name: 'Auto', groupId: waveCorrectionTypeId },
+  waveCorrectionType_N: { id: 612, name: 'None', groupId: waveCorrectionTypeId },
+  waveCorrectionType_H: { id: 613, name: 'Horizontal', groupId: waveCorrectionTypeId },
+  waveCorrectionType_V: { id: 614, name: 'Vertical', groupId: waveCorrectionTypeId },
 
   blendType_none: { id: 574, name: 'None', groupId: blendTypeId },
   blendType_multiBand: { id: 575, name: 'Multiband', groupId: blendTypeId },
@@ -172,7 +177,7 @@ export const paramTypes = Object.freeze({
 
   multiStitch_projectionType: { id: projection3Id, name: 'Surface projection', groupId: paramGroups.multiStitcherCamera.id },
   multiStitch_bundleAdjust: { id: bundleAdjustTypeId, name: 'Bundle adjustement type', groupId: paramGroups.multiStitcherCamera.id },
-  multiStitch_waveCorrection: { id: 584, name: 'Wave correction', groupId: paramGroups.multiStitcherCamera.id },
+  multiStitch_waveCorrection: { id: waveCorrectionTypeId, name: 'Wave correction', groupId: paramGroups.multiStitcherCamera.id },
   multiStitch_camEstimate: { id: 582, name: 'Cam estimation', groupId: paramGroups.multiStitcherCamera.id },
   
  
@@ -187,10 +192,6 @@ export const paramTypes = Object.freeze({
   multiStitch_seamBlend: { id: 585, name: 'Seam blend', groupId: paramGroups.multiStitcherSeams.id },
   multiStitch_blendStrength: { id: 592, name: 'Blend strength', groupId: paramGroups.multiStitcherSeams.id, enabledIfId: 585 },
   multiStitch_seamFinderType: { id: seamFinderTypeId, name: 'Seam finder', groupId: paramGroups.multiStitcherSeams.id },
-  
-  
-  
-
   
   multiStitch_warpFirst: { id: 580, name: 'Warp first', groupId: paramGroups.multiStitcherStitchOrder.id },
   multiStitch_calcCenterImage: { id: 588, name: 'Estimate start image', groupId: paramGroups.multiStitcherStitchOrder.id, enabledIfId: 580 },

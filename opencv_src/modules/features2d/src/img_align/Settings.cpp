@@ -85,7 +85,7 @@ namespace imgalign
       { eMultiStitch_rectifyPerspective, { 0.0f, "MultiStitch_rectifyPerspective" } },
       { eMultiStitch_camEstimate, { 1.0f, "eMultiStitch_camEstimate" } },
       { eMultiStitch_bundleAdjustType, { (float)eBundleAdjustType_ray, "MultiStitch_bundleAdjustType" } },
-      { eMultiStitch_waveCorrection, { 1.0f, "MultiStitch_waveCorrection" } },
+      { eMultiStitch_waveCorrection, { (float)eWaveCorrectionType_A, "MultiStitch_waveCorrection" } },
       { eMultiStitch_seamBlend, { 1.0f, "MultiStitch_seamBlend" } },
       { eMultiStitch_colorTransfer, { 0.0f, "MultiStitch_colorTransfer" } },
       { eMultiStitch_calcImageOrder, { 1.0f, "MultiStitch_calcImageOrder" } },
@@ -200,6 +200,23 @@ namespace imgalign
       case eSeamFinderType_Vornoi:
       default: {
         return SeamFinderType::SFT_VORNOI;
+      }
+    }
+  }
+
+  WaveCorrectType Settings::getWaveCorrectType() const
+  {
+    switch((int)getValue(eMultiStitch_waveCorrection)) {
+      case eWaveCorrectionType_A:
+        return WaveCorrectType::WCT_AUTO;
+      case eWaveCorrectionType_N:
+        return WaveCorrectType::WCT_NONE;
+      case eWaveCorrectionType_H:
+        return WaveCorrectType::WCT_H;
+      case eWaveCorrectionType_V:
+        return WaveCorrectType::WCT_V;
+      default: {
+        return WaveCorrectType::WCT_AUTO;
       }
     }
   }

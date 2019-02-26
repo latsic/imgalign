@@ -372,9 +372,10 @@ export class Settings {
       },
       {
         id: paramTypes.multiStitch_waveCorrection.id,
-        type: valueTypes.bool,
-        value: 1,
-        defaultValue: 1,
+        type: valueTypes.discrete,
+        value: paramTypes.waveCorrectionType_A.id,
+        defaultValue: paramTypes.waveCorrectionType_A.id,
+        values: getDiscreteParams(paramTypes.multiStitch_waveCorrection.id)
       },
       {
         id: paramTypes.multiStitch_seamBlend.id,
