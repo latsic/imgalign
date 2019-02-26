@@ -110,11 +110,11 @@ export default {
       }
       else if(this.imageUrlArray.length == 3) {
         return {
-          xs4: true,
+          xs6: true,
         }
       }
       return {
-        xs4: true,
+        xs6: true,
         sm3: true,
         md3: true
       }
