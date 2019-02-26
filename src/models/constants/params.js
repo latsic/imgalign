@@ -183,8 +183,6 @@ export const paramTypes = Object.freeze({
  
   multiStitch_maxRectangle: { id: 603, name: 'Crop to max rect', groupId: paramGroups.multiStitcherImage.id },
   multiStitch_exposureCompensator: { id: 590, name: 'Exp compens. (slow)', groupId: paramGroups.multiStitcherImage.id },
-  multiStitch_rectifyPerspective: { id: 581, name: 'Rectify perspective', groupId: paramGroups.multiStitcherImage.id },
-  multiStitch_rectifyStretch: { id: 593, name: 'Rectify stretch', groupId: paramGroups.multiStitcherImage.id, enabledIfId: 581 },
   multiStitch_colorTransfer: { id: 586, name: 'Color transfer', groupId: paramGroups.multiStitcherImage.id },
 
   
@@ -195,6 +193,8 @@ export const paramTypes = Object.freeze({
   
   multiStitch_warpFirst: { id: 580, name: 'Warp first', groupId: paramGroups.multiStitcherStitchOrder.id },
   multiStitch_calcCenterImage: { id: 588, name: 'Estimate start image', groupId: paramGroups.multiStitcherStitchOrder.id, enabledIfId: 580 },
+  multiStitch_rectifyPerspective: { id: 581, name: 'Rectify perspective', groupId: paramGroups.multiStitcherStitchOrder.id },
+  multiStitch_rectifyStretch: { id: 593, name: 'Rectify stretch', groupId: paramGroups.multiStitcherStitchOrder.id, enabledIfId: 581 },
   
   
   multiStitch_confidenceThreshCamManual: { id: 595, name: 'Thresh camera', groupId: 0 },
