@@ -23,7 +23,8 @@ module.exports = {
   globals: {
     cv: false,
     process: false,
-    module: false
+    module: false,
+    workbox: false
   },
   // "parser": "vue-eslint-parser",
   // "parserOptions": {

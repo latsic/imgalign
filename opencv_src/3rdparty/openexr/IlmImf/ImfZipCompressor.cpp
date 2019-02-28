@@ -97,7 +97,7 @@ ZipCompressor::compress (const char *inPtr,
              const char *&outPtr)
 {
     //
-    // Special case ­- empty input buffer
+    // Special case ï¿½- empty input buffer
     //
 
     if (inSize == 0)
@@ -171,7 +171,7 @@ ZipCompressor::uncompress (const char *inPtr,
                const char *&outPtr)
 {
     //
-    // Special case ­- empty input buffer
+    // Special case ï¿½- empty input buffer
     //
 
     if (inSize == 0)

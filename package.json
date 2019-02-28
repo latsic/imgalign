@@ -11,6 +11,7 @@
     "axios": "^0.18.0",
     "exif-js": "^2.3.0",
     "file-saver": "^2.0.0",
+    "register-service-worker": "^1.5.2",
     "vue": "^2.5.22",
     "vue-router": "^3.0.2",
     "vuetify": "^1.4.2",
@@ -19,6 +20,7 @@
   "devDependencies": {
     "@vue/cli-plugin-babel": "^3.3.0",
     "@vue/cli-plugin-eslint": "^3.3.0",
+    "@vue/cli-plugin-pwa": "^3.4.1",
     "@vue/cli-service": "^3.3.0",
     "babel-eslint": "^10.0.1",
     "copy-webpack-plugin": "^4.6.0",

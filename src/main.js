@@ -3,6 +3,7 @@ import './plugins/vuetify'
 import App from './App.vue'
 import router from './router'
 import store from './store/store'
+import './registerServiceWorker'
 
 //import workerMatcher from 'worker-loader!./workers/webworker_matcher.js'
 //window.workerMatcher = workerMatcher;
