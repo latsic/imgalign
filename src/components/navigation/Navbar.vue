@@ -104,19 +104,33 @@
             :color="busyColor"
           />
         </v-layout>
+        <v-layout
+          justify-end
+          align-center
+          v-else
+          >
+          <img :src="logo" alt="logo" width='30px'/>
+        </v-layout>
       </v-toolbar-items>
 
       <template
-        v-if="$vuetify.breakpoint.xsOnly && busy"
+        v-if="$vuetify.breakpoint.xsOnly"
       >
         <v-spacer />
         <v-toolbar-items>
           <v-layout
             align-center
+            v-if="busy"
           >
             <app-spinner
               :color="busyColor"
             />
+          </v-layout>
+          <v-layout
+            align-center
+            v-else
+          >
+            <img :src="logo" alt="logo" width='30px'/>
           </v-layout>
         </v-toolbar-items>
       </template>
@@ -153,6 +167,7 @@
 <script>
 
 import Spinner from '@/components/gui/Spinner';
+import LogoSvg from '@/assets/logo.svg';
 
 export default {
   components: {
@@ -274,6 +289,9 @@ export default {
         return this.$vuetify.theme.accent;
       }
       return this.$vuetify.theme.error;
+    },
+    logo() {
+      return LogoSvg;
     }
   },
   methods: {

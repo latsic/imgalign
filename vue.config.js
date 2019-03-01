@@ -6,7 +6,7 @@ module.exports = {
     ? '/imgalign/'
     : '/',
   pwa: {
-    name: 'image needle',
+    name: 'Image Needle',
     themeColor: '#000000',
     msTileColor: '#000000',
     appleMobileWebAppCapable: 'yes',
