@@ -19,7 +19,17 @@
             @click="itemClicked(item)"
           >
             <v-list-tile-action>
-              <v-icon>{{ item.icon }}</v-icon>
+
+              <v-icon
+                v-if="!item.isSvg"  
+              >
+                {{ item.icon }}
+              </v-icon>
+              <v-layout
+                v-else
+                >
+                <img :src="item.icon" alt="logo" width='20px'/>
+              </v-layout>
             </v-list-tile-action>
             <v-list-tile-content>
               <v-list-tile-title v-text="item.title" />
@@ -134,29 +144,6 @@
           </v-layout>
         </v-toolbar-items>
       </template>
-      <!-- <template
-        v-if="$vuetify.breakpoint.xsOnly && relatedItem($route.name)"
-      >
-        <v-spacer />
-        <v-toolbar-items>
-          <v-btn
-            flat
-            :to="relatedItem($route.name).componentName"
-            @click="itemClicked(relatedItem($route.name))"
-          >
-            {{ relatedItem($route.name).title }}
-          </v-btn>
-          <v-layout
-            align-center
-            >
-            <app-spinner
-              :color="$vuetify.theme.accent"
-            />
-          </v-layout>
-        </v-toolbar-items>
-
-      </template> -->
-
       
     </v-toolbar>
       
@@ -168,6 +155,8 @@
 
 import Spinner from '@/components/gui/Spinner';
 import LogoSvg from '@/assets/logo.svg';
+
+import FingerPrint from '@/assets/fingerprint.svg';
 
 export default {
   components: {
@@ -190,7 +179,7 @@ export default {
   data() {
     return {
       drawer: false,
-      appTitle: "Image Aligner"
+      appTitle: 'Image Aligner'
     };
   },
   computed: {
@@ -198,28 +187,29 @@ export default {
       return [
         
         {
-          title: "Matcher",
-          componentName: "matcher",
+          title: 'Matcher',
+          componentName: 'matcher',
           func: null,
-          icon: "vpn_key"
+          icon: 'vpn_key'
         },
         {
-          title: "Comparer",
-          componentName: "comparer",
+          title: 'Comparer',
+          componentName: 'comparer',
           func: null,
-          icon: "compare"
+          icon: 'border_all',
+          isSvg: false
         },
         {
-          title: "Stitcher",
-          componentName: "stitcher",
+          title: 'Stitcher',
+          componentName: 'stitcher',
           func: null,
-          icon: "border_all"
+          icon: 'border_all'
         },
         {
-          title: "MultiStitcher",
-          componentName: "multistitcher",
+          title: 'MultiStitcher',
+          componentName: 'multistitcher',
           func: null,
-          icon: "border_all"
+          icon: 'border_all'
         },
         
         
@@ -292,6 +282,9 @@ export default {
     },
     logo() {
       return LogoSvg;
+    },
+    fingerPrint() {
+      return FingerPrint;
     }
   },
   methods: {

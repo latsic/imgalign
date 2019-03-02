@@ -58,8 +58,8 @@ namespace imgalign
         TConstMat& inDescriptors1, TConstMat& inDescriptors2,
         TConstKeyPoints &keyPoints1, TConstKeyPoints &keyPoints2) const;
 
-      void match(TConstMat& inDescriptors1, TConstMat& inDecsriptors2, TMatches &outMatches) const;
-      void matchFilter(TConstMat& inDescriptors1, TConstMat& inDecsriptors2, TMatches &outMatches) const;
+      void match(TConstMat& inDescriptors1, TConstMat& inDescriptors2, TMatches &outMatches) const;
+      void matchFilter(TConstMat& inDescriptors1, TConstMat& inDescriptors2, TMatches &outMatches) const;
 
       FilterInfo filter(TConstMatches& inMatches, TMatches& outMatches) const;
 

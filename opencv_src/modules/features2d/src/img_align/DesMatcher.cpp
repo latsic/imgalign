@@ -113,25 +113,33 @@ FilterInfo DesMatcher::filter(TConstMatches& inMatches, TMatches& outMatches) co
 	return filterInfo;
 }
 
-void DesMatcher::match(TConstMat& inDescriptors1, TConstMat& inDecsriptors2, TMatches &outMatches) const
+void DesMatcher::match(TConstMat& inDescriptors1, TConstMat& inDescriptors2, TMatches &outMatches) const
 {
   FUNCLOGTIMEL("DesMatcher::match");
 
-  matcher->match(inDescriptors1, inDecsriptors2, outMatches);
+  if(  inDescriptors1.size().width == 0
+    || inDescriptors1.size().height == 0
+    || inDescriptors2.size().width == 0
+    || inDescriptors2.size().height == 0) {
+    
+    return;
+  }
+
+  matcher->match(inDescriptors1, inDescriptors2, outMatches);
 }
 
-void DesMatcher::matchFilter(TConstMat& inDescriptors1, TConstMat& inDecsriptors2, TMatches &outMatches) const
+void DesMatcher::matchFilter(TConstMat& inDescriptors1, TConstMat& inDescriptors2, TMatches &outMatches) const
 {
   FUNCLOGTIMEL("DesMatcher::matchFilter");
 
   TMatches allMatches;
-  match(inDescriptors1, inDecsriptors2, allMatches);
+  match(inDescriptors1, inDescriptors2, allMatches);
   filter(allMatches, outMatches);
 }
 
 MatchInfo DesMatcher::match(
   TransformFinderType tfType,
-  TConstMat& inDescriptors1, TConstMat& inDecsriptors2,
+  TConstMat& inDescriptors1, TConstMat& inDescriptors2,
   TConstKeyPoints &keyPoints1, TConstKeyPoints &keyPoints2) const
 {
   FUNCLOGTIMEL("DesMatcher::match");
@@ -140,7 +148,7 @@ MatchInfo DesMatcher::match(
   matchInfo.success = false;
   matchInfo.confidence = 0;
 
-  match(inDescriptors1, inDecsriptors2, matchInfo.allMatches);
+  match(inDescriptors1, inDescriptors2, matchInfo.allMatches);
   if(matchInfo.allMatches.empty()) {
     return matchInfo;
   }

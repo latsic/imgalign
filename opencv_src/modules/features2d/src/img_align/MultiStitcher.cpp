@@ -193,6 +193,7 @@ namespace
     const std::vector<CameraParams> &cameraParamsV,
     bool camEstimateDone,
     bool baDone,
+    bool warpFirst,
     MultiStitcher::TStitchOrder &rStitchOrder,
     double &rGlobalScale) {
 
@@ -573,6 +574,10 @@ MultiStitcher::initStiching(
     LogUtils::getLog() << "resultPreviewMaxPixelsN " << (int)(settings.getValue(eMultiStitch_limitResultPreview)) << std::endl;
     LogUtils::getLog() << "liveUpdateCycle " << (int)(settings.getValue(eMultiStitch_liveUpdateCycle)) << std::endl;
     LogUtils::getLog() << "maxRectangle " << maxRectangle << std::endl;
+  }
+
+  if(bundleAdjustType == BundleAdjustType::BAT_NONE) {
+    warpFirst = true;
   }
 
   computeKeyPoints();
@@ -1459,7 +1464,7 @@ MultiStitcher::camEstimateAndBundleAdjustIf(
 
       switch(bundleAdjustType) {
         case BundleAdjustType::BAT_NONE:
-          applyCamParams(cameraParamsV, camEstimate, false, rStitchOrder, rGlobalScale);
+          applyCamParams(cameraParamsV, camEstimate, false, warpFirst, rStitchOrder, rGlobalScale);
           return true;
         case BundleAdjustType::BAT_REPROJ:
         case BundleAdjustType::BAT_REPROJ2:
@@ -1566,7 +1571,7 @@ MultiStitcher::camEstimateAndBundleAdjustIf(
     }
   }
   if(baSuccess) {
-    applyCamParams(baCamParamsV, true, camEstimate, rStitchOrder, rGlobalScale);
+    applyCamParams(baCamParamsV, true, camEstimate, warpFirst, rStitchOrder, rGlobalScale);
     logCameraParams(baCamParamsV, srcImagesSizes, rStitchOrder);
   }
   else {
@@ -1578,7 +1583,7 @@ MultiStitcher::camEstimateAndBundleAdjustIf(
       << "2. Choose a difference bundle adjustement type."
       << std::endl;
 
-    applyCamParams(cameraParamsV, false, camEstimate, rStitchOrder, rGlobalScale);
+    applyCamParams(cameraParamsV, false, camEstimate, warpFirst, rStitchOrder, rGlobalScale);
   }
   return baSuccess;
 }
