@@ -84,8 +84,8 @@ namespace imgalign
       { eMultiStitch_projection, { (float)eStitch_projectionTypeSpherical, "MultiStitch_projection" } },
       { eMultiStitch_rectifyPerspective, { 0.0f, "MultiStitch_rectifyPerspective" } },
       { eMultiStitch_camEstimate, { 1.0f, "eMultiStitch_camEstimate" } },
-      { eMultiStitch_bundleAdjustType, { (float)eBundleAdjustType_ray, "MultiStitch_bundleAdjustType" } },
-      { eMultiStitch_waveCorrection, { (float)eWaveCorrectionType_A, "MultiStitch_waveCorrection" } },
+      { eMultiStitch_bundleAdjustType, { (float)eBundleAdjustType_rayBlacklist, "MultiStitch_bundleAdjustType" } },
+      { eMultiStitch_waveCorrection, { (float)eWaveCorrectionType_H, "MultiStitch_waveCorrection" } },
       { eMultiStitch_seamBlend, { 1.0f, "MultiStitch_seamBlend" } },
       { eMultiStitch_colorTransfer, { 0.0f, "MultiStitch_colorTransfer" } },
       { eMultiStitch_calcImageOrder, { 1.0f, "MultiStitch_calcImageOrder" } },
@@ -165,16 +165,18 @@ namespace imgalign
   BundleAdjustType Settings::getBundleAdjustType() const
   {
     switch((int)getValue(eMultiStitch_bundleAdjustType)) {
+
       case eBundleAdjustType_none: return BundleAdjustType::BAT_NONE;
       case eBundleAdjustType_ray: return BundleAdjustType::BAT_RAY;
+      case eBundleAdjustType_rayBlacklist: return BundleAdjustType::BAT_RAYBLACKLIST;
+      case eBundleAdjustType_rayConfidenceStep: return BundleAdjustType::BAT_RAYCONFIDENCESTEP;
+      case eBundleAdjustType_rayMinTiles: return BundleAdjustType::BAT_RAYMINTILES;
       case eBundleAdjustType_reproj: return BundleAdjustType::BAT_REPROJ;
-      case eBundleAdjustType_rayretry: return BundleAdjustType::BAT_RAYRETRY;
-      case eBundleAdjustType_ray2: return BundleAdjustType::BAT_RAY2;
-      case eBundleAdjustType_reproj2: return BundleAdjustType::BAT_REPROJ2;
-      case eBundleAdjustType_reprojcap: return BundleAdjustType::BAT_REPROJCAP;
-      case eBundleAdjustType_ray3: return BundleAdjustType::BAT_RAY3;
-      case eBundleAdjustType_auto:
-      default: return BundleAdjustType::BAT_AUTO;
+      case eBundleAdjustType_reprojCap200: return BundleAdjustType::BAT_REPROJCAP200;
+      case eBundleAdjustType_reprojMinTiles: return BundleAdjustType::BAT_REPROJMINTILES;
+      case eBundleAdjustType_reprojNoCam: return BundleAdjustType::BAT_REPROJNOCAM;
+      case eBundleAdjustType_reprojNoCamCap200: return BundleAdjustType::BAT_REPROJNOCAMCAP200;
+      default: return BundleAdjustType::BAT_RAY;
     }
   }
 

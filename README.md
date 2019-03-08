@@ -36,10 +36,21 @@ Optionally opencv can be built:
 
 ## License
 
+MIT
+
 ## Acknowledgments
 
-## Screenshots
+## Images and Screenshots
 
+<p align="center">
+  <img width="460" src="./images/collections/Table_Collection.jpg">
+</p>
+<p align="center">
+  <img width="460" src="./images/collections/wz_collection.jpg">
+</p>
+<p align="center">
+  <img width="460" src="./images/collections/balcony_collection.jpg">
+</p>
 <p align="center">
   <img width="460" src="./screenshots/matcher0.jpg">
 </p>

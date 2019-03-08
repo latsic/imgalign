@@ -13,6 +13,7 @@ namespace imgalign
 {
 struct MatchInfo;
 struct StitchInfo;
+class StitchInfoFilter;
 
 namespace bundle
 {
@@ -20,27 +21,26 @@ namespace bundle
   
     public:
 
-  // MatchesInfo getMatchesInfo(const MatchInfo &matchInfo, int srcI, int dstI);
-  // CameraParams getCameraParams(double focal = 1.0);
-  // ImageFeatures getImageFeatures();
+      static void getData(
+        const std::vector<TKeyPoints> &keyPoints,
+        const std::vector<TMat> &descriptors,
+        const std::vector<cv::Size> &imageSizes,
+        const std::vector<double> &fieldOfViews,
+        const std::vector<const StitchInfo *> &rStitchOrder,
+        std::vector<CameraParams> &cameraParamsV,
+        std::vector<ImageFeatures> &imageFeaturesV);
 
-    static void getData(
-      const std::vector<TKeyPoints> &keyPoints,
-      const std::vector<TMat> &descriptors,
-      const std::vector<cv::Size> &imageSizes,
-      const std::vector<double> &fieldOfViews,
-      const std::vector<const StitchInfo *> &rStitchOrder,
-      const std::vector<const StitchInfo *> &rStitchInfos,
-      double confidenceThreshCam,
-      std::vector<MatchesInfo> &matchesInfoV,
-      std::vector<CameraParams> &cameraParamsV,
-      std::vector<ImageFeatures> &imageFeaturesV);
+      static void getMatchesInfo(
+        const std::vector<const StitchInfo *> &rStitchOrder,
+        const std::vector<const StitchInfo *> &rStitchInfos,
+        const StitchInfoFilter &stitchInfoFilter,
+        std::vector<MatchesInfo> &matchesInfoV);
 
-    static bool getMatchInfo(
-      size_t srcImageIndex, size_t dstImageIndex,
-      double confidenceThresh,
-      double sumDeltaHV,
-      const MatchInfo &matchInfo, MatchesInfo &outMatchesInfo);
+      static bool getMatchInfo(
+        size_t srcImageIndex, size_t dstImageIndex,
+        const StitchInfoFilter &stitchInfoFilter,
+        double sumDeltaHV,
+        const StitchInfo &stitchInfo, MatchesInfo &outMatchesInfo);
   };
 
 }

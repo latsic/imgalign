@@ -366,15 +366,15 @@ export class Settings {
       {
         id: paramTypes.multiStitch_bundleAdjust.id,
         type: valueTypes.discrete,
-        value: paramTypes.bundleAdjustType_ray.id,
-        defaultValue: paramTypes.bundleAdjustType_ray.id,
+        value: paramTypes.bat_rayBlacklist.id,
+        defaultValue: paramTypes.bat_rayBlacklist.id,
         values: getDiscreteParams(paramTypes.multiStitch_bundleAdjust.id)
       },
       {
         id: paramTypes.multiStitch_waveCorrection.id,
         type: valueTypes.discrete,
-        value: paramTypes.waveCorrectionType_A.id,
-        defaultValue: paramTypes.waveCorrectionType_A.id,
+        value: paramTypes.waveCorrectionType_H.id,
+        defaultValue: paramTypes.waveCorrectionType_H.id,
         values: getDiscreteParams(paramTypes.multiStitch_waveCorrection.id)
       },
       {

@@ -7,6 +7,8 @@
 #include "FeatureFactory.h"
 #include "ImageUtils.h"
 
+#include "StitchInfoFilter.h"
+
 #include "bundle_adjuster/Helper.h"
 #include "bundle_adjuster/motion_estimators.hpp"
 
@@ -193,7 +195,6 @@ namespace
     const std::vector<CameraParams> &cameraParamsV,
     bool camEstimateDone,
     bool baDone,
-    bool warpFirst,
     MultiStitcher::TStitchOrder &rStitchOrder,
     double &rGlobalScale) {
 
@@ -271,7 +272,10 @@ namespace
     const std::vector<CameraParams> &cameraParamsV,
     double confidenceThresh,
     std::vector<CameraParams> &outCameraParamsV,
-    int maxIterations)
+    int maxIterations,
+    StitchInfoFilter &sifBundleAdjust,
+    StitchInfoFilter &sifCamEstimate,
+    StitchInfoFilter &sifComputeOrder)
   {
     FUNCLOGTIMEL("MultiStitcher::camEstimateAndBundleAdjustRay");
 
@@ -299,6 +303,19 @@ namespace
 
         for(auto &camParams : cameraParamsTmp) {
           camParams.focal = -camParams.focal;
+        }
+      }
+      else {
+
+        if(ba->edgeSrc == -1 || ba->edgeDst == -1) {
+          sifBundleAdjust.setDone();
+          sifComputeOrder.setDone();
+          sifCamEstimate.setDone();
+        }
+        else {
+          sifBundleAdjust.addEdge(ba->edgeSrc, ba->edgeDst);
+          sifComputeOrder.addEdge(ba->edgeSrc, ba->edgeDst);
+          sifCamEstimate.addEdge(ba->edgeSrc, ba->edgeDst);
         }
       }
     }
@@ -340,88 +357,6 @@ namespace
     Ptr<detail::Estimator> estimator = makePtr<detail::HomographyBasedEstimator>();
 
     return (*estimator)(imageFeaturesV, matchesInfoV, outCameraParamsV);
-  }
-
-  std::vector<const StitchInfo *>
-  getStitchInfosReduced(
-    double confThresh,
-    const std::vector<const StitchInfo *> &rStitchOrder,
-    const std::vector<const StitchInfo *> &rStitchInfos,
-    std::vector<size_t> &doNotRemove)
-  {
-    FUNCLOGTIMEL("MultiStitcher::getStitchInfosReduced");
-
-    LogUtils::getLogUserInfo() << "MultiStitcher::getStitchInfosReduced " << std::endl;
-
-    auto canRemove = [&](size_t srcIndex) {
-      for(auto i : doNotRemove) {
-        if(i == srcIndex) return false;
-      }
-      return true;
-    };
-
-    std::map<size_t, std::vector<double>> confV;
-    for(const auto *pStitchInfo : rStitchInfos) {
-
-      if(pStitchInfo->matchInfo.confidence < confThresh) {
-        continue;
-      }
-
-      size_t srcIndex = pStitchInfo->srcImageIndex;
-      auto it = confV.find(srcIndex);
-      if(it == confV.end()) {
-        confV.insert(std::make_pair(srcIndex, std::vector<double>()));
-      }
-      auto &srcConfs = confV[srcIndex];
-      srcConfs.push_back(pStitchInfo->matchInfo.confidence);
-    }
-    std::map<size_t, double> confs;
-    for(auto &pair : confV) {
-      double cSum = 0;
-      for(auto c : pair.second) {
-        cSum += c;
-      }
-      confs.insert(std::make_pair(pair.first, cSum / pair.second.size()));
-    }
-
-    LogUtils::getLogUserInfo() << "MultiStitcher::getStitchInfosReduced collecting confs done" << std::endl;
-
-    double minConf = std::numeric_limits<double>::max();
-    int indexToRemove = -1;
-    for(auto &pair : confs) { 
-      if(pair.second < minConf && canRemove(pair.first)) {
-        minConf = pair.second;
-        indexToRemove = (int)pair.first;
-      }
-    }
-    LogUtils::getLogUserInfo() << "Removing " << indexToRemove << " " << minConf << std::endl;
-    
-    auto isInsideStitchOrder = [&](size_t index1, size_t index2) -> bool {
-      for(const auto *pStitchInfo : rStitchOrder) {
-        if(pStitchInfo->srcImageIndex == index1 && pStitchInfo->dstImageIndex == index2) {
-          return true;
-        }
-        if(pStitchInfo->srcImageIndex == index2 && pStitchInfo->dstImageIndex == index1) {
-          return true;
-        }
-      }
-      return false;
-    };
-
-    std::vector<const StitchInfo *> result;
-    for(const auto *pStitchInfo : rStitchInfos) {
-      size_t srcIndex = pStitchInfo->srcImageIndex;
-      size_t dstIndex = pStitchInfo->dstImageIndex;
-
-      if(((int)srcIndex != indexToRemove && (int)dstIndex != indexToRemove) || isInsideStitchOrder(srcIndex, dstIndex)) {
-        result.push_back(pStitchInfo);
-      }
-      else {
-        LogUtils::getLogUserInfo() << "Removing " << srcIndex << "->" << dstIndex << std::endl;
-      }
-    }
-
-    return result;
   }
 }
 
@@ -576,10 +511,6 @@ MultiStitcher::initStiching(
     LogUtils::getLog() << "maxRectangle " << maxRectangle << std::endl;
   }
 
-  if(bundleAdjustType == BundleAdjustType::BAT_NONE) {
-    warpFirst = true;
-  }
-
   computeKeyPoints();
   if(!keyPointsComputed)
   {
@@ -594,10 +525,12 @@ MultiStitcher::initStiching(
     }
   }
 
+  sifComputeOrder = std::unique_ptr<StitchInfoFilter>(new SIF_Std(confidenceThresh));
+
   if(!camBasicDataUpToDate) {
 
     centerImageIndex = 0;
-    if(calcCenterImage) {
+    if(calcCenterImage && warpFirst) {
       centerImageIndex = getCenterImage();
     }
     stitchOrder = computeStitchOrder();
@@ -616,18 +549,59 @@ MultiStitcher::initStiching(
     return false;
   }
 
-  outStitchIndices.clear();
-  for(auto *stitchInfo : stitchOrder) {
-    outStitchIndices.push_back(stitchInfo->srcImageIndex);
-  }
-
   if(!camBasicDataUpToDate) {
 
     computeAbsRotation(stitchOrder);
     setCamMatrices(stitchOrder);
 
-    if(!camEstimateAndBundleAdjustIf(stitchOrder, globalScale)) {
-      return false;
+    std::vector<const StitchInfo *> tempStitchInfos;
+    for(auto spStitchInfo : stitchInfos) {
+      tempStitchInfos.push_back(spStitchInfo.get());
+    }
+
+    switch(bundleAdjustType) {
+      case BundleAdjustType::BAT_RAYMINTILES:
+      case BundleAdjustType::BAT_REPROJMINTILES:
+        sifBundleAdjust = std::unique_ptr<StitchInfoFilter>(new SIF_BestNeighbourOnly(confidenceThresh, stitchOrder));
+        sifCamEstimate = std::unique_ptr<StitchInfoFilter>(new SIF_BestNeighbourOnly(confidenceThresh, stitchOrder));
+        break;
+      case BundleAdjustType::BAT_RAYCONFIDENCESTEP:
+        sifComputeOrder = std::unique_ptr<StitchInfoFilter>(new SIF_IgnoreEdgesConfidence(confidenceThresh, tempStitchInfos));
+        sifCamEstimate = std::unique_ptr<StitchInfoFilter>(new SIF_IgnoreEdgesConfidence(confidenceThresh, tempStitchInfos)); 
+        sifBundleAdjust = std::unique_ptr<StitchInfoFilter>(new SIF_IgnoreEdgesConfidence(confidenceThresh, tempStitchInfos));
+        break;
+      case BundleAdjustType::BAT_RAYBLACKLIST:
+        sifBundleAdjust = std::unique_ptr<StitchInfoFilter>(new SIF_IgnoreEdgesBlacklist(confidenceThresh, tempStitchInfos.size()));
+        sifComputeOrder = std::unique_ptr<StitchInfoFilter>(new SIF_IgnoreEdgesBlacklist(confidenceThresh, tempStitchInfos.size()));
+        sifCamEstimate = std::unique_ptr<StitchInfoFilter>(new SIF_IgnoreEdgesBlacklist(confidenceThresh, tempStitchInfos.size()));
+        break;
+      case BundleAdjustType::BAT_NONE:
+      case BundleAdjustType::BAT_REPROJ:
+      case BundleAdjustType::BAT_REPROJCAP200:
+      case BundleAdjustType::BAT_REPROJNOCAM:
+      case BundleAdjustType::BAT_REPROJNOCAMCAP200:
+      default: {
+        sifBundleAdjust = std::unique_ptr<StitchInfoFilter>(new SIF_Std(confidenceThresh));
+        sifCamEstimate = std::unique_ptr<StitchInfoFilter>(new SIF_Std(confidenceThresh));
+      }
+    }
+
+    for(int i = 1; true; ++i) {
+      if(camEstimateAndBundleAdjustIf(stitchOrder, globalScale)) {
+        break;
+      }
+
+      sifComputeOrder->setIteration(i);
+      sifBundleAdjust->setIteration(i);
+      sifCamEstimate->setIteration(i);
+
+      // if(sifComputeOrder->done()) {
+      //   return false;
+      // }
+      if(sifBundleAdjust == nullptr || sifBundleAdjust->done()) {
+        return false;
+      }
+      stitchOrder = computeStitchOrder();
     }
 
     lastRunData = std::unique_ptr<LastRunData>(
@@ -643,12 +617,17 @@ MultiStitcher::initStiching(
     waveCorrection(stitchOrder);
   }
 
+  outStitchIndices.clear();
+  for(auto *stitchInfo : stitchOrder) {
+    outStitchIndices.push_back(stitchInfo->srcImageIndex);
+  }
+
   logStitchOrder(globalScale, srcImagesSizes, stitchOrder);
 
   //descriptors.clear();
   //keyPoints.clear();
   points.clear();
-  //dismissDetailedMatchInfoData(stitchInfos);
+  dismissDetailedMatchInfoData(stitchInfos);
   
   stitchedImage.init(
     srcImages[centerImageIndex],
@@ -726,8 +705,8 @@ MultiStitcher::findNextMatch(
     for(auto srcIndex : srcI) {
       const auto *stitchInfo = getStitchInfo(dstIndex, srcIndex);
 
-      if(matchesMinCriterias(*stitchInfo)) {  
-
+      if(sifComputeOrder->pass(*stitchInfo)) {
+     
         if(stitchInfoP == nullptr) {
           stitchInfoP = stitchInfo;
           continue;
@@ -925,11 +904,6 @@ MultiStitcher::stitch(const StitchInfo &stitchInfo)
       srcImageProjected, homography2,
       cv::Size((int)(r - l), (int)(b - t)),
       stitchedImage.warpedImage(srcIndex), true, true);
-
-    // LogUtils::getLogUserInfo() << "Warp " << l << "/" << r << "/" << t << "/" << b << " " << tx << "/" << ty << std::endl; 
-    // LogUtils::getLogUserInfo() << "Warp w/h srcImageProjected"  << srcIndex << " " << srcImageProjected.size().width << "/" << srcImageProjected.size().height << std::endl;
-    // LogUtils::getLogUserInfo() << "Warp w/h srcImageWarped   "  << srcIndex << " " << (int)(r - l) << "/" << (int)(b - t) << std::endl;
-    
 
     WarperHelper::warpPerspective(
       maskProjected, homography2,
@@ -1158,8 +1132,8 @@ MultiStitcher::TStitchOrder MultiStitcher::computeStitchOrder(size_t startIndex)
 
       size_t dstIndex = lastDstSuccess;
       auto *stitchInfo = getStitchInfo(dstIndex, srcIndex);
-      if(matchesMinCriterias(*stitchInfo)) {
-        
+      if(sifComputeOrder->pass(*stitchInfo)) {
+       
         lastDstSuccess = srcIndex;
         _stitchOrder.push_back(stitchInfo);
 
@@ -1277,36 +1251,12 @@ MultiStitcher::computeRelativeRotation(const StitchInfo &stitchInfo)
   auto h1 = srcImagesSizes[stitchInfo.dstImageIndex].height;
   auto w2 = srcImagesSizes[stitchInfo.srcImageIndex].width;
   auto h2 = srcImagesSizes[stitchInfo.srcImageIndex].height;
-  // auto w1 = srcImages[stitchInfo.dstImageIndex].size().width;
-  // auto h1 = srcImages[stitchInfo.dstImageIndex].size().height;
-  // auto w2 = srcImages[stitchInfo.srcImageIndex].size().width;
-  // auto h2 = srcImages[stitchInfo.srcImageIndex].size().height;
-
+ 
   WarperHelper::getRelativeRotation(
     w1, h1, w2, h2,
     fieldsOfView[stitchInfo.dstImageIndex],
     stitchInfo.matchInfo.homography,
     stitchInfo.deltaH, stitchInfo.deltaV);
-}
-
-bool
-MultiStitcher::deltaAngleSumInRange(const StitchInfo &stitchInfo)
-{
-  if(stitchInfo.srcImageIndex == stitchInfo.dstImageIndex) {
-    return false;
-  }
-  
-  double deltaSum = std::abs(stitchInfo.deltaH) + std::abs(stitchInfo.deltaV);
-
-  return deltaSum < 3500.0;
-}
-
-bool
-MultiStitcher::matchesMinCriterias(const StitchInfo &stitchInfo)
-{
-  return stitchInfo.matchInfo.isHomographyGood()
-      && stitchInfo.matchInfo.confidence >= confidenceThresh
-      && deltaAngleSumInRange(stitchInfo);
 }
 
 void
@@ -1366,45 +1316,15 @@ MultiStitcher::camEstimateAndBundleAdjustIf(
 {
   FUNCLOGTIMEL("MultiStitcher::camEstimateAndBundleAdjust");
 
-  
-
   rGlobalScale = 0.0;
 
   if(!camEstimate && bundleAdjustType == BundleAdjustType::BAT_NONE) {
     return true;
   }
 
-  bool retry = BundleAdjustType::BAT_RAYRETRY == bundleAdjustType
-            || BundleAdjustType::BAT_RAY3 == bundleAdjustType;
-
-  std::vector<size_t> doNotRemove;
-
-  std::vector<const StitchInfo *> tempStitchInfos;
-
-  if(  (warpFirst && bundleAdjustType == BundleAdjustType::BAT_AUTO)
-    || bundleAdjustType == BundleAdjustType::BAT_RAY2
-    || bundleAdjustType == BundleAdjustType::BAT_REPROJ2) {
-    
-    for(size_t i = 0; i < stitchInfos.size(); ++i) {
-
-      size_t srcIndex = stitchInfos[i]->srcImageIndex;
-      size_t dstIndex = stitchInfos[i]->dstImageIndex;
-
-      for(size_t j = 0; j < rStitchOrder.size(); ++j) {
-        if(   (rStitchOrder[j]->srcImageIndex == srcIndex && rStitchOrder[j]->dstImageIndex == dstIndex)
-           || (rStitchOrder[j]->srcImageIndex == dstIndex && rStitchOrder[j]->dstImageIndex == srcIndex)) {
-            
-          tempStitchInfos.push_back(stitchInfos[i].get());
-          break;
-        }
-      }
-    }
-  }
-  else {
-    tempStitchInfos.resize(stitchInfos.size());
-    for(size_t i = 0; i < stitchInfos.size(); ++i) {
-      tempStitchInfos[i] = stitchInfos[i].get();
-    }
+  std::vector<const StitchInfo *> tempStitchInfos(stitchInfos.size());
+  for(size_t i = 0; i < stitchInfos.size(); ++i) {
+    tempStitchInfos[i] = stitchInfos[i].get();
   }
 
   bool baSuccess = false;
@@ -1413,165 +1333,74 @@ MultiStitcher::camEstimateAndBundleAdjustIf(
   std::vector<CameraParams> cameraParamsV;
   std::vector<ImageFeatures> imageFeaturesV;
 
-  Helper::getData(
-    keyPoints, descriptors, srcImagesSizes, fieldsOfView,
-    rStitchOrder, tempStitchInfos, confidenceThreshCam,
-    matchesInfoV, cameraParamsV, imageFeaturesV);
+  Helper::getData(keyPoints, descriptors, srcImagesSizes, fieldsOfView,
+    rStitchOrder, cameraParamsV, imageFeaturesV);
+
+  LogUtils::getLogUserInfo() << "Matches CamEstimate" << std::endl;
+  Helper::getMatchesInfo(rStitchOrder, tempStitchInfos,
+    *sifCamEstimate, matchesInfoV);
 
   logPairwiseMatches(matchesInfoV, false);
   logCameraParams(cameraParamsV, srcImagesSizes, rStitchOrder);
 
-  if(camEstimate) {
+  if(camEstimate &&
+     bundleAdjustType != BundleAdjustType::BAT_REPROJNOCAM &&
+     bundleAdjustType != BundleAdjustType::BAT_REPROJNOCAMCAP200) {
 
-    double cf = confidenceThreshCam;
-
-    for(auto i = 0; i < 10; ++i) {
-      try {
-        std::vector<CameraParams> estimatedCamParamsV;
-        if(runCamEstimate(matchesInfoV, imageFeaturesV, estimatedCamParamsV)) {
-          
-          cameraParamsV.assign(estimatedCamParamsV.begin(), estimatedCamParamsV.end());
-          logCameraParams(cameraParamsV, srcImagesSizes, rStitchOrder);
-          break;
-        }
+    try {
+      std::vector<CameraParams> estimatedCamParamsV;
+      if(runCamEstimate(matchesInfoV, imageFeaturesV, estimatedCamParamsV)) {
+        
+        cameraParamsV.assign(estimatedCamParamsV.begin(), estimatedCamParamsV.end());
+        logCameraParams(cameraParamsV, srcImagesSizes, rStitchOrder);
+      }
+      else {
         LogUtils::getLogUserError() << "Inital cam estimation failed" << std::endl;
+        LogUtils::getLogUserInfo() << "Try to decrease confidence values." << std::endl;
         return false;
       }
-      catch(std::exception &e) {
-        if(i == 9 || confidenceThresh >= cf) {
-          LogUtils::getLog() << e.what() << std::endl;
-          LogUtils::getLogUserError() << "Inital cam estimation failed" << std::endl;
-          LogUtils::getLogUserInfo() << "Try different confidence values." << std::endl;
-          return false;
-        }
-        
-        cf *= 0.9;
-
-        LogUtils::getLogUserError() << "Inital cam estimation failed" << std::endl;
-        LogUtils::getLogUserError() << "Retrying with conf cam value " << cf << std::endl;
-
-        Helper::getData(
-          keyPoints, descriptors, srcImagesSizes, fieldsOfView,
-          rStitchOrder, tempStitchInfos, cf,
-          matchesInfoV, cameraParamsV, imageFeaturesV);
-      }
+    }
+    catch(std::exception &e) {
+      LogUtils::getLog() << e.what() << std::endl;
+      LogUtils::getLogUserError() << "Inital cam estimation failed" << std::endl;
+      LogUtils::getLogUserInfo() << "Try to decrease confidence values." << std::endl;
+      return false;
     }
   }
 
-  while(true) {
-    
-    try {
-
-      switch(bundleAdjustType) {
-        case BundleAdjustType::BAT_NONE:
-          applyCamParams(cameraParamsV, camEstimate, false, warpFirst, rStitchOrder, rGlobalScale);
-          return true;
-        case BundleAdjustType::BAT_REPROJ:
-        case BundleAdjustType::BAT_REPROJ2:
-          LogUtils::getLogUserInfo() << "Run BA reprojection" << std::endl;
-          baSuccess = bundleAdjustReproj(matchesInfoV, imageFeaturesV, cameraParamsV, confidenceThresh, baCamParamsV, -1);
-          break;
-        case BundleAdjustType::BAT_REPROJCAP: 
-          LogUtils::getLogUserInfo() << "Run BA reprojection cap" << std::endl;
-          baSuccess = bundleAdjustReproj(matchesInfoV, imageFeaturesV, cameraParamsV, confidenceThresh, baCamParamsV, 200);
-          break;
-        case BundleAdjustType::BAT_RAY:
-        case BundleAdjustType::BAT_RAY2:
-        case BundleAdjustType::BAT_RAYRETRY:
-        case BundleAdjustType::BAT_RAY3:
-          LogUtils::getLogUserInfo() << "Run BA ray" << std::endl;
-          baSuccess = bundleAdjustRay(matchesInfoV, imageFeaturesV, cameraParamsV, confidenceThresh, baCamParamsV, -1);
-          break;
-        case BundleAdjustType::BAT_AUTO:
-
-          if(!retry) {
-            LogUtils::getLogUserInfo() << "Run BA ray" << std::endl;
-            baSuccess = bundleAdjustRay(matchesInfoV, imageFeaturesV, cameraParamsV, confidenceThresh, baCamParamsV, -1);
-            if(!baSuccess) {
-              LogUtils::getLogUserInfo() << "BA ray failed, retrying with reprojection cap" << std::endl;
-              baSuccess = bundleAdjustReproj(matchesInfoV, imageFeaturesV, cameraParamsV, confidenceThresh, baCamParamsV, 200);
-            }
-          }
-          if(!warpFirst && !baSuccess) {
-            LogUtils::getLogUserInfo() << "BA reproj failed, retrying with ray" << std::endl;
-            baSuccess = bundleAdjustRay(matchesInfoV, imageFeaturesV, cameraParamsV, confidenceThresh, baCamParamsV, -1);
-            retry = true;
-          }
-          break;
-        default:{
-        }
-      }
-    }
-    catch(...) {
-      retry = false;
-    }
-    if(baSuccess || !retry) {
+  LogUtils::getLogUserInfo() << "Matches sifBundleAdjust" << std::endl;
+  Helper::getMatchesInfo(rStitchOrder, tempStitchInfos,
+    *sifBundleAdjust, matchesInfoV);
+  
+  switch(bundleAdjustType) {
+    case BundleAdjustType::BAT_NONE:
+      applyCamParams(cameraParamsV, camEstimate, false, rStitchOrder, rGlobalScale);
+      return true;
+    case BundleAdjustType::BAT_REPROJ:
+    case BundleAdjustType::BAT_REPROJMINTILES:
+    case BundleAdjustType::BAT_REPROJNOCAM:
+      LogUtils::getLogUserInfo() << "Run BA reprojection" << std::endl;
+      baSuccess = bundleAdjustReproj(matchesInfoV, imageFeaturesV, cameraParamsV, confidenceThresh, baCamParamsV, -1);
       break;
-    }
-    else if(bundleAdjustType == BundleAdjustType::BAT_RAY3) {
-      size_t count = tempStitchInfos.size();
-      tempStitchInfos = getStitchInfosReduced(confidenceThresh, rStitchOrder, tempStitchInfos, doNotRemove);
-      if(tempStitchInfos.size() == count) {
-        LogUtils::getLogUserInfo() << "Can not remove more stitchInfos" << std::endl;
-        break;
-      }
-      Helper::getData(
-        keyPoints, descriptors, srcImagesSizes, fieldsOfView,
-        rStitchOrder, tempStitchInfos, confidenceThreshCam,
-        matchesInfoV, cameraParamsV, imageFeaturesV);
-    }
-    else {
-
-      auto removeWorstMatchInfo = [&]() -> bool {
-        double minConf = 1000000;
-        MatchesInfo *pMatchesInfo1 = nullptr;
-        MatchesInfo *pMatchesInfo2 = nullptr;
-        for(auto &matchesInfo : matchesInfoV) {
-          if(matchesInfo.confidence < minConf && matchesInfo.confidence > 0) {
-            minConf = matchesInfo.confidence;
-            pMatchesInfo1 = &matchesInfo;
-            pMatchesInfo2 = nullptr;
-          }
-          else if(  pMatchesInfo1 != nullptr
-                 && matchesInfo.src_img_idx == pMatchesInfo1->dst_img_idx
-                 && matchesInfo.dst_img_idx == pMatchesInfo1->src_img_idx) {
-
-            pMatchesInfo2 = &matchesInfo;
-          }
-        }
-        if(pMatchesInfo1 != nullptr && pMatchesInfo2 != nullptr) {
-          pMatchesInfo1->confidence = 0.0;
-          pMatchesInfo2->confidence = 0.0;
-          TMat m = TMat::zeros(0, 0, CV_64F);
-          m.copyTo(pMatchesInfo1->H);
-          m.copyTo(pMatchesInfo2->H);
-          pMatchesInfo1->num_inliers = 0;
-          pMatchesInfo2->num_inliers = 0;
-          pMatchesInfo1->matches.clear();
-          pMatchesInfo2->matches.clear();
-          pMatchesInfo1->inliers_mask.clear();
-          pMatchesInfo2->inliers_mask.clear();
-          LogUtils::getLogUserError()
-            << "Removing " << pMatchesInfo1->src_img_idx << "->" << pMatchesInfo1->dst_img_idx
-            << std::endl;
-        }
-
-        if(pMatchesInfo1 != nullptr && pMatchesInfo2 == nullptr) {
-          LogUtils::getLogUserInfo() << "removeWorstMatchInfo ERROR " << pMatchesInfo1->src_img_idx << "->"
-            << pMatchesInfo2->dst_img_idx << std::endl;
-        }
-
-        return pMatchesInfo1 != nullptr && pMatchesInfo2 != nullptr;
-      };
-
-      if(!removeWorstMatchInfo()) {
-        break;
-      }
-      logPairwiseMatches(matchesInfoV, false);
+    case BundleAdjustType::BAT_REPROJCAP200:
+    case BundleAdjustType::BAT_REPROJNOCAMCAP200:
+      LogUtils::getLogUserInfo() << "Run BA reprojection cap" << std::endl;
+      baSuccess = bundleAdjustReproj(matchesInfoV, imageFeaturesV, cameraParamsV, confidenceThresh, baCamParamsV, 200);
+      break;
+    case BundleAdjustType::BAT_RAY:
+    case BundleAdjustType::BAT_RAYBLACKLIST:
+    case BundleAdjustType::BAT_RAYCONFIDENCESTEP:
+    case BundleAdjustType::BAT_RAYMINTILES:
+      LogUtils::getLogUserInfo() << "Run BA ray" << std::endl;
+      baSuccess = bundleAdjustRay(matchesInfoV, imageFeaturesV, cameraParamsV,
+        confidenceThresh, baCamParamsV, -1, *sifBundleAdjust, *sifCamEstimate, *sifComputeOrder);
+      break;
+    default:{
     }
   }
+  
   if(baSuccess) {
-    applyCamParams(baCamParamsV, true, camEstimate, warpFirst, rStitchOrder, rGlobalScale);
+    applyCamParams(baCamParamsV, camEstimate, true, rStitchOrder, rGlobalScale);
     logCameraParams(baCamParamsV, srcImagesSizes, rStitchOrder);
   }
   else {
@@ -1579,11 +1408,11 @@ MultiStitcher::camEstimateAndBundleAdjustIf(
 
     LogUtils::getLogUserError()
       << "Advice: "
-      << "1. Increase confidence value, "
-      << "2. Choose a difference bundle adjustement type."
+      << "1. Increase/decrease confidence value, "
+      << "2. Try a difference bundle adjustement type."
       << std::endl;
 
-    applyCamParams(cameraParamsV, false, camEstimate, warpFirst, rStitchOrder, rGlobalScale);
+    applyCamParams(cameraParamsV, camEstimate, false, rStitchOrder, rGlobalScale);
   }
   return baSuccess;
 }

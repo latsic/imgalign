@@ -35,15 +35,27 @@ namespace imgalign
     WCT_NONE = 0, WCT_H = 1, WCT_V = 2, WCT_AUTO = 3
   };
   enum class BundleAdjustType{
+    // BAT_NONE = 0,
+    // BAT_RAY = 1,
+    // BAT_REPROJ = 2,
+    // BAT_AUTO = 3,
+    // BAT_RAYRETRY = 4,
+    // BAT_RAY2 = 5,
+    // BAT_REPROJ2 = 6,
+    // BAT_REPROJCAP = 7,
+    // BAT_RAY3 = 8,
+    // BAT_RAY4 = 9
+
     BAT_NONE = 0,
     BAT_RAY = 1,
-    BAT_REPROJ = 2,
-    BAT_AUTO = 3,
-    BAT_RAYRETRY = 4,
-    BAT_RAY2 = 5,
-    BAT_REPROJ2 = 6,
-    BAT_REPROJCAP = 7,
-    BAT_RAY3 = 8
+    BAT_RAYBLACKLIST = 2,
+    BAT_RAYCONFIDENCESTEP = 3,
+    BAT_RAYMINTILES = 4,
+    BAT_REPROJ = 5,
+    BAT_REPROJCAP200 = 6,
+    BAT_REPROJMINTILES = 7,
+    BAT_REPROJNOCAM = 9,
+    BAT_REPROJNOCAMCAP200 = 10
   };
   enum class BlendType{
     BT_MULTIBAND = 0, BT_FEATHER = 1, BT_NONE = 3

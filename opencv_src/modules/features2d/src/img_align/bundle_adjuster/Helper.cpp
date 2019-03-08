@@ -2,6 +2,7 @@
 #include "Helper.h"
 #include "../MultiStitcher.h"
 #include "../LogUtils.h"
+#include "../StitchInfoFilter.h"
 #include <map>
 
 namespace imgalign
@@ -11,9 +12,9 @@ namespace bundle
 
 bool Helper::getMatchInfo(
   size_t srcImageIndex, size_t dstImageIndex,
-  double confidenceThreshCam,
+  const StitchInfoFilter &stitchInfoFilter,
   double sumDeltaHV,
-  const MatchInfo &matchInfo, MatchesInfo &outMatchesInfo)
+  const StitchInfo &stitchInfo, MatchesInfo &outMatchesInfo)
 {
   FUNCLOGTIMEL("Helper::getMatchInfo");
 
@@ -25,15 +26,14 @@ bool Helper::getMatchInfo(
   m.src_img_idx = srcImageIndex;
   m.dst_img_idx = dstImageIndex;
 
-  if(  matchInfo.success
-    && matchInfo.confidence >= confidenceThreshCam
-    && matchInfo.isHomographyGood()
-    && sumDeltaHV < 5000) {
-
+  
+  if(stitchInfoFilter.pass(stitchInfo)) {
+    
+    const MatchInfo &matchInfo = stitchInfo.matchInfo;
     const auto &inliers = matchInfo.inlierMatchInfos;
 
     m.confidence = matchInfo.confidence;
-    m.confidence = m.confidence > 4.5 ? 0.0 : m.confidence;
+    m.confidence = m.confidence > 10 ? 0.0 : m.confidence;
 
     m.sumDeltaHV = sumDeltaHV;
 
@@ -60,28 +60,13 @@ void Helper::getData(
     const std::vector<cv::Size> &imageSizes,
     const std::vector<double> &fieldOfViews,
     const std::vector<const StitchInfo *> &rStitchOrder,
-    const std::vector<const StitchInfo *> &rStitchInfos,
-    double confidenceThreshCam,
-    std::vector<MatchesInfo> &matchesInfoV,
     std::vector<CameraParams> &cameraParamsV,
     std::vector<ImageFeatures> &imageFeaturesV)
 {
   FUNCLOGTIMEL("Helper::getData");
 
-  LogUtils::getLogUserInfo() << "confidenceThreshCam "  << confidenceThreshCam << std::endl;
-
-  matchesInfoV.clear();
   cameraParamsV.clear();
   imageFeaturesV.clear();
-
-  std::map<size_t, size_t> arrayIndexToImageIndex;
-  std::map<size_t, size_t> imageIndexToArrayIndex;
-  int imagesToStitchN = rStitchOrder.size();
-  for(size_t i = 0; i < rStitchOrder.size(); ++i) {
-    size_t srcImageIndex = rStitchOrder[i]->srcImageIndex;
-    arrayIndexToImageIndex.insert(std::make_pair(i, srcImageIndex));
-    imageIndexToArrayIndex.insert(std::make_pair(srcImageIndex, i));
-  }
 
   for(const auto *stitchInfo : rStitchOrder) {
     
@@ -112,6 +97,26 @@ void Helper::getData(
 
     imageFeaturesV.push_back(std::move(imgF));
   }
+}
+
+void Helper::getMatchesInfo(
+  const std::vector<const StitchInfo *> &rStitchOrder,
+  const std::vector<const StitchInfo *> &rStitchInfos,
+  const StitchInfoFilter &stitchInfoFilter,
+  std::vector<MatchesInfo> &matchesInfoV)
+{
+  FUNCLOGTIMEL("Helper::getMatchesInfo");
+
+  matchesInfoV.clear();
+
+  std::map<size_t, size_t> arrayIndexToImageIndex;
+  std::map<size_t, size_t> imageIndexToArrayIndex;
+  int imagesToStitchN = rStitchOrder.size();
+  for(size_t i = 0; i < rStitchOrder.size(); ++i) {
+    size_t srcImageIndex = rStitchOrder[i]->srcImageIndex;
+    arrayIndexToImageIndex.insert(std::make_pair(i, srcImageIndex));
+    imageIndexToArrayIndex.insert(std::make_pair(srcImageIndex, i));
+  }
 
   std::string baStitchInfos;
   std::stringstream sStream;
@@ -133,7 +138,8 @@ void Helper::getData(
 
     double sumDeltaHV = std::abs(stitchInfo->deltaH) + std::abs(stitchInfo->deltaV);
 
-    if(getMatchInfo(srcImageIndex, dstImageIndex, confidenceThreshCam, sumDeltaHV, stitchInfo->matchInfo, m)) {
+    if(getMatchInfo(srcImageIndex, dstImageIndex, stitchInfoFilter,
+        sumDeltaHV, *stitchInfo, m)) {
 
       sStream << srcImageIndex << "->" << dstImageIndex << "("
         << arrayIndexSrc << "->" <<  arrayIndexDst << ") "
@@ -141,12 +147,12 @@ void Helper::getData(
     }
 
     matchesInfoV[arrayIndexSrc * imagesToStitchN + arrayIndexDst] = std::move(m);
-
   }
 
   LogUtils::getLogUserInfo() << sStream.str() << std::endl;
 
 }
+
 
 }
 }

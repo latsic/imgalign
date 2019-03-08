@@ -10,6 +10,7 @@
 namespace imgalign
 {
   struct MatchInfo;
+  class StitchInfoFilter;
 
   struct StitchInfo {
 
@@ -216,6 +217,10 @@ namespace imgalign
       bool abort = false;
 
       std::unique_ptr<LastRunData> lastRunData;
+      std::unique_ptr<StitchInfoFilter> sifComputeOrder;
+      std::unique_ptr<StitchInfoFilter> sifBundleAdjust;
+      std::unique_ptr<StitchInfoFilter> sifCamEstimate;
+
   };
 
 }
