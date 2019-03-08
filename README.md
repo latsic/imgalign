@@ -52,7 +52,7 @@ MIT
   <img width="100%" src="./images/collections/balcony_collection.jpg">
 </p>
 <p align="center">
-  <img width="460" src="./screenshots/Multistitcher.jpg">
+  <img width="100%" src="./screenshots/Multistitcher.jpg">
 </p>
 <p align="center">
   <img width="460" src="./screenshots/matcher0.jpg">
