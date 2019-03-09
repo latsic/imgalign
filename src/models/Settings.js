@@ -10,47 +10,47 @@ export class Settings {
 
   constructor() {
 
-      function getDiscreteParams(paramTypeId) {
-        return Object.keys(paramTypes)
-          .filter(key => {
-            return paramTypes[key].groupId ==  paramTypeId
-                || (paramTypes[key].groupId2 && paramTypes[key].groupId2 ==  paramTypeId)
-                || (paramTypes[key].groupId3 && paramTypes[key].groupId3 ==  paramTypeId)
-          })
-          .map(key => paramTypes[key]);
-      }
+      // function getDiscreteParams(paramTypeId) {
+      //   return Object.keys(paramTypes)
+      //     .filter(key => {
+      //       return paramTypes[key].groupId ==  paramTypeId
+      //           || (paramTypes[key].groupId2 && paramTypes[key].groupId2 ==  paramTypeId)
+      //           || (paramTypes[key].groupId3 && paramTypes[key].groupId3 ==  paramTypeId)
+      //     })
+      //     .map(key => paramTypes[key]);
+      // }
 
       this.params = [
       { id: paramTypes.detType.id,
         type: valueTypes.discrete,
         defaultValue: paramTypes.detType_sift.id,
         value: paramTypes.detType_sift.id,
-        values: getDiscreteParams(paramTypes.detType.id)
+        values: this.getDiscreteParams(paramTypes.detType.id)
       },
       { id: paramTypes.desType.id,
         type: valueTypes.discrete,
         defaultValue: paramTypes.desType_sift.id,
         value: paramTypes.desType_sift.id,
-        values: getDiscreteParams(paramTypes.desType.id)
+        values: this.getDiscreteParams(paramTypes.desType.id)
       },
       { id: paramTypes.matcherType.id,
         type: valueTypes.discrete,
         defaultValue: paramTypes.matcherType_auto.id,
         value: paramTypes.matcherType_auto.id,
-        values: getDiscreteParams(paramTypes.matcherType.id)
+        values: this.getDiscreteParams(paramTypes.matcherType.id)
       },
       { id: paramTypes.transformFinderType.id,
         type: valueTypes.discrete,
         defaultValue: paramTypes.transformFinderType_ransac.id,
         value: paramTypes.transformFinderType_ransac.id,
-        values: getDiscreteParams(paramTypes.transformFinderType.id)
+        values: this.getDiscreteParams(paramTypes.transformFinderType.id)
       },
 
       { id: paramTypes.compareDetTypes.id,
         type: valueTypes.multiple,
         defaultValue: [paramTypes.detType_sift.id, paramTypes.detType_orb.id, paramTypes.detType_akaze.id].toString(),
         value: [paramTypes.detType_sift.id, paramTypes.detType_orb.id, paramTypes.detType_akaze.id].toString(),
-        values: getDiscreteParams(paramTypes.detType.id)
+        values: this.getDiscreteParams(paramTypes.detType.id)
       },
 
       {
@@ -58,7 +58,7 @@ export class Settings {
         type: valueTypes.discrete,
         defaultValue: paramTypes.imageTemplate.id,
         value: paramTypes.imageTemplate.id,
-        values: getDiscreteParams(paramTypes.compareImageType.id)
+        values: this.getDiscreteParams(paramTypes.compareImageType.id)
       },
 
       { id: paramTypes.imageCap.id,
@@ -258,13 +258,13 @@ export class Settings {
         type: valueTypes.discrete,
         defaultValue: paramTypes.stitch_projectionTypeSpherical.id,
         value: paramTypes.stitch_projectionTypeSpherical.id,
-        values: getDiscreteParams(paramTypes.stitch_projection.id)
+        values: this.getDiscreteParams(paramTypes.stitch_projection.id)
       },
       { id: paramTypes.stitch_projection2.id,
         type: valueTypes.discrete,
         defaultValue: paramTypes.stitch_projectionTypeSpherical.id,
         value: paramTypes.stitch_projectionTypeSpherical.id,
-        values: getDiscreteParams(paramTypes.stitch_projection2.id)
+        values: this.getDiscreteParams(paramTypes.stitch_projection2.id)
       },
 
       {
@@ -337,7 +337,7 @@ export class Settings {
         type: valueTypes.discrete,
         value: paramTypes.stitch_projectionTypeSpherical.id,
         defaultValue: paramTypes.stitch_projectionTypeSpherical.id,
-        values: getDiscreteParams(paramTypes.multiStitch_projectionType.id)
+        values: this.getDiscreteParams(paramTypes.multiStitch_projectionType.id)
       },
       {
         id: paramTypes.multiStitch_rectifyPerspective.id,
@@ -368,14 +368,14 @@ export class Settings {
         type: valueTypes.discrete,
         value: paramTypes.bat_rayBlacklist.id,
         defaultValue: paramTypes.bat_rayBlacklist.id,
-        values: getDiscreteParams(paramTypes.multiStitch_bundleAdjust.id)
+        values: this.getDiscreteParams(paramTypes.multiStitch_bundleAdjust.id)
       },
       {
         id: paramTypes.multiStitch_waveCorrection.id,
         type: valueTypes.discrete,
         value: paramTypes.waveCorrectionType_H.id,
         defaultValue: paramTypes.waveCorrectionType_H.id,
-        values: getDiscreteParams(paramTypes.multiStitch_waveCorrection.id)
+        values: this.getDiscreteParams(paramTypes.multiStitch_waveCorrection.id)
       },
       {
         id: paramTypes.multiStitch_seamBlend.id,
@@ -389,7 +389,7 @@ export class Settings {
         type: valueTypes.discrete,
         value: paramTypes.seamFinderType_Vornoi.id,
         defaultValue: paramTypes.seamFinderType_Vornoi.id,
-        values: getDiscreteParams(paramTypes.multiStitch_seamFinderType.id)
+        values: this.getDiscreteParams(paramTypes.multiStitch_seamFinderType.id)
       },
 
       // {
@@ -496,6 +496,16 @@ export class Settings {
     ];
   }
 
+  getDiscreteParams(paramTypeId) {
+    return Object.keys(paramTypes)
+      .filter(key => {
+        return paramTypes[key].groupId ==  paramTypeId
+            || (paramTypes[key].groupId2 && paramTypes[key].groupId2 ==  paramTypeId)
+            || (paramTypes[key].groupId3 && paramTypes[key].groupId3 ==  paramTypeId)
+      })
+      .map(key => paramTypes[key]);
+  }
+
   getParamDefaultValueById(id) {
     return this._getParamById(id).defaultValue;
   }
@@ -549,6 +559,35 @@ export class Settings {
     idValueArr.forEach(idValue => {
       this.setParamValueById(idValue.id, idValue.value);
     });
+  }
+
+  removeInvalidParams(idValueArr) {
+    
+    idValueArr = idValueArr.filter(idValue => {
+      
+      const param = this.params.find(p => p.id == idValue.id);
+      if(!param) return false;
+
+      if(param.type == valueTypes.discrete) {
+
+        const values = this.getDiscreteParams(param.id);
+        if(!values ||
+           !values.find(dParam => {
+              return dParam.id == idValue.value;
+           })) {
+
+          return false;
+        }
+      }
+      else if(param.type == valueTypes.range || param.type == valueTypes.rangeSquareRoot) {
+        if(idValue.value < param.range.min || idValue.value > param.range.max) {
+          return false;
+        }
+      }
+      return true;
+    });
+
+    return idValueArr;
   }
 
   equals(idValueArr) {

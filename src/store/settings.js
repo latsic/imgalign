@@ -80,8 +80,13 @@ const mutations = {
 
 const actions = {
   init(context) {
-    context.commit('defaultSettings', context.getters['settings'].getIdValueArr());
-    context.commit('params', LocalStorageUtils.getIdValueArr(context.getters['settings'].getIdArr()));
+
+    const settings = context.getters['settings'];
+    context.commit('defaultSettings', settings.getIdValueArr());
+
+    let idValueArr = LocalStorageUtils.getIdValueArr(settings.getIdArr());
+    idValueArr = settings.removeInvalidParams(idValueArr);
+    context.commit('params', idValueArr);
   },
   param({ commit, getters }, { id, value }) {
 
