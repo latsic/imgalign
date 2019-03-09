@@ -104,7 +104,7 @@ const getters = {
   },
   allImageDataValid(state, getters) {
     return getters['imageDataValid'](fixedImageName)
-        && getters['imageDataValid'](movingImageName)
+        && getters['imageDataValid'](movingImageName);
   },
   allImageNames() {
     return [fixedImageName, movingImageName];

@@ -1,7 +1,12 @@
 # ImgAlign
 
-An spa to align an image to a template image or to stitch multiple images. It uses a custom opencv version (compiled to wasm) to do so.
-To align the image 2d-feature detection is used (orb, sift, kaze, etc).
+A client-side only webapplication to join, stitch or align overlapping images. It can be used to create panoramas or to align images, for example forms which have not been scanned properly.
+
+Features: Surface projection, feature detection, feature matching, bundle adjustement, wave correction, color transfer, seam detection and multiband blending.
+
+The core algorithms are taken from OpenCV (modules Feature2D and Stitching mainly) and have been adjusted where needed. A customized version of OpenCV has then been compiled to wasm. To ensure a non blocking UI, all OpenCV related functions run via a webworker.
+
+Pros and cons: As image stitching can be quite memory and cpu intensive, there are some limitations on the amount or size of images which can be stitched together, especially on mobile devices. On the plus side, basic stitching functionality is available on almost any device which can run a browser. There is no need to download a professional stitching software. The application is fully functional offline as well.
 
 ## Built With
 
@@ -36,7 +41,8 @@ Optionally opencv can be built:
 
 ## License
 
-MIT
+MIT if not otherwise noted in the source files.
+Be aware that Surf and Sift are patented algorithms (at least in some regions of the world).
 
 ## Acknowledgments
 
@@ -55,9 +61,9 @@ MIT
   <img width="100%" src="./screenshots/Multistitcher.jpg">
 </p>
 <p align="center">
-  <img width="460" src="./screenshots/matcher0.jpg">
+  <img width="460" src="./screenshots/matcher4.jpg">
 </p>
-<p align="center">
+<!-- <p align="center">
   <img width="460" src="./screenshots/matcher2.jpg">
 </p>
 <p align="center">
@@ -65,7 +71,7 @@ MIT
 </p>
 <p align="center">
   <img width="460" src="./screenshots/comparer1.jpg">
-</p>
+</p> -->
 
 
 

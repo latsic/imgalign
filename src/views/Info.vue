@@ -33,6 +33,12 @@
         The application is <strong>fully functional offline</strong> as well.
       </p>
 
+      <img
+        :src="infoImage"
+        alt="Info Stitching"
+        width="100%"
+      >
+
     </div>
   </app-view-layout>
 </template>
@@ -40,10 +46,16 @@
 <script>
 
 import ViewLayout from '@/components/layout/ViewLayout';
+import InfoImage from '@/assets/infoImage.jpg';
 
 export default {
   components: {
     'AppViewLayout': ViewLayout
+  },
+  computed: {
+    infoImage() {
+      return InfoImage;
+    }
   }
 }
 </script>
