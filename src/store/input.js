@@ -6,8 +6,8 @@ import { matchName, compareName, stitchName } from '@/models/constants/images';
 import { close_snapDist } from '@/models/constants/polygon';
 import { ExifHelper } from '@/utilities/ExifHelper';
 
-import defaultImage1 from '@/assets/bild1.jpg';
-import defaultImage2 from '@/assets/bild2.jpg';
+import defaultImage1 from '@/assets/mountains1.jpg';
+import defaultImage2 from '@/assets/mountains2.jpg';
 import { Polygon } from '@/models/Polygon';
 import { paramTypes } from '@/models/constants/params';
 

@@ -486,6 +486,10 @@ MultiStitcher::initStiching(
   warpFirst = (bool)settings.getValue(eMultiStitch_warpFirst);
   maxRectangle = (bool)settings.getValue(eMultiStitch_maxRectangle);
 
+  if(bundleAdjustType == BundleAdjustType::BAT_NONE) {
+    warpFirst = true;
+  }
+
   if(LogUtils::isDebug) {
     LogUtils::getLog() << "projectionType " << projectionType << std::endl;
     LogUtils::getLog() << "featureDetectionMaxPixelsN " << featureDetectionMaxPixelsN << std::endl;
