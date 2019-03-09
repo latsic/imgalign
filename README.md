@@ -61,7 +61,7 @@ Be aware that Surf and Sift are patented algorithms (at least in some regions of
   <img width="100%" src="./screenshots/Multistitcher.jpg">
 </p>
 <p align="center">
-  <img width="460" src="./screenshots/matcher4.jpg">
+  <img width="100%" src="./screenshots/matcher5.jpg">
 </p>
 <!-- <p align="center">
   <img width="460" src="./screenshots/matcher2.jpg">
