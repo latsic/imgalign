@@ -484,31 +484,6 @@ cv::Point WarperHelper::warpImage(
         : cv::BORDER_CONSTANT, outMat);
   }
 }
-// void WarperHelper::warpImageBackwards(
-//   int warperType,
-//   TConstMat& srcMat,
-//   TMat &outMat,
-//   double fieldOfView,
-//   double yaw, double pitch, double roll)
-// {
-//   FUNCLOGTIMEL("WarperHelper::warpImageBackwards");
-
-//   float focalLengthPx = (srcMat.size().width * 0.5) / tan(fieldOfView * 0.5 * CV_PI / 180);
-
-//   float scale = srcMat.size().width * (360 / fieldOfView) / (2 * CV_PI);
-  
-//   TMat R, K;
-//   WarperHelper::getMatR(yaw, pitch, roll, R);
-//   WarperHelper::getMatK(srcMat.size().width, srcMat.size().height, focalLengthPx, K);
-
-//   auto warper = WarperHelper::getWarper(warperType, (float)scale);
-//   if(warper == nullptr) {
-//     srcMat.copyTo(outMat);
-//   }
-//   else {
-//     warper->warpBackward(srcMat, K, R, cv::INTER_LINEAR, cv::BORDER_CONSTANT, outMat.size(), outMat);
-//   }
-// }
 
 void WarperHelper::getBox(
   double w1, double h1, double w2, double h2,
@@ -640,8 +615,6 @@ void WarperHelper::warpPerspective(
   bool useLinear)
 {
   FUNCLOGTIMEL("WarperHelper::warpPerspective");
-
-  //useLinear = true;
 
   dst = TMat::zeros(dstSize, src.type());
   

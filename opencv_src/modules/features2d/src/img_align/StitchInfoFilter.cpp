@@ -449,9 +449,6 @@ bool SIF_IgnoreEdgesDistortion::pass(const StitchInfo &stitchInfo) const
   for(int i = 0; i < (int)_stitchInfos.size(); ++i) {
 
     if(i > maxIndex) {
-      // LogUtils::getLogUserInfo() << "SIF_IgnoreEdgesDistortion Pass > MaxIndex "
-      //   << stitchInfo.srcImageIndex << "->" << stitchInfo.dstImageIndex
-      //   << std::endl;
       return false;
     }
 
@@ -471,12 +468,7 @@ bool SIF_IgnoreEdgesDistortion::pass(const StitchInfo &stitchInfo) const
     if(found1 && found2) {
       return true;
     }
-
   }
-
-  // LogUtils::getLogUserInfo() << "SIF_IgnoreEdgesDistortion Pass End "
-  //       << stitchInfo.srcImageIndex << "->" << stitchInfo.dstImageIndex
-  //       << std::endl;
 
   return false;
 }
@@ -601,9 +593,6 @@ bool SIF_IgnoreEdgesInlierDistance::pass(const StitchInfo &stitchInfo) const
   for(int i = 0; i < (int)_stitchInfos.size(); ++i) {
 
     if(i > maxIndex) {
-      // LogUtils::getLogUserInfo() << "SIF_IgnoreEdgesDistortion Pass > MaxIndex "
-      //   << stitchInfo.srcImageIndex << "->" << stitchInfo.dstImageIndex
-      //   << std::endl;
       return false;
     }
 
@@ -626,10 +615,6 @@ bool SIF_IgnoreEdgesInlierDistance::pass(const StitchInfo &stitchInfo) const
 
   }
 
-  // LogUtils::getLogUserInfo() << "SIF_IgnoreEdgesDistortion Pass End "
-  //       << stitchInfo.srcImageIndex << "->" << stitchInfo.dstImageIndex
-  //       << std::endl;
-
   return false;
 }
 
@@ -638,7 +623,5 @@ bool SIF_IgnoreEdgesInlierDistance::done() const
   int maxIndex = (int)_stitchInfos.size() - iteration * 2;
   return maxIndex <= 1;
 }
-
-
 
 } // imgalign
