@@ -26,7 +26,6 @@ bool Helper::getMatchInfo(
   m.src_img_idx = srcImageIndex;
   m.dst_img_idx = dstImageIndex;
 
-  
   if(stitchInfoFilter.pass(stitchInfo)) {
     
     const MatchInfo &matchInfo = stitchInfo.matchInfo;
@@ -43,9 +42,9 @@ bool Helper::getMatchInfo(
     }
 
     m.num_inliers = (int)inliers.size();
-    m.num_filtered = (int)matchInfo.filteredMatchInfos.size();
-    m.num_all = (int)matchInfo.allMatchInfos.size();
-    m.num_outlier = (int)matchInfo.outlierMatchInfos.size();
+    m.num_filtered = (int)matchInfo.filteredMatchesCount;
+    m.num_all = (int)matchInfo.allMatchesCount;
+    m.num_outlier = (int)matchInfo.outlierMatchesCount;
 
     matchInfo.homography.convertTo(m.H, CV_64F);
     return true;
@@ -93,10 +92,18 @@ void Helper::getData(
     imgF.img_idx = i;
     imgF.img_size = imageSizes[srcImageIndex];
     imgF.keypoints.assign(keyPoints[srcImageIndex].begin(), keyPoints[srcImageIndex].end());
-    descriptors[srcImageIndex].copyTo(imgF.descriptors);
+    //descriptors[srcImageIndex].copyTo(imgF.descriptors);
 
     imageFeaturesV.push_back(std::move(imgF));
   }
+  if(!descriptors.empty()) {
+    for(size_t i = 0; i < rStitchOrder.size(); ++i) {
+      size_t srcImageIndex = rStitchOrder[i]->srcImageIndex;
+      descriptors[srcImageIndex].copyTo(imageFeaturesV[i].descriptors);
+    }
+  }
+
+
 }
 
 void Helper::getMatchesInfo(

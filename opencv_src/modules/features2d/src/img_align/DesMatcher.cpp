@@ -54,7 +54,7 @@ namespace
   }
 
   void
-  getMatchingPoints(TMatchInfos &inMatchesInfos, TPoints2f &outPts1, TPoints2f &outPts2)
+  getMatchingPoints(const TMatchInfos &inMatchesInfos, TPoints2f &outPts1, TPoints2f &outPts2)
   {
     FUNCLOGTIMEL("DesMatcher::getMatchingPoints");
 
@@ -140,7 +140,8 @@ void DesMatcher::matchFilter(TConstMat& inDescriptors1, TConstMat& inDescriptors
 MatchInfo DesMatcher::match(
   TransformFinderType tfType,
   TConstMat& inDescriptors1, TConstMat& inDescriptors2,
-  TConstKeyPoints &keyPoints1, TConstKeyPoints &keyPoints2) const
+  TConstKeyPoints &keyPoints1, TConstKeyPoints &keyPoints2,
+  DataExtractionMode dataExtractionMode) const
 {
   FUNCLOGTIMEL("DesMatcher::match");
 
@@ -152,19 +153,29 @@ MatchInfo DesMatcher::match(
   if(matchInfo.allMatches.empty()) {
     return matchInfo;
   }
+  matchInfo.allMatchesCount = matchInfo.allMatches.size();
+
   matchInfo.filterInfo = filter(matchInfo.allMatches, matchInfo.filteredMatches);
+  matchInfo.filteredMatchesCount = matchInfo.filteredMatches.size();
   
-  for(auto it = matchInfo.allMatches.begin(); it != matchInfo.allMatches.end(); ++it) {
-    matchInfo.allMatchInfos.push_back(TMatchInfo(
-      TKeyPointPair(keyPoints1[it->queryIdx], keyPoints2[it->trainIdx]), *it));
+  if(dataExtractionMode == DataExtractionMode::eExtended) {
+    for(auto it = matchInfo.allMatches.begin(); it != matchInfo.allMatches.end(); ++it) {
+      matchInfo.allMatchInfos.push_back(TMatchInfo(
+        TKeyPointPair(keyPoints1[it->queryIdx], keyPoints2[it->trainIdx]), *it));
+    }
+    sortMatchInfos(matchInfo.allMatchInfos);
   }
-  sortMatchInfos(matchInfo.allMatchInfos);
+  else {
+    matchInfo.allMatches.clear();
+  }
   
-  for(auto it = matchInfo.filteredMatches.begin(); it != matchInfo.filteredMatches.end(); ++it) {
-    matchInfo.filteredMatchInfos.push_back(TMatchInfo(
-      TKeyPointPair(keyPoints1[it->queryIdx], keyPoints2[it->trainIdx]), *it));
+  if(dataExtractionMode == DataExtractionMode::eExtended) {
+    for(auto it = matchInfo.filteredMatches.begin(); it != matchInfo.filteredMatches.end(); ++it) {
+      matchInfo.filteredMatchInfos.push_back(TMatchInfo(
+        TKeyPointPair(keyPoints1[it->queryIdx], keyPoints2[it->trainIdx]), *it));
+    }
+    sortMatchInfos(matchInfo.filteredMatchInfos);
   }
-  sortMatchInfos(matchInfo.filteredMatchInfos);
 
   getMatchingPoints(matchInfo.filteredMatches, keyPoints1, keyPoints2, matchInfo.filteredPts1, matchInfo.filteredPts2);
 
@@ -173,27 +184,42 @@ MatchInfo DesMatcher::match(
     return matchInfo;
   }
 
+  if(dataExtractionMode != DataExtractionMode::eExtended) {
+    matchInfo.filteredPts1.clear();
+    matchInfo.filteredPts2.clear();
+  }
 
   TBools::const_iterator itMask = mask.begin();
-  for(TMatches::const_iterator it = matchInfo.filteredMatches.begin(); it != matchInfo.filteredMatches.end(); ++it, ++itMask){
+  for(TMatches::const_iterator it = matchInfo.filteredMatches.begin();
+      it != matchInfo.filteredMatches.end(); ++it, ++itMask){
     
     if(*itMask) {
       matchInfo.inlierMatchInfos.push_back(TMatchInfo(
         TKeyPointPair(keyPoints1[it->queryIdx], keyPoints2[it->trainIdx]), *it));
     }
-    else {
+    else if(dataExtractionMode == DataExtractionMode::eExtended){
       matchInfo.outlierMatchInfos.push_back(TMatchInfo(
         TKeyPointPair(keyPoints1[it->queryIdx], keyPoints2[it->trainIdx]), *it));
     }
   }
+  matchInfo.inlierMatchesCount = matchInfo.inlierMatchInfos.size();
+  matchInfo.outlierMatchesCount = matchInfo.filteredMatches.size() - matchInfo.inlierMatchesCount;
+
+  if(dataExtractionMode != DataExtractionMode::eExtended) {
+    matchInfo.filteredMatches.clear();
+  }
 
   sortMatchInfos(matchInfo.inlierMatchInfos);
-  sortMatchInfos(matchInfo.outlierMatchInfos);
+  if(dataExtractionMode == DataExtractionMode::eExtended) {
+    sortMatchInfos(matchInfo.outlierMatchInfos);
+  }
 
-  getMatchingPoints(matchInfo.inlierMatchInfos, matchInfo.inlierPts1, matchInfo.inlierPts2);
+  if(dataExtractionMode != DataExtractionMode::eMin) {
+    getMatchingPoints(matchInfo.inlierMatchInfos, matchInfo.inlierPts1, matchInfo.inlierPts2);
+  }
   
   //matchInfo.confidence = ((double)matchInfo.inlierMatchInfos.size()) / matchInfo.filteredMatchInfos.size();
-  matchInfo.confidence = matchInfo.inlierMatchInfos.size() / (0.8 + 0.3 * matchInfo.filteredMatchInfos.size());
+  matchInfo.confidence = matchInfo.inlierMatchesCount / (0.8 + 0.3 * matchInfo.filteredMatchesCount);
 
   matchInfo.success = true;
   matchInfo.determinant = Homography::determinant(matchInfo.homography);
@@ -202,15 +228,14 @@ MatchInfo DesMatcher::match(
   matchInfo.svdConditionNumberIsSane = Homography::isSvdConditionNumberSane(
     matchInfo.homography, matchInfo.svdConditionNumber);
 
+  //matchInfo.logInfo(false);
+
   return matchInfo;
 }
 
 bool MatchInfo::isHomographyGood() const
 {
   //FUNCLOGTIMEL("DesMatcher::isHomographyGood");
-
-  
-
   return success
       && determinant > 0.01
       && svdConditionNumberIsSane;
@@ -230,6 +255,11 @@ MatchInfo::getInverse() const
   matchInfo.determinant = determinant;
   matchInfo.svdConditionNumber = svdConditionNumber;
   matchInfo.svdConditionNumberIsSane = svdConditionNumberIsSane;
+
+  matchInfo.allMatchesCount = allMatchesCount;
+  matchInfo.filteredMatchesCount = filteredMatchesCount;
+  matchInfo.inlierMatchesCount = inlierMatchesCount;
+  matchInfo.outlierMatchesCount = outlierMatchesCount;
 
   auto invertMatches = [&](const TMatches &srcMatches, TMatches &dstMatches) {
     dstMatches.resize(srcMatches.size());
@@ -280,6 +310,10 @@ void MatchInfo::logInfo(bool logH) const
   LogUtils::getLog() << "determinant: " << determinant << std::endl;
   LogUtils::getLog() << "svdConditionNumber: " << svdConditionNumber << std::endl;
   LogUtils::getLog() << "svdConditionNumberIsSane: " << svdConditionNumberIsSane << std::endl;
+  LogUtils::getLog() << "allMatchesCount: " << allMatchesCount << std::endl;
+  LogUtils::getLog() << "filteredMatchesCount: " << filteredMatchesCount << std::endl;
+  LogUtils::getLog() << "outlierMatchesCount: " << outlierMatchesCount << std::endl;
+  LogUtils::getLog() << "inlierMatchesCount: " << inlierMatchesCount << std::endl;
 
   if(logH) {
     LogUtils::logMat("homography", homography);
@@ -298,6 +332,17 @@ void MatchInfo::dismissDetailData()
   outlierMatchInfos.clear();
   filteredPts1.clear();
   filteredPts2.clear();
+}
+
+void MatchInfo::getInlierPts(TPoints2f &pts1, TPoints2f &pts2) const
+{
+  if(!inlierPts1.empty() && !inlierPts2.empty()) {
+    pts1.assign(inlierPts1.begin(), inlierPts1.end());
+    pts2.assign(inlierPts2.begin(), inlierPts2.end());
+  }
+  else {
+    getMatchingPoints(inlierMatchInfos, pts1, pts2);
+  }
 }
 
 } // imgalign

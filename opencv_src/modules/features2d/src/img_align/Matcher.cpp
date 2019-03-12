@@ -205,7 +205,8 @@ FUNCLOGTIME("match", msTotal);
 		descriptors1,
 		descriptors2,
 		fixedKeyPoints,
-		movingKeyPoints);
+		movingKeyPoints,
+		DataExtractionMode::eExtended);
 
 	goodMatchesFixedImagePtsOrdered = matchInfo.filteredPts1;
 	goodMatchesMovingImagePtsOrdered = matchInfo.filteredPts2;

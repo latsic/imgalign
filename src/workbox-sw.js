@@ -7,3 +7,9 @@ workbox.precaching.suppressWarnings();
 
 workbox.routing.registerNavigationRoute('/imgalign/index.html');
 workbox.precaching.precacheAndRoute(self.__precacheManifest, {});
+
+workbox.googleAnalytics.initialize();
+
+self.addEventListener('install', () => {
+  self.skipWaiting();
+});

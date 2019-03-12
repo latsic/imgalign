@@ -19,7 +19,7 @@ module.exports = {
     workboxPluginMode: 'InjectManifest',
     workboxOptions: {
       swSrc: 'src/workbox-sw.js',
-      swDest: 'workbox-sw.js',
+      swDest: 'workbox-sw.js'
       // modifyUrlPrefix: {
       //   // Remove a '/dist' prefix from the URLs:
       //   '/': process.env.NODE_ENV === 'production' ? '/imgalign/' : '/'

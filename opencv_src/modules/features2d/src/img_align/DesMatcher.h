@@ -13,6 +13,12 @@ namespace cv
 
 namespace imgalign
 { 
+  enum class DataExtractionMode {
+    eMin = 0,
+    eBasic = 1,
+    eExtended = 2
+  };
+  
   struct FilterInfo {
     double minDist, maxDist;
     double maxDistUsed, maxDistFactorUsed;
@@ -43,11 +49,18 @@ namespace imgalign
 
     FilterInfo filterInfo;
 
+    int allMatchesCount = 0;
+    int filteredMatchesCount = 0;
+    int inlierMatchesCount = 0;
+    int outlierMatchesCount = 0;
+
     bool isHomographyGood() const;
     MatchInfo getInverse() const;
     void logInfo(bool logH = false) const;
 
     void dismissDetailData();
+
+    void getInlierPts(TPoints2f &pts1, TPoints2f &pts2) const;
   };
 
   class DesMatcher {
@@ -56,7 +69,8 @@ namespace imgalign
       MatchInfo match(
         TransformFinderType tfType,
         TConstMat& inDescriptors1, TConstMat& inDescriptors2,
-        TConstKeyPoints &keyPoints1, TConstKeyPoints &keyPoints2) const;
+        TConstKeyPoints &keyPoints1, TConstKeyPoints &keyPoints2,
+        DataExtractionMode dataExtractionMode) const;
 
       void match(TConstMat& inDescriptors1, TConstMat& inDescriptors2, TMatches &outMatches) const;
       void matchFilter(TConstMat& inDescriptors1, TConstMat& inDescriptors2, TMatches &outMatches) const;

@@ -48,10 +48,10 @@ namespace
         << stitchInfo->srcImageIndex << "->" << stitchInfo->dstImageIndex
         << ", confidence: " << stitchInfo->matchInfo.confidence
         << ", matches count all/filtered/outlier/inlier: "
-          << stitchInfo->matchInfo.allMatchInfos.size() << "/"
-          << stitchInfo->matchInfo.filteredMatchInfos.size() << "/"
-          << stitchInfo->matchInfo.outlierMatchInfos.size() << "/"
-          << stitchInfo->matchInfo.inlierMatchInfos.size()
+          << stitchInfo->matchInfo.allMatchesCount << "/"
+          << stitchInfo->matchInfo.filteredMatchesCount << "/"
+          << stitchInfo->matchInfo.outlierMatchesCount << "/"
+          << stitchInfo->matchInfo.inlierMatchesCount
         << ", determinant: " << stitchInfo->matchInfo.determinant
         << ", svdConditionNumber: " << stitchInfo->matchInfo.svdConditionNumber
         << ", deltaH/deltaV [°]: " << stitchInfo->deltaH << "/" << stitchInfo->deltaV
@@ -277,7 +277,7 @@ namespace
     StitchInfoFilter &sifCamEstimate,
     StitchInfoFilter &sifComputeOrder)
   {
-    FUNCLOGTIMEL("MultiStitcher::camEstimateAndBundleAdjustRay");
+    FUNCLOGTIMEL("MultiStitcher::bundleAdjustRay");
 
     std::vector<CameraParams> cameraParamsTmp(cameraParamsV.begin(), cameraParamsV.end());
 
@@ -486,7 +486,9 @@ MultiStitcher::initStiching(
   warpFirst = (bool)settings.getValue(eMultiStitch_warpFirst);
   maxRectangle = (bool)settings.getValue(eMultiStitch_maxRectangle);
 
-  if(bundleAdjustType == BundleAdjustType::BAT_NONE) {
+  if(bundleAdjustType == BundleAdjustType::BAT_NONE ||
+     projectionType == (int)eStitch_projectionTypeNone) {
+
     warpFirst = true;
   }
 
@@ -633,10 +635,12 @@ MultiStitcher::initStiching(
 
   logStitchOrder(globalScale, srcImagesSizes, stitchOrder);
 
-  //descriptors.clear();
+  if(calcImageOrder) {
+    descriptors.clear();
+  }
   //keyPoints.clear();
-  points.clear();
-  dismissDetailedMatchInfoData(stitchInfos);
+  //points.clear();
+  //dismissDetailedMatchInfoData(stitchInfos);
   
   stitchedImage.init(
     srcImages[centerImageIndex],
@@ -823,8 +827,12 @@ MultiStitcher::stitch(const StitchInfo &stitchInfo)
   rotMat2 = stitchInfo.matR;
   kMat2 = &stitchInfo.matK;
 
+  TPoints2f inlierPts1, inlierPts2;
+  stitchInfo.matchInfo.getInlierPts(inlierPts1, inlierPts2);
+
   TPoints2f ptsWarped1 = stitchedImage.getTransformedPts(
-    stitchInfo.matchInfo.inlierPts1,
+    //stitchInfo.matchInfo.inlierPts1,
+    inlierPts1,
     srcImagesSizes[dstIndex],
     dstIndex,
     globalScale == 0.0 ? nullptr : &globalScale);
@@ -832,7 +840,8 @@ MultiStitcher::stitch(const StitchInfo &stitchInfo)
   TMat homography;
   bool homographyFound = Homography::getHomography(
     ptsWarped1,
-    stitchInfo.matchInfo.inlierPts2, 
+    //stitchInfo.matchInfo.inlierPts2, 
+    inlierPts2,
     cv::Size(0, 0),
     srcImage.size(),
     kMat1, kMat2,
@@ -970,15 +979,15 @@ MultiStitcher::computeKeyPoints()
       featureDet->detect(image, keyPoints[imageIndex]);
       featureDes->compute(image, keyPoints[imageIndex], descriptors[imageIndex]);
 
-      auto ptIndex = 0;
-      points[imageIndex].resize(keyPoints[imageIndex].size());
+      //auto ptIndex = 0;
+      //points[imageIndex].resize(keyPoints[imageIndex].size());
       for(auto &keyPoint : keyPoints[imageIndex]) {
         keyPoint.pt.x *= scaleFactors[imageIndex];
         keyPoint.pt.y *= scaleFactors[imageIndex];
-        points[imageIndex][ptIndex].x = keyPoint.pt.x;
-        points[imageIndex][ptIndex].y = keyPoint.pt.y;
+        //points[imageIndex][ptIndex].x = keyPoint.pt.x;
+        //points[imageIndex][ptIndex].y = keyPoint.pt.y;
 
-        ++ptIndex;
+        //++ptIndex;
       }
       ++imageIndex;
 
@@ -1032,7 +1041,8 @@ MultiStitcher::getStitchInfo(size_t dstI, size_t srcI, bool createIf)
     
     spStitchInfo->matchInfo = matcher.match(
       tfType, descriptors[dstI], descriptors[srcI],
-      keyPoints[dstI], keyPoints[srcI]);
+      keyPoints[dstI], keyPoints[srcI],
+      warpFirst ? DataExtractionMode::eBasic : DataExtractionMode::eMin);
 
     if(LogUtils::isDebug) {
       LogUtils::getLog() << "Matching from " << srcI << " to " << dstI << ", confidence: "
