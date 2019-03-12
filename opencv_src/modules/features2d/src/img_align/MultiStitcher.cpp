@@ -550,6 +550,7 @@ MultiStitcher::initStiching(
   }
 
   if(stitchOrder.size() < 2) {
+    LogUtils::getLogUserError() << "Failed, no matches found" << std::endl;
     return false;
   }
 
@@ -606,6 +607,10 @@ MultiStitcher::initStiching(
         return false;
       }
       stitchOrder = computeStitchOrder();
+      if(stitchOrder.size() < 2) {
+        LogUtils::getLogUserError() << "Failed, no matches found" << std::endl;
+        return false;
+      }
     }
 
     lastRunData = std::unique_ptr<LastRunData>(
