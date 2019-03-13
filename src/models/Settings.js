@@ -63,14 +63,14 @@ export class Settings {
 
       { id: paramTypes.imageCap.id,
         type: valueTypes.rangeSquareRoot,
-        defaultValue: 500000,
-        value: 500000,
+        defaultValue: 250000,
+        value: 250000,
         range: { min: 10000, max: 9000000 }
       },
       { id: paramTypes.imageCapInput.id,
         type: valueTypes.rangeSquareRoot,
-        defaultValue: 600000,
-        value: 600000,
+        defaultValue: 350000,
+        value: 350000,
         range: { min: 10000, max: 16000000 }
       },
 

@@ -16,7 +16,7 @@ namespace imgalign
     paramValuesExt = {
 
       { eImageCap, { 250000.0f, "imageCap" } },
-      { eImageCapInput, { 1000000.0f, "imageCapInput" } },
+      { eImageCapInput, { 350000.0f, "imageCapInput" } },
 
       { eSift_featuresN, { 0.0f, "Sift_featuresN" } },
       { eSift_octaveLayersN, { 3.0f, "Sift_octaveLayersN" } },

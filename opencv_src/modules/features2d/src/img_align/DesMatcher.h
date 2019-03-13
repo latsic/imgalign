@@ -66,6 +66,17 @@ namespace imgalign
   class DesMatcher {
     public:
 
+      DesMatcher() : descriptors(nullptr), keyPoints(nullptr) {};
+      DesMatcher(TConstMat *inDescriptors, TConstKeyPoints *inKeyPoints)
+        : descriptors(inDescriptors)
+        , keyPoints(inKeyPoints) {};
+
+      MatchInfo match(
+        TransformFinderType tfType,
+        TConstMat& inQueryDescriptors,
+        TConstKeyPoints &inQueryKeyPoints,
+        DataExtractionMode dataExtractionMode) const;
+
       MatchInfo match(
         TransformFinderType tfType,
         TConstMat& inDescriptors1, TConstMat& inDescriptors2,
@@ -73,7 +84,8 @@ namespace imgalign
         DataExtractionMode dataExtractionMode) const;
 
       void match(TConstMat& inDescriptors1, TConstMat& inDescriptors2, TMatches &outMatches) const;
-      void matchFilter(TConstMat& inDescriptors1, TConstMat& inDescriptors2, TMatches &outMatches) const;
+      void match(TConstMat& inQueryDescriptors, TMatches &outMatches) const;
+      //void matchFilter(TConstMat& inDescriptors1, TConstMat& inDescriptors2, TMatches &outMatches) const;
 
       FilterInfo filter(TConstMatches& inMatches, TMatches& outMatches) const;
 
@@ -81,6 +93,17 @@ namespace imgalign
       int matchFilterMinMatchesToRetain = 1;
       int matchFilterMaxMatchesToRetain = 100;
       cv::Ptr<cv::DescriptorMatcher> matcher = nullptr;
+
+      TConstMat *descriptors;
+      TConstKeyPoints *keyPoints;
+
+    private:
+      MatchInfo extractData(
+        DataExtractionMode dataExtractionMode,
+        TransformFinderType tfType,
+        TMatches &ioMatches,
+        TConstKeyPoints &keyPoints1,
+        TConstKeyPoints &keyPoints2) const;
   };
 }
 

@@ -99,11 +99,22 @@ void FeatureFactory::CreateDescriptorComputer(Ptr<Feature2D> &featureDes, const 
 	}
 }
 
-DesMatcher FeatureFactory::CreateMatcher(const Settings &settings)
+DesMatcher FeatureFactory::CreateMatcher(
+  const Settings &settings,
+  TConstMat *inDescriptors, 
+  TConstKeyPoints *inKeyPoints)
 {
   FUNCLOGTIMEL("FeatureFactory::CreateMatcher");
 
-  DesMatcher desMatcher;
+  if(inDescriptors != nullptr && inKeyPoints == nullptr) {
+    throw std::logic_error("Can not create feature matcher, no key points given.");
+
+  }
+  if(inDescriptors == nullptr && inKeyPoints != nullptr) {
+    throw std::logic_error("Can not create feature matcher, no descriptors given.");
+  }
+
+  DesMatcher desMatcher(inDescriptors, inKeyPoints);
   
   switch(getMatcherType(settings)){
 
@@ -126,6 +137,8 @@ DesMatcher FeatureFactory::CreateMatcher(const Settings &settings)
 			throw std::logic_error("not implemented");
 		}
 	}
+
+  if(inDescriptors != nullptr) desMatcher.matcher->add(*inDescriptors);
 
   auto matchFilterSpreadAuto = (bool)settings.getValue(eMatchFilterSpreadAuto);
   auto matchFilterSpreadFactor = settings.getValue(eMatchFilterSpreadFactor);

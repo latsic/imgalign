@@ -209,7 +209,7 @@ namespace imgalign
       int currentStitchedImageMaxPixelsN = 200000;
       size_t centerImageIndex = 0;
       bool keyPointsComputed = false;
-      DesMatcher matcher;
+      //DesMatcher matcher;
       TStitchOrder stitchOrder;
       double estimatedFieldOfViewH = 0.0;
       double estimatesFieldOfViewV = 0.0;
@@ -221,6 +221,11 @@ namespace imgalign
       std::unique_ptr<StitchInfoFilter> sifBundleAdjust;
       std::unique_ptr<StitchInfoFilter> sifCamEstimate;
 
+      std::map<int, DesMatcher> matchers;
+      const DesMatcher *getMatcher(int dstIndex);
+      const DesMatcher &getMatcherRef(int dstIndex);
+      const DesMatcher *createMatcher(int dstIndex, TConstMat& inDescriptors, TConstKeyPoints &inKeyPoints);
+      const DesMatcher &getMatcher(int dstIndex, TConstMat& inDescriptors, TConstKeyPoints &inKeyPoints);
   };
 
 }

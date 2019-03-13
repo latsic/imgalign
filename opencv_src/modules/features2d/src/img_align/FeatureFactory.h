@@ -20,8 +20,10 @@ namespace imgalign
     public:
       static void CreateFeatureDetector(cv::Ptr<cv::Feature2D> &featureDet, const Settings &settings);
       static void CreateDescriptorComputer(cv::Ptr<cv::Feature2D> &featureDes, const Settings &settings);
-      static DesMatcher CreateMatcher(const Settings &settings);
-      
+      static DesMatcher CreateMatcher(
+        const Settings &settings,
+        TConstMat *inDescriptors = nullptr, 
+        TConstKeyPoints *inKeyPoints = nullptr);
       static cv::Ptr<cv::Feature2D> createSift(const Settings &settings);
       static cv::Ptr<cv::Feature2D> createSurf(const Settings &settings);
       static cv::Ptr<cv::Feature2D> createOrb(const Settings &settings);

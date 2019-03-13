@@ -128,13 +128,44 @@ void DesMatcher::match(TConstMat& inDescriptors1, TConstMat& inDescriptors2, TMa
   matcher->match(inDescriptors1, inDescriptors2, outMatches);
 }
 
-void DesMatcher::matchFilter(TConstMat& inDescriptors1, TConstMat& inDescriptors2, TMatches &outMatches) const
+void DesMatcher::match(TConstMat& inQueryDescriptors, TMatches &outMatches) const
 {
-  FUNCLOGTIMEL("DesMatcher::matchFilter");
+  FUNCLOGTIMEL("DesMatcher::match");
 
-  TMatches allMatches;
-  match(inDescriptors1, inDescriptors2, allMatches);
-  filter(allMatches, outMatches);
+  if(  descriptors == nullptr
+    || descriptors->size().width == 0
+    || descriptors->size().height == 0
+    || inQueryDescriptors.size().width == 0
+    || inQueryDescriptors.size().height == 0) {
+    
+    return;
+  }
+
+  if(matcher->getTrainDescriptors().empty()) {
+    throw std::logic_error("Can not match, train descriptors not available");
+  }
+
+  matcher->match(inQueryDescriptors, outMatches);
+}
+
+MatchInfo DesMatcher::match(
+  TransformFinderType tfType,
+  TConstMat& inQueryDescriptors,
+  TConstKeyPoints &inQueryKeyPoints,
+  DataExtractionMode dataExtractionMode) const
+{
+  FUNCLOGTIMEL("DesMatcher::match");
+  
+  if(descriptors == nullptr) {
+    throw std::logic_error("Can not match, train descriptors not available");
+  }
+  if(keyPoints == nullptr) {
+    throw std::logic_error("Can not match, keypoints not available");
+  }
+
+  TMatches matches;
+  match(inQueryDescriptors, matches);
+  return extractData(dataExtractionMode, tfType, matches, inQueryKeyPoints, *keyPoints);
 }
 
 MatchInfo DesMatcher::match(
@@ -145,11 +176,25 @@ MatchInfo DesMatcher::match(
 {
   FUNCLOGTIMEL("DesMatcher::match");
 
+  TMatches matches;
+  match(inDescriptors1, inDescriptors2, matches);
+  return extractData(dataExtractionMode, tfType, matches, keyPoints1, keyPoints2);
+}
+
+MatchInfo DesMatcher::extractData(
+  DataExtractionMode dataExtractionMode,
+  TransformFinderType tfType,
+  TMatches &ioMatches,
+  TConstKeyPoints &keyPoints1,
+  TConstKeyPoints &keyPoints2) const
+{
+  FUNCLOGTIMEL("DesMatcher::extractData");
+
   MatchInfo matchInfo;
   matchInfo.success = false;
   matchInfo.confidence = 0;
+  matchInfo.allMatches = ioMatches;
 
-  match(inDescriptors1, inDescriptors2, matchInfo.allMatches);
   if(matchInfo.allMatches.empty()) {
     return matchInfo;
   }
@@ -227,8 +272,6 @@ MatchInfo DesMatcher::match(
 
   matchInfo.svdConditionNumberIsSane = Homography::isSvdConditionNumberSane(
     matchInfo.homography, matchInfo.svdConditionNumber);
-
-  //matchInfo.logInfo(false);
 
   return matchInfo;
 }

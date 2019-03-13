@@ -472,7 +472,8 @@ MultiStitcher::initStiching(
   currentStitchedImageMaxPixelsN = (int)settings.getValue(eMultiStitch_limitLiveStitchingPreview);
   
   tfType = settings.getTransformFinderType();
-  matcher = FeatureFactory::CreateMatcher(settings);
+  //matcher = FeatureFactory::CreateMatcher(settings);
+  matchers.clear();
 
   blendType = seamBlend
     ? BlendType::BT_MULTIBAND
@@ -1039,10 +1040,19 @@ MultiStitcher::getStitchInfo(size_t dstI, size_t srcI, bool createIf)
       throw std::logic_error("Can not match, key points not available");
     }
     
+    const auto &matcher = getMatcher(srcI, descriptors[srcI], keyPoints[srcI]);
+
     spStitchInfo->matchInfo = matcher.match(
-      tfType, descriptors[dstI], descriptors[srcI],
-      keyPoints[dstI], keyPoints[srcI],
+      tfType, descriptors[dstI],
+      keyPoints[dstI],
       warpFirst ? DataExtractionMode::eBasic : DataExtractionMode::eMin);
+
+    // const auto &matcher = getMatcherRef(srcI);
+
+    // spStitchInfo->matchInfo = matcher.match(
+    //   tfType, descriptors[dstI], descriptors[srcI],
+    //   keyPoints[dstI], keyPoints[srcI],
+    //   warpFirst ? DataExtractionMode::eBasic : DataExtractionMode::eMin);
 
     if(LogUtils::isDebug) {
       LogUtils::getLog() << "Matching from " << srcI << " to " << dstI << ", confidence: "
@@ -1533,6 +1543,62 @@ void MultiStitcher::signalAbort()
   FUNCLOGTIMEL("MultiStitcher::signalAbort");
   abort = true;
 }
+
+const DesMatcher *MultiStitcher::getMatcher(int dstIndex)
+{
+  FUNCLOGTIMEL("MultiStitcher::getMatcher");
+
+  auto it = matchers.find(dstIndex);
+  if(it == matchers.end()) {
+    return nullptr;
+  }
+  return &(it->second);
+}
+
+const DesMatcher &MultiStitcher::getMatcherRef(int dstIndex)
+{
+  FUNCLOGTIMEL("MultiStitcher::getMatcher");
+  auto it = matchers.find(dstIndex);
+  if(it == matchers.end()) {
+
+    return matchers.insert(std::make_pair(
+      dstIndex,
+      FeatureFactory::CreateMatcher(settings))).first->second;
+
+  }
+  return it->second;
+
+}
+
+const DesMatcher *MultiStitcher::createMatcher(
+  int dstIndex, TConstMat& inDescriptors, TConstKeyPoints &inKeyPoints)
+{
+  FUNCLOGTIMEL("MultiStitcher::createMatcher");
+
+  if(getMatcher(dstIndex) != nullptr) {
+    return nullptr;
+  }
+
+  return &(matchers.insert(std::make_pair(
+      dstIndex,
+      FeatureFactory::CreateMatcher(settings, &inDescriptors, &inKeyPoints))).first->second);
+}
+
+const DesMatcher &MultiStitcher::getMatcher(
+  int dstIndex, TConstMat& inDescriptors, TConstKeyPoints &inKeyPoints)
+{
+  FUNCLOGTIMEL("MultiStitcher::getMatcher");
+
+  auto *matcher = getMatcher(dstIndex);
+  if(matcher != nullptr) {
+    return *matcher;
+  }
+
+  return matchers.insert(std::make_pair(
+      dstIndex,
+      FeatureFactory::CreateMatcher(settings, &inDescriptors, &inKeyPoints))).first->second;
+}
+
 
 StitchedImage::StitchedInfo::StitchedInfo()
 {
