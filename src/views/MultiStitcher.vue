@@ -188,7 +188,7 @@ export default {
     'AppMultiStitcherConfidenceSettings': MultiStitcherConfidenceSettings
   },
   created() {
-    //this.$store.dispatch('input/init');
+    this.$store.dispatch('multiInput/init');
     this.$store.dispatch('worker/load');
   },
   computed: {

@@ -111,6 +111,7 @@ export default {
       else if(this.imageUrlArray.length == 3) {
         return {
           xs6: true,
+          md4: true
         }
       }
       return {

@@ -3,6 +3,10 @@ import { ImageDataConversion } from '@/utilities/ImageDataConversion';
 import { paramTypes } from '@/models/constants/params';
 import { ExifHelper } from '@/utilities/ExifHelper';
 
+import defaultImage1 from '@/assets/ms1.jpg';
+import defaultImage2 from '@/assets/ms2.jpg';
+import defaultImage3 from '@/assets/ms3.jpg';
+
 const state = {
   imageDataArray: [],
   imageDataUrlsArray: [],
@@ -153,6 +157,38 @@ const mutations = {
 }
 
 const actions = {
+
+  init(context) {
+    const ia = context.getters['imageDataArray'];
+    if(ia && ia.length > 0) return;
+
+
+    const defaultImages = [defaultImage1, defaultImage2, defaultImage3];
+     
+    for(const defaultImage of defaultImages) {
+      
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const imageData = ImageDataConversion.imageDataFromImageSrc(img);
+
+          context.commit('imageData', imageData);
+          context.commit('_imageDataUrl', ImageDataConversion.imageSrcFromImageData(imageData));
+          context.commit('imageFieldOfView', 45);
+          context.commit('imageFieldOfViewInitial', 45);
+
+          img.onload = null;
+        }
+        finally {
+          context.commit('busy', false);
+        }
+      }
+      if(defaultImage) {
+        img.src = defaultImage;
+        context.commit('busy', true);
+      }
+    }
+  },
 
   async imageData({ commit, dispatch, rootGetters }, imageData) {
     

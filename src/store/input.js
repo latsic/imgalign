@@ -254,7 +254,7 @@ const actions = {
     ];
 
     for(const { name, dataUrl } of defaultImages) {
-      //if(!context.getters['imageDataValid'](name)) {
+      if(!context.getters['imageDataValid'](name)) {
         const img = new Image();
         img.onload = () => {
           try {
@@ -270,7 +270,7 @@ const actions = {
           img.src = dataUrl;
           context.commit('busy', { name, value: true });
         }
-      //}
+      }
     }
   },
   async imageData({ commit, dispatch, rootGetters }, { name, imageData }) {
