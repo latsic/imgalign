@@ -328,6 +328,7 @@ export class WorkerClient {
   }
 
   _messageDone() {
+    if(!this.__messageDone) return;
     this.__messageDone(...arguments);
     this.__messageDone = null;
   }

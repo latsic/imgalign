@@ -246,15 +246,15 @@ const mutations = {
 }
 
 const actions = {
-  init(context) {
+  init(context, urls) {
 
     const defaultImages = [
-      { name: fixedImageName, dataUrl: defaultImage1 },
-      { name: movingImageName, dataUrl: defaultImage2 }
+      { name: fixedImageName, dataUrl: urls ? urls.url1 : defaultImage1 },
+      { name: movingImageName, dataUrl: urls ? urls.url2 : defaultImage2 }
     ];
 
     for(const { name, dataUrl } of defaultImages) {
-      if(!context.getters['imageDataValid'](name)) {
+      //if(!context.getters['imageDataValid'](name)) {
         const img = new Image();
         img.onload = () => {
           try {
@@ -270,7 +270,7 @@ const actions = {
           img.src = dataUrl;
           context.commit('busy', { name, value: true });
         }
-      }
+      //}
     }
   },
   async imageData({ commit, dispatch, rootGetters }, { name, imageData }) {

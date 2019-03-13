@@ -112,6 +112,9 @@ import { fixedImageName, movingImageName, matchName } from '@/models/constants/i
 import { matcherImageType } from '@/models/constants/matcherImageType';
 import { paramTypes, ParamUtils } from '@/models/constants/params';
 
+import defaultImage1 from '@/assets/zauberSchuleTemplate.jpg';
+import defaultImage2 from '@/assets/zauberSchuleAlign.jpg';
+
 export default {
   components: {
     'AppViewLayout': ViewLayout,
@@ -121,7 +124,7 @@ export default {
     'AppImageResult': ImageResult
   },
   created() {
-    this.$store.dispatch('input/init');
+    this.$store.dispatch('input/init', {url1: defaultImage1, url2: defaultImage2});
     this.$store.dispatch('worker/load');
   },
   computed: {
