@@ -246,36 +246,44 @@ const mutations = {
 }
 
 const actions = {
-  init(context, urls) {
 
+  loadDefaultImages(context, urls) {
     const defaultImages = [
       { name: fixedImageName, dataUrl: urls ? urls.url1 : defaultImage1 },
       { name: movingImageName, dataUrl: urls ? urls.url2 : defaultImage2 }
     ];
 
     for(const { name, dataUrl } of defaultImages) {
-      if(!context.getters['imageDataValid'](name)) {
-        const img = new Image();
-        img.onload = () => {
-          try {
-            const imageData = ImageDataConversion.imageDataFromImageSrc(img);
-            context.dispatch('imageData', { name, imageData });
-            img.onload = null;
-          }
-          finally {
-            context.commit('busy', { name, value: false });
-          }
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const imageData = ImageDataConversion.imageDataFromImageSrc(img);
+          context.dispatch('imageData', { name, imageData, doResizeIf: false });
+          img.onload = null;
         }
-        if(dataUrl) {
-          img.src = dataUrl;
-          context.commit('busy', { name, value: true });
+        finally {
+          context.commit('busy', { name, value: false });
         }
+      }
+      if(dataUrl) {
+        img.src = dataUrl;
+        context.commit('busy', { name, value: true });
       }
     }
   },
-  async imageData({ commit, dispatch, rootGetters }, { name, imageData }) {
+
+  init(context, urls) {
+
+    if(context.getters['imageDataValid'](fixedImageName) ||
+       context.getters['imageDataValid'](movingImageName)) {
+      
+      return;
+    }
+    context.dispatch('loadDefaultImages', urls);
+  },
+  async imageData({ commit, dispatch, rootGetters }, { name, imageData, doResizeIf = true }) {
     
-    if(imageData && rootGetters['worker/ready']) {
+    if(doResizeIf && imageData && rootGetters['worker/ready']) {
       const maxPixelsN = rootGetters['settings/param'](paramTypes.imageCapInput.id);
       if(imageData.width * imageData.height > maxPixelsN) {
         const scaleF = Math.sqrt(maxPixelsN / (imageData.width * imageData.height));

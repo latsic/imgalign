@@ -9,11 +9,26 @@
         pr-2
         align-center
       >
-        <span v-if="!multiple">
-          Template image / image to align
-        </span>
-        <span v-else>
-          Choose input
+        <span
+          :style="{
+            position: 'relative',
+          }"
+        >
+          {{ inputButtonsTitle }}
+          
+           <v-btn
+              @click="$emit('load-default-images');"
+              flat icon color="accent"
+              :style="{
+                position: 'absolute',
+                top: '0',
+                right: '0',
+                transform: 'translateY(-42%) translateX(120%)',
+              }"
+            >
+            <v-icon small>cached</v-icon>
+          </v-btn>
+
         </span>
         
         <span
@@ -158,6 +173,7 @@
             </v-btn>
           </v-layout>
           
+          
         </v-flex>
         
         <v-flex>
@@ -268,6 +284,10 @@ export default {
     enableSaveImage: {
       type: Boolean,
       default: false
+    },
+    inputButtonsTitle: {
+      type: String,
+      default: ''
     }
   },
   created() {

@@ -56,10 +56,12 @@
         :multiple="true"
         :delete-disabled="$store.getters['multiInput/imageCount'] == 0"
         :enable-save-image="true"
+        :inputButtonsTitle="'Choose input'"
         @delete-result="deleteResult"
         @delete-click="deleteAllOrSelectedInputImages"
         @save-result="saveImage"
         @multi-input-files-changed="multiInputFilesChanged"
+        @load-default-images="loadDefaultImages"
       />
     
       <div
@@ -256,6 +258,10 @@ export default {
     deleteResult() {
       this.$store.commit('worker/results/imageData', { name: multiStitchName, imageData: null });
       //this.$store.dispatch('worker/multiStitchResetWorkerData');
+    },
+    loadDefaultImages() {
+      this.$store.dispatch('multiInput/loadDefaultImages');
+      this.deleteWorkerData();
     },
     deleteAllOrSelectedInputImages() {
       this.$store.dispatch('multiInput/removeAllOrSelected');

@@ -296,9 +296,7 @@ const actions = {
       return;
       // throw new Error('Already busy with another task');
     }
-
     try {
-
       context.commit('_busyCompute', true);
       context.commit('error', null);
       context.commit('currentActionInfo', 'Feature detection');
@@ -487,10 +485,9 @@ const actions = {
     fixedImage, movingImage, fixedImagePolygonPts, movingImagePolygonPts, settings }) {
     
     if(context.getters['busy']) {
-      // return;
-      throw new Error('Already busy with another task');
+      return;
+      // throw new Error('Already busy with another task');
     }
-    
     try {
       context.commit('_busyCompute', true);
       context.commit('error', null);
@@ -611,12 +608,10 @@ const actions = {
   async setInputImageResized(context, { imageName, imageDataSrc, width, height }) {
 
     if(context.getters['busy']) {
-      // return;
-      throw new Error('Already busy with another task');
+      return;
+      // throw new Error('Already busy with another task');
     }
-    
     try {
-
       context.commit('_busyImage', true);
       context.commit('currentActionInfo', 'Resizing image');
 
@@ -636,12 +631,10 @@ const actions = {
   async setMultiInputImageResized(context, { imageDataSrc, width, height }) {
 
     if(context.getters['busy']) {
-      // return;
-      throw new Error('Already busy with another task');
+      return;
+      // throw new Error('Already busy with another task');
     }
-    
     try {
-
       context.commit('_busyImage', true);
       context.commit('currentActionInfo', 'Resizing image');
 
@@ -661,9 +654,10 @@ const actions = {
   },
 
   async setMultiInputImageUrlResized(context, { imageDataSrc, width, height }) {
+    
     if(context.getters['busy']) {
-      // return;
-      throw new Error('Already busy with another task');
+      return;
+      // throw new Error('Already busy with another task');
     }
     try {
       context.commit('_busyImage', true);

@@ -18,7 +18,7 @@
         <div
           :style="{
             position: 'relative',
-            border: $store.getters['input/imageDataValid'](imageName) ? `1px solid ${$vuetify.theme.primary}` : null,
+            border: $store.getters['input/imageDataValid'](imageName) ? `1px solid ${$vuetify.theme.secondary}` : null,
             margin: '',
             padding: '0.3rem',
           }"

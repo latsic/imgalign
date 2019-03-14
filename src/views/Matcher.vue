@@ -31,7 +31,9 @@
         :fail-text="errorText"
         :action-text="'Match!'"
         :result-valid="$store.getters['worker/results/imageDataValid'](matchName)"
+        :inputButtonsTitle="'Template image / align image'"
         @delete-result="deleteResult"
+        @load-default-images="loadDefaultImages"
       />
 
       <v-layout
@@ -203,6 +205,10 @@ export default {
     },
     deleteResult() {
       this.$store.commit('worker/results/imageData', { name: matchName, imageData: null });
+      this.$store.dispatch('worker/resetWorkerData');
+    },
+    loadDefaultImages() {
+      this.$store.dispatch('input/loadDefaultImages', {url1: defaultImage1, url2: defaultImage2});
       this.$store.dispatch('worker/resetWorkerData');
     },
     imageSelectionChanged(value) {

@@ -128,7 +128,7 @@ export default {
     borderColor(index) {
       return this.indicesSelected.some(selectedIndex => selectedIndex == index)
         ? this.$vuetify.theme.error
-        : this.$vuetify.theme.primary;
+        : this.$vuetify.theme.secondary;
     },
     borderLineWidth(index) {
       return this.indicesSelected.some(selectedIndex => selectedIndex == index)

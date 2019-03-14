@@ -190,26 +190,26 @@ export default {
           title: 'Matcher',
           componentName: 'matcher',
           func: null,
-          icon: 'vpn_key'
+          icon: 'filter_none'
         },
         {
           title: 'Comparer',
           componentName: 'comparer',
           func: null,
-          icon: 'border_all',
+          icon: 'fingerprint',
           isSvg: false
         },
         {
           title: 'Stitcher',
           componentName: 'stitcher',
           func: null,
-          icon: 'border_all'
+          icon: 'broken_image'
         },
         {
           title: 'MultiStitcher',
           componentName: 'multistitcher',
           func: null,
-          icon: 'border_all'
+          icon: 'burst_mode'
         },
         
         
@@ -230,7 +230,7 @@ export default {
           title: "Info",
           componentName: "info",
           func: null,
-          icon: "device_hub"
+          icon: "info"
         },
         {
           title: "Global settings",
@@ -242,7 +242,7 @@ export default {
           title: "Log",
           componentName: "logoutput",
           func: null,
-          icon: "border_all"
+          icon: "reorder"
         }
       ];
     },

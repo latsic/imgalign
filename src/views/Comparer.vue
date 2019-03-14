@@ -15,7 +15,9 @@
       :action-text="'Compare!'"
       :action-button-disabled-condition="detTypeValues.length == 0"
       :result-valid="$store.getters['worker/results/imageDataValid'](compareName)"
+      :inputButtonsTitle="'First image / second image'"
       @delete-result="deleteResult"
+      @load-default-images="loadDefaultImages"
     />
 
     <app-compare
@@ -143,6 +145,10 @@ export default {
     },
     deleteResult() {
       this.$store.commit('worker/results/imageData', { name: compareName, imageData: null });
+      this.$store.dispatch('worker/resetWorkerData');
+    },
+    loadDefaultImages() {
+      this.$store.dispatch('input/loadDefaultImages');
       this.$store.dispatch('worker/resetWorkerData');
     },
     changed(obj) {

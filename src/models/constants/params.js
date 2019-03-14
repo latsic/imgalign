@@ -101,11 +101,11 @@ export const paramTypes = Object.freeze({
   matcherType: { id: matcherTypeId, name: 'Matcher', groupId: paramGroups.basic.id },
   transformFinderType: { id: tftTypeId, name: 'Transform finder', groupId: paramGroups.basic.id },
 
-  compareDetTypes: { id: compareDetTypesId, name: 'Detectors', groupId: paramGroups.compare.id },
-  compareImageType: { id: compareImageTypeId, name: 'Image', groupId: paramGroups.compare.id },
+  compareDetTypes: { id: compareDetTypesId, name: 'Choose detectors', groupId: paramGroups.compare.id },
+  compareImageType: { id: compareImageTypeId, name: 'Choose image', groupId: paramGroups.compare.id },
 
-  imageTemplate: { id: 130, name: 'Template Image', groupId: compareImageTypeId },
-  imageMoving: { id: 131, name: 'Moving Image', groupId: compareImageTypeId },
+  imageFirst: { id: 130, name: 'First image', groupId: compareImageTypeId },
+  imageSecond: { id: 131, name: 'Second image', groupId: compareImageTypeId },
 
   matchFilterSpreadAuto: { id: 140, name: 'Spread factor automatic', groupId: paramGroups.matchFilter.id },
   matchFilterSpreadFactor: { id: 141, name: 'Spread factor', groupId: paramGroups.matchFilter.id, disabledIfId: 140},

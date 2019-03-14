@@ -15,7 +15,8 @@ const state = {
   imageFieldOfViewInitialArray: [],
   busy: false,
   busyLoading: false,
-  indicesSelected: []
+  indicesSelected: [],
+  initCalled: false
 }
 
 const getters = {
@@ -58,6 +59,9 @@ const getters = {
   },
   imageCount(state) {
     return state.imageDataArray.length;
+  },
+  initCalled(state) {
+    return state.initCalled;
   }
 }
 
@@ -137,11 +141,6 @@ const mutations = {
   },
   removeAll(state) {
     state.imageDataArray = [];
-
-    // for(let imageUrl of state.imageDataUrlsArray) {
-    //   URL.revokeObjectURL(imageUrl);
-    // }
-
     state.imageDataUrlsArray = [];
     state.imageFileArray = [];
     state.imageFieldOfViewArray = [];
@@ -153,15 +152,20 @@ const mutations = {
     const count = state.imageDataArray.length;
     state.imageDataArray = [];
     state.imageDataArray = new Array(count).fill(null);
+  },
+  initCalled(state) {
+    state.initCalled = true;
   }
 }
 
 const actions = {
 
-  init(context) {
+  loadDefaultImages(context) {
+    
     const ia = context.getters['imageDataArray'];
-    if(ia && ia.length > 0) return;
-
+    if(ia && ia.length > 0) {
+      context.commit('removeAll');
+    }
 
     const defaultImages = [defaultImage1, defaultImage2, defaultImage3];
      
@@ -188,6 +192,15 @@ const actions = {
         context.commit('busy', true);
       }
     }
+  },
+
+  init(context) {
+
+    if(context.getters['initCalled']) {
+      return;
+    }
+    context.commit('initCalled');
+    context.dispatch('loadDefaultImages');
   },
 
   async imageData({ commit, dispatch, rootGetters }, imageData) {

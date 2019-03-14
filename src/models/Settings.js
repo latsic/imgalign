@@ -56,8 +56,8 @@ export class Settings {
       {
         id: paramTypes.compareImageType.id,
         type: valueTypes.discrete,
-        defaultValue: paramTypes.imageTemplate.id,
-        value: paramTypes.imageTemplate.id,
+        defaultValue: paramTypes.imageFirst.id,
+        value: paramTypes.imageFirst.id,
         values: this.getDiscreteParams(paramTypes.compareImageType.id)
       },
 

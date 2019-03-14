@@ -52,7 +52,9 @@
         :fail-text="errorText"
         :action-text="'Stitch!'"
         :result-valid="$store.getters['worker/results/imageDataValid'](stitchName)"
+        :inputButtonsTitle="'First image / second image'"
         @delete-result="deleteResult"
+        @load-default-images="loadDefaultImages"
       />
       
       <div
@@ -209,6 +211,10 @@ export default {
     },
     deleteResult() {
       this.$store.commit('worker/results/imageData', { name: stitchName, imageData: null });
+      this.$store.dispatch('worker/resetWorkerData');
+    },
+    loadDefaultImages() {
+      this.$store.dispatch('input/loadDefaultImages');
       this.$store.dispatch('worker/resetWorkerData');
     },
     addPolygonPt(name, pt) {
