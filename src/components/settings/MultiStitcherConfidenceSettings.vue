@@ -27,13 +27,13 @@
         v-if="param.type == valueTypes.range"  
         always-dirty
         v-bind="additionalSliderAttributes(param)"
-        :value="param.value"
+        :value="sliderValue(param)"
         :max="param.range.max"
         :min="param.range.min"
         :step="param.step ? param.step : '0.01'"
         :style="{'margin-top': '0', 'margin-bottom': '0'}"
         :disabled="isDisabled(param)"
-        @change="value => $emit('change', { id: param.id, value })"
+        @change="value => sliderChanged(param, value)"
       />
     </v-flex>
   </v-layout>
@@ -84,11 +84,11 @@ export default {
     },
     additionalSliderAttributes(param) {
 
-      const paramValue = param.value === 0 ? '∞' : param.value
+      const paramValue = param.value === param.range.maxReplace ? `> ${param.range.max}` : param.value
 
       if(this.$vuetify.breakpoint.name == "xs") {
         return {
-          hint: `${this.paramName(param.id)} ${paramValue}`,
+          hint: `${this.paramName(param.id)}: ${paramValue}`,
           'persistent-hint': true,
           label: '',
           'hide-details': false
@@ -96,12 +96,25 @@ export default {
       }
       else {
         return {
-          label: `${this.paramName(param.id)} ${paramValue}`,
+          label: `${this.paramName(param.id)}: ${paramValue}`,
           'persistent-hint': false,
           hint: null,
           'hide-details': true
         }
       }
+    },
+    sliderValue(param) {
+      if(param.range.maxReplace != undefined && param.value == param.range.maxReplace) {
+        return param.range.max;
+      }
+      return param.value;
+    },
+    sliderChanged(param, value) {
+      let emitValue = value;
+      if(param.range.maxReplace != undefined && value == param.range.max) {
+        emitValue = param.range.maxReplace;
+      }
+      this.$emit('change', { id: param.id, value: emitValue });
     }
   }
 }

@@ -420,7 +420,7 @@ export class Settings {
         type: valueTypes.range,
         defaultValue: 0,
         value: 0,
-        range: { min: 0, max: 40 },
+        range: { min: 1, max: 40, maxReplace: 0 },
         step: 1
       },
 

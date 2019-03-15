@@ -96,7 +96,7 @@ export default {
     additionalSliderAttributes(param) {
       if(this.$vuetify.breakpoint.name == "xs") {
         return {
-          hint: `${this.paramName(param.id)} ${param.value}`,
+          hint: `${this.paramName(param.id)}: ${param.value}`,
           'persistent-hint': true,
           label: '',
           'hide-details': false
@@ -104,7 +104,7 @@ export default {
       }
       else {
         return {
-          label: `${this.paramName(param.id)} ${param.value}`,
+          label: `${this.paramName(param.id)}: ${param.value}`,
           'persistent-hint': false,
           hint: null,
           'hide-details': true
