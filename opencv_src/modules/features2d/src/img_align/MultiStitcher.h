@@ -11,10 +11,12 @@ namespace imgalign
 {
   struct MatchInfo;
   class StitchInfoFilter;
+  class InputImagesReach;
 
   struct StitchInfo {
 
     StitchInfo(size_t srcI, size_t dstI);
+    ~StitchInfo();
     void resetCamData();
   
     size_t srcImageIndex;
@@ -32,7 +34,7 @@ namespace imgalign
     mutable TMat matR;
     mutable TMat matK;
 
-    ~StitchInfo();
+    bool matched = false;
   };
 
   struct StitchedImage {
@@ -216,10 +218,13 @@ namespace imgalign
 
       bool abort = false;
 
+      int inputImagesMatchReach = 0;
+
       std::unique_ptr<LastRunData> lastRunData;
       std::unique_ptr<StitchInfoFilter> sifComputeOrder;
       std::unique_ptr<StitchInfoFilter> sifBundleAdjust;
       std::unique_ptr<StitchInfoFilter> sifCamEstimate;
+      std::unique_ptr<InputImagesReach> iiR;
 
       std::map<int, DesMatcher> matchers;
       const DesMatcher *getMatcher(int dstIndex);

@@ -414,7 +414,7 @@ bool BundleAdjusterBase::estimate(const std::vector<ImageFeatures> &features,
             cvCopy(&tmp, _err);
 
             auto time = imgalign::milliseconds();
-            if(time - startTime > 500) {
+            if(time - startTime > 1500) {
                 auto currErrSqr = err.dot(err) / total_num_matches_;
                 //auto currError = std::sqrt(currErrSqr);
                 LogUtils::getLogUserInfo()
@@ -447,7 +447,7 @@ bool BundleAdjusterBase::estimate(const std::vector<ImageFeatures> &features,
         }
         else if (loopIter % 20 == 0) {
             auto time = imgalign::milliseconds();
-            if(time - startTime > 500) {
+            if(time - startTime > 1500) {
                 LogUtils::getLogUserInfo()
                     << "BA current no curr err, " << iter << "/" << loopIter << std::endl;
             }

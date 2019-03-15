@@ -21,16 +21,47 @@ namespace
   }
 
   bool
-  fulfillsMinCriterias(const StitchInfo &stitchInfo, double cf)
+  fulfillsMinCriterias(const StitchInfo &stitchInfo, double cf, const InputImagesReach *pReach)
   {
+    bool insideReach =
+      pReach == nullptr ||
+      pReach->insideReach((int)stitchInfo.srcImageIndex, (int)stitchInfo.dstImageIndex);
+
     return stitchInfo.matchInfo.isHomographyGood()
       && stitchInfo.matchInfo.confidence >= cf
+      && insideReach
       && deltaAngleSumInRange(stitchInfo);
   }
 }
 
-StitchInfoFilter::StitchInfoFilter(double confidenceThresh)
+InputImagesReach::InputImagesReach(int inReach, int inRange)
+  : reach(inReach)
+  , rangeStart(std::min(0, inRange))
+  , rangeEnd(std::max(0, inRange))
+{
+  FUNCLOGTIMEL("InputImagesReach::InputImagesReach");
+}
+
+bool InputImagesReach::insideReach(int srcI, int dstI) const
+{
+  FUNCLOGTIMEL("InputImagesReach::insideReach");
+
+  const int largeVal = std::max(srcI, dstI);
+  const int smallVal = std::min(srcI, dstI);
+
+  if(smallVal < rangeStart) return false;
+  if(largeVal > rangeEnd) return false;
+
+  if(largeVal - smallVal <= reach) {
+    return true;
+  }
+
+  return (smallVal - rangeStart) + (rangeEnd - largeVal) <= reach;
+}
+
+StitchInfoFilter::StitchInfoFilter(double confidenceThresh, const InputImagesReach *pReach)
   : cf(confidenceThresh)
+  , reach(pReach)
 {
 }
 
@@ -44,8 +75,8 @@ bool StitchInfoFilter::done() const
   return false;
 }
 
-SIF_Std::SIF_Std(double confidenceThresh)
-  : StitchInfoFilter(confidenceThresh)
+SIF_Std::SIF_Std(double confidenceThresh, const InputImagesReach *pReach)
+  : StitchInfoFilter(confidenceThresh, pReach)
 {
 }
 
@@ -55,7 +86,7 @@ bool SIF_Std::pass(const StitchInfo &stitchInfo) const
     return false;
   }
 
-  return fulfillsMinCriterias(stitchInfo, cf);
+  return fulfillsMinCriterias(stitchInfo, cf, reach);
 }
 
 bool SIF_Std::done() const
@@ -64,13 +95,16 @@ bool SIF_Std::done() const
 }
 
 SIF_IgnoreEdgesConfidence::SIF_IgnoreEdgesConfidence(
-  double confidenceThresh, const std::vector<const StitchInfo *> &stitchInfos)
-  : StitchInfoFilter(confidenceThresh)
+  double confidenceThresh,
+  const InputImagesReach *pReach,
+  const std::vector<const StitchInfo *> &stitchInfos)
+
+  : StitchInfoFilter(confidenceThresh, pReach)
 {
   FUNCLOGTIMEL("SIF_IgnoreEdgesConfidence::SIF_IgnoreEdgesConfidence");
 
   for(const auto *pStitchInfo : stitchInfos) {
-    if(pStitchInfo != nullptr && fulfillsMinCriterias(*pStitchInfo, cf)) {
+    if(pStitchInfo != nullptr && fulfillsMinCriterias(*pStitchInfo, cf, reach)) {
       _stitchInfos.push_back(pStitchInfo);
     }
   }
@@ -92,7 +126,7 @@ bool SIF_IgnoreEdgesConfidence::pass(const StitchInfo &stitchInfo) const
   if(stitchInfo.srcImageIndex == stitchInfo.dstImageIndex) {
     return false;
   }
-  if(!fulfillsMinCriterias(stitchInfo, cf)) {
+  if(!fulfillsMinCriterias(stitchInfo, cf, reach)) {
     return false;
   }
 
@@ -117,8 +151,10 @@ bool SIF_IgnoreEdgesConfidence::done() const
 }
 
 SIF_IgnoreImagesConfidence::SIF_IgnoreImagesConfidence(
-  double confidenceThresh, const std::vector<const StitchInfo *> &stitchInfos)
-  : StitchInfoFilter(confidenceThresh)
+  double confidenceThresh,
+  const InputImagesReach *pReach,
+  const std::vector<const StitchInfo *> &stitchInfos)
+  : StitchInfoFilter(confidenceThresh, pReach)
 {
   FUNCLOGTIMEL("SIF_IgnoreImagesConfidence::SIF_IgnoreImagesConfidence");
 
@@ -126,7 +162,7 @@ SIF_IgnoreImagesConfidence::SIF_IgnoreImagesConfidence(
   
   for(const auto *pStitchInfo : stitchInfos) {
     
-    if(pStitchInfo == nullptr || !fulfillsMinCriterias(*pStitchInfo, cf)) {
+    if(pStitchInfo == nullptr || !fulfillsMinCriterias(*pStitchInfo, cf, reach)) {
       continue;
     }
     
@@ -174,7 +210,7 @@ bool SIF_IgnoreImagesConfidence::pass(const StitchInfo &stitchInfo) const
   if(stitchInfo.srcImageIndex == stitchInfo.dstImageIndex) {
     return false;
   }
-  if(!fulfillsMinCriterias(stitchInfo, cf)) {
+  if(!fulfillsMinCriterias(stitchInfo, cf, reach)) {
     return false;
   }
 
@@ -198,8 +234,9 @@ bool SIF_IgnoreImagesConfidence::done() const
 
 SIF_BestNeighbourOnly::SIF_BestNeighbourOnly(
   double confidenceThresh,
+  const InputImagesReach *pReach,
   const std::vector<const StitchInfo *> &stitchOrder)
-  : StitchInfoFilter(confidenceThresh)
+  : StitchInfoFilter(confidenceThresh, pReach)
   , _stitchOrder(stitchOrder)
 {
   FUNCLOGTIMEL("SIF_BestNeighbourOnly::SIF_BestNeighbourOnly");
@@ -210,7 +247,7 @@ bool SIF_BestNeighbourOnly::pass(const StitchInfo &stitchInfo) const
   if(stitchInfo.srcImageIndex == stitchInfo.dstImageIndex) {
     return false;
   }
-  if(!fulfillsMinCriterias(stitchInfo, cf)) {
+  if(!fulfillsMinCriterias(stitchInfo, cf, reach)) {
     return false;
   }
 
@@ -237,8 +274,11 @@ bool SIF_BestNeighbourOnly::done() const
 }
 
 SIF_IgnoreImagesDeltaSumHV::SIF_IgnoreImagesDeltaSumHV(
-  double confidenceThresh, const std::vector<const StitchInfo *> &stitchInfos)
-  : StitchInfoFilter(confidenceThresh)
+  double confidenceThresh,
+  const InputImagesReach *pReach,
+  const std::vector<const StitchInfo *> &stitchInfos)
+
+  : StitchInfoFilter(confidenceThresh, pReach)
 {
   FUNCLOGTIMEL("SIF_IgnoreImagesDeltaSumHV::SIF_IgnoreImagesDeltaSumHV");
 
@@ -246,7 +286,7 @@ SIF_IgnoreImagesDeltaSumHV::SIF_IgnoreImagesDeltaSumHV(
   
   for(const auto *pStitchInfo : stitchInfos) {
     
-    if(pStitchInfo == nullptr || !fulfillsMinCriterias(*pStitchInfo, cf)) {
+    if(pStitchInfo == nullptr || !fulfillsMinCriterias(*pStitchInfo, cf, reach)) {
       continue;
     }
     
@@ -294,7 +334,7 @@ bool SIF_IgnoreImagesDeltaSumHV::pass(const StitchInfo &stitchInfo) const
   if(stitchInfo.srcImageIndex == stitchInfo.dstImageIndex) {
     return false;
   }
-  if(!fulfillsMinCriterias(stitchInfo, cf)) {
+  if(!fulfillsMinCriterias(stitchInfo, cf, reach)) {
     return false;
   }
 
@@ -317,13 +357,16 @@ bool SIF_IgnoreImagesDeltaSumHV::done() const
 }
 
 SIF_IgnoreEdgesDeltaSumHV::SIF_IgnoreEdgesDeltaSumHV(
-  double confidenceThresh, const std::vector<const StitchInfo *> &stitchInfos)
-  : StitchInfoFilter(confidenceThresh)
+  double confidenceThresh,
+  const InputImagesReach *pReach,
+  const std::vector<const StitchInfo *> &stitchInfos)
+
+  : StitchInfoFilter(confidenceThresh, pReach)
 {
   FUNCLOGTIMEL("SIF_IgnoreEdgesDeltaSumHV::SIF_IgnoreEdgesDeltaSumHV");
 
   for(const auto *pStitchInfo : stitchInfos) {
-    if(pStitchInfo != nullptr && fulfillsMinCriterias(*pStitchInfo, cf)) {
+    if(pStitchInfo != nullptr && fulfillsMinCriterias(*pStitchInfo, cf, reach)) {
       _stitchInfos.push_back(pStitchInfo);
     }
   }
@@ -350,7 +393,7 @@ bool SIF_IgnoreEdgesDeltaSumHV::pass(const StitchInfo &stitchInfo) const
   if(stitchInfo.srcImageIndex == stitchInfo.dstImageIndex) {
     return false;
   }
-  if(!fulfillsMinCriterias(stitchInfo, cf)) {
+  if(!fulfillsMinCriterias(stitchInfo, cf, reach)) {
     return false;
   }
 
@@ -377,9 +420,11 @@ bool SIF_IgnoreEdgesDeltaSumHV::done() const
 
 SIF_IgnoreEdgesDistortion::SIF_IgnoreEdgesDistortion(
   double confidenceThresh,
+  const InputImagesReach *pReach,
   const std::vector<const StitchInfo *> &stitchInfos,
   const std::vector<cv::Size> &srcImagesSizes)
-  : StitchInfoFilter(confidenceThresh)
+
+  : StitchInfoFilter(confidenceThresh, pReach)
 {
   FUNCLOGTIMEL("SIF_IgnoreEdgesScale::SIF_IgnoreEdgesScale");
 
@@ -414,7 +459,7 @@ SIF_IgnoreEdgesDistortion::SIF_IgnoreEdgesDistortion(
   };
 
   for(const auto *pStitchInfo : stitchInfos) {
-    if(pStitchInfo != nullptr && fulfillsMinCriterias(*pStitchInfo, cf)) {
+    if(pStitchInfo != nullptr && fulfillsMinCriterias(*pStitchInfo, cf, reach)) {
       _stitchInfos.push_back(std::make_pair(pStitchInfo, getValue(*pStitchInfo)));
     }
   }
@@ -438,7 +483,7 @@ bool SIF_IgnoreEdgesDistortion::pass(const StitchInfo &stitchInfo) const
   if(stitchInfo.srcImageIndex == stitchInfo.dstImageIndex) {
     return false;
   }
-  if(!fulfillsMinCriterias(stitchInfo, cf)) {
+  if(!fulfillsMinCriterias(stitchInfo, cf, reach)) {
     return false;
   }
 
@@ -479,8 +524,12 @@ bool SIF_IgnoreEdgesDistortion::done() const
   return maxIndex <= 1;
 }
 
-SIF_IgnoreEdgesBlacklist::SIF_IgnoreEdgesBlacklist(double confidenceThresh, int edgesN)
-  : StitchInfoFilter(confidenceThresh)
+SIF_IgnoreEdgesBlacklist::SIF_IgnoreEdgesBlacklist(
+  double confidenceThresh,
+  const InputImagesReach *pReach,
+  int edgesN)
+
+  : StitchInfoFilter(confidenceThresh, pReach)
   , _edgesN(edgesN)
 {
   FUNCLOGTIMEL("SIF_IgnoreEdgesBlacklist::SIF_IgnoreEdgesBlacklist");  
@@ -499,7 +548,7 @@ bool SIF_IgnoreEdgesBlacklist::pass(const StitchInfo &stitchInfo) const
   if(srcI == dstI) {
     return false;
   }
-  if(!fulfillsMinCriterias(stitchInfo, cf)) {
+  if(!fulfillsMinCriterias(stitchInfo, cf, reach)) {
     return false;
   }
 
@@ -524,8 +573,11 @@ bool SIF_IgnoreEdgesBlacklist::done() const
 }
 
 SIF_IgnoreEdgesInlierDistance::SIF_IgnoreEdgesInlierDistance(
-  double confidenceThresh, const std::vector<const StitchInfo *> &stitchInfos)
-  : StitchInfoFilter(confidenceThresh)
+  double confidenceThresh,
+  const InputImagesReach *pReach,
+  const std::vector<const StitchInfo *> &stitchInfos)
+
+  : StitchInfoFilter(confidenceThresh, pReach)
 {
   FUNCLOGTIMEL("SIF_IgnoreEdgesInlierDistance::SIF_IgnoreEdgesInlierDistance");
 
@@ -555,7 +607,7 @@ SIF_IgnoreEdgesInlierDistance::SIF_IgnoreEdgesInlierDistance(
     if(stitchInfo->srcImageIndex == stitchInfo->dstImageIndex) {
       continue;
     }
-    if(!fulfillsMinCriterias(*stitchInfo, cf)) {
+    if(!fulfillsMinCriterias(*stitchInfo, cf, reach)) {
       continue;
     }
 
@@ -582,7 +634,7 @@ bool SIF_IgnoreEdgesInlierDistance::pass(const StitchInfo &stitchInfo) const
   if(stitchInfo.srcImageIndex == stitchInfo.dstImageIndex) {
     return false;
   }
-  if(!fulfillsMinCriterias(stitchInfo, cf)) {
+  if(!fulfillsMinCriterias(stitchInfo, cf, reach)) {
     return false;
   }
 

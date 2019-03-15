@@ -152,17 +152,6 @@ export const paramTypes = Object.freeze({
   stitch_projectionTypePaniniA2B1: { id: 564, name: 'Panini A2B1', groupId: projectionId, groupId2: projection2Id, groupId3: projection3Id },
   stitch_projectionTypePaniniPortraitA2B1: { id: 565, name: 'Panini portrait A2B1', groupId: projectionId, groupId2: projection2Id, groupId3: projection3Id },
 
-  // bundleAdjustType_none: { id: 570, name: 'None', groupId: bundleAdjustTypeId },
-  // bundleAdjustType_ray: { id: 571, name: 'Ray', groupId: bundleAdjustTypeId },
-  // bundleAdjustType_reprojCap: { id: 566, name: 'Reprojection Cap', groupId: bundleAdjustTypeId },
-  // bundleAdjustType_reproj: { id: 572, name: 'Reprojection', groupId: bundleAdjustTypeId },
-  // bundleAdjustType_auto: { id: 573, name: 'Auto', groupId: bundleAdjustTypeId },
-  // bundleAdjustType_rayretry: { id: 569, name: 'Ray retry', groupId: bundleAdjustTypeId },
-  // bundleAdjustType_ray2: { id: 568, name: 'Ray2', groupId: bundleAdjustTypeId },
-  // bundleAdjustType_reproj2: { id: 567, name: 'Reprojection2', groupId: bundleAdjustTypeId },
-  // bundleAdjustType_ray3: { id: 602, name: 'Ray3', groupId: bundleAdjustTypeId },
-  // bundleAdjustType_ray4: { id: 604, name: 'Ray4', groupId: bundleAdjustTypeId },
-
   bat_none: { id: 701, name: 'None', groupId: bundleAdjustTypeId },
   bat_ray: { id: 702, name: 'Ray', groupId: bundleAdjustTypeId },
   bat_rayBlacklist: { id: 703, name: 'Ray blacklist', groupId: bundleAdjustTypeId },
@@ -183,7 +172,6 @@ export const paramTypes = Object.freeze({
   blendType_none: { id: 574, name: 'None', groupId: blendTypeId },
   blendType_multiBand: { id: 575, name: 'Multiband', groupId: blendTypeId },
   blendType_feather: { id: 576, name: 'Feather', groupId: blendTypeId },
-
   
   seamFinderType_Vornoi: { id: 578, name: 'Vornoi', groupId: seamFinderTypeId },
   seamFinderType_Graphcut: { id: 579, name: 'Graphcut (slow)', groupId: seamFinderTypeId },
@@ -208,14 +196,10 @@ export const paramTypes = Object.freeze({
   multiStitch_calcCenterImage: { id: 588, name: 'Estimate start image', groupId: paramGroups.multiStitcherStitchOrder.id, enabledIfId: 580 },
   multiStitch_rectifyPerspective: { id: 581, name: 'Rectify perspective', groupId: paramGroups.multiStitcherStitchOrder.id },
   multiStitch_rectifyStretch: { id: 593, name: 'Rectify stretch', groupId: paramGroups.multiStitcherStitchOrder.id, enabledIfId: 581 },
-  
-  
-  multiStitch_confidenceThreshCamManual: { id: 595, name: 'Thresh camera', groupId: 0 },
-  multiStitch_confidenceThreshCam: { id: 594, name: 'Thresh camera', groupId: 0 },
-  // multiStitch_confidenceThreshCamManual: { id: 595, name: 'Thresh camera', groupId: paramGroups.multiStitcherConfidence.id },
-  // multiStitch_confidenceThreshCam: { id: 594, name: 'Thresh camera', groupId: paramGroups.multiStitcherConfidence.id, enabledIfId: 595 },
+
   multiStitch_confidenceThresh: { id: 589, name: 'Thresh stitching', groupId: paramGroups.multiStitcherConfidence.id },
-  multiStitch_calcImageOrder: { id: 587, name: 'Calc stitch order', groupId: paramGroups.multiStitcherConfidence.id },
+  multiStitch_inputImagesMatchReach: { id: 720, name: 'Image match reach', groupId: paramGroups.multiStitcherConfidence.id },
+  //multiStitch_calcImageOrder: { id: 587, name: 'Calc stitch order', groupId: paramGroups.multiStitcherConfidence.id },
 
   multiStitch_preserveAlphaChannelValue: { id: 600, name: 'Preserve Alpha Channel', groupId: paramGroups.multiStitcherMemory.id },
   multiStitch_disposeInputImages: { id: 598, name: 'Dispose input before stitching', groupId: paramGroups.multiStitcherMemory.id },
@@ -428,10 +412,10 @@ export const paramTexts = Object.freeze([
         + 'stitching pipeline is used as template. This usually does not work with '
         + 'with black and white images.'
   },
-  { id: paramTypes.multiStitch_calcImageOrder.id,
-    text: 'Calculate the best stitching order instead of stitching the images in the same order as the '
-        + 'input images are displayed.' 
-  },
+  // { id: paramTypes.multiStitch_calcImageOrder.id,
+  //   text: 'Calculate the best stitching order instead of stitching the images in the same order as the '
+  //       + 'input images are displayed.' 
+  // },
   { id: paramTypes.multiStitch_calcCenterImage.id,
     text: 'Calculate a center image and start stitching from there.'
   },
@@ -462,11 +446,12 @@ export const paramTexts = Object.freeze([
   { id: paramTypes.multiStitch_preserveAlphaChannelValue.id,
     text: 'To save memory while blending, preserving of alpha channel values can be disabled.' 
         + 'The final stitching result is only influeces if images containing non opaque areas are stitched together.' 
+  },
+  { id: paramTypes.multiStitch_inputImagesMatchReach.id,
+    text: 'Considers the order of input images. Two images are only considered for a match if the index distance '
+        + 'is lower or equal than this value. A value of 0 is interpreted as infinite value. Example: '
+        + 'The input image at position 3 and the input images at position 7 have an index distance of 4.'
   }
-
-
-
-  
 
 
 ]);

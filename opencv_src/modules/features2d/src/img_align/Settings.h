@@ -175,6 +175,7 @@ namespace imgalign
 
     eMultiStitch_confidenceThreshCam = 594,
     eMultiStitch_confidenceThreshCamManual = 595,
+    eMultiStitch_inputImagesMatchReach = 720,
 
     eMultiStitch_limitResultPreview = 596,
     eMultiStitch_limitInputView = 597,

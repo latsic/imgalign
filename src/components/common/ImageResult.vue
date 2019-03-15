@@ -4,7 +4,7 @@
   >
     <div
       :style="{
-        border: `1px solid ${$vuetify.theme.primary}`,
+        border: `1px solid ${$vuetify.theme.secondary}`,
         'padding': '0.3rem',
       }"
     >

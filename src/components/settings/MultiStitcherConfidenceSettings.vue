@@ -30,7 +30,7 @@
         :value="param.value"
         :max="param.range.max"
         :min="param.range.min"
-        :step="0.01"
+        :step="param.step ? param.step : '0.01'"
         :style="{'margin-top': '0', 'margin-bottom': '0'}"
         :disabled="isDisabled(param)"
         @change="value => $emit('change', { id: param.id, value })"
@@ -83,9 +83,12 @@ export default {
       return false;
     },
     additionalSliderAttributes(param) {
+
+      const paramValue = param.value === 0 ? '∞' : param.value
+
       if(this.$vuetify.breakpoint.name == "xs") {
         return {
-          hint: `${this.paramName(param.id)} ${param.value}`,
+          hint: `${this.paramName(param.id)} ${paramValue}`,
           'persistent-hint': true,
           label: '',
           'hide-details': false
@@ -93,7 +96,7 @@ export default {
       }
       else {
         return {
-          label: `${this.paramName(param.id)} ${param.value}`,
+          label: `${this.paramName(param.id)} ${paramValue}`,
           'persistent-hint': false,
           hint: null,
           'hide-details': true

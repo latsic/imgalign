@@ -63,8 +63,8 @@ export class Settings {
 
       { id: paramTypes.imageCap.id,
         type: valueTypes.rangeSquareRoot,
-        defaultValue: 250000,
-        value: 250000,
+        defaultValue: 300000,
+        value: 300000,
         range: { min: 10000, max: 9000000 }
       },
       { id: paramTypes.imageCapInput.id,
@@ -229,26 +229,22 @@ export class Settings {
         defaultValue: 4
       },
       
-      {
-        id: paramTypes.matchFilterSpreadAuto.id,
+      { id: paramTypes.matchFilterSpreadAuto.id,
         type: valueTypes.bool,
         value: 1,
         defaultValue: 1
       },
-      {
-        id: paramTypes.matchFilterSpreadFactor.id,
+      { id: paramTypes.matchFilterSpreadFactor.id,
         type: valueTypes.number,
         value: 2.2,
         defaultValue: 2.2
       },
-      {
-        id: paramTypes.matchFilterMinMatchesToRetain.id,
+      { id: paramTypes.matchFilterMinMatchesToRetain.id,
         type: valueTypes.number,
         value: 300,
         defaultValue: 300
       },
-      {
-        id: paramTypes.matchFilterMaxMatchesToRetain.id,
+      { id: paramTypes.matchFilterMaxMatchesToRetain.id,
         type: valueTypes.number,
         value: 800,
         defaultValue: 800
@@ -267,125 +263,104 @@ export class Settings {
         values: this.getDiscreteParams(paramTypes.stitch_projection2.id)
       },
 
-      {
-        id: paramTypes.stitch_seamBlend.id,
+      { id: paramTypes.stitch_seamBlend.id,
         type: valueTypes.bool,
         value: 1,
         defaultValue: 1,
       },
-      {
-        id: paramTypes.stitch_colorTransfer.id,
+      { id: paramTypes.stitch_colorTransfer.id,
         type: valueTypes.bool,
         value: 0,
         defaultValue: 0,
       },
       
-      {
-        id: paramTypes.stitch_fieldOfView1.id,
+      { id: paramTypes.stitch_fieldOfView1.id,
         type: valueTypes.numberAuto,
         value: 45,
         defaultValue: 45,
       },
-      {
-        id: paramTypes.stitch_yaw1.id,
+      { id: paramTypes.stitch_yaw1.id,
         type: valueTypes.numberAuto,
         value: 0,
         defaultValue: 0,
       },
-      {
-        id: paramTypes.stitch_pitch1.id,
+      { id: paramTypes.stitch_pitch1.id,
         type: valueTypes.numberAuto,
         value: 0,
         defaultValue: 0
       },
-      {
-        id: paramTypes.stitch_fieldOfView2.id,
+      { id: paramTypes.stitch_fieldOfView2.id,
         type: valueTypes.numberAuto,
         value: 45,
         defaultValue: 45
       },
-      {
-        id: paramTypes.stitch_yaw2.id,
+      { id: paramTypes.stitch_yaw2.id,
         type: valueTypes.numberAuto,
         value: 0,
         defaultValue: 0,
         flagId: paramTypes.stitch_yaw2Auto.id
       },
-      {
-        id: paramTypes.stitch_pitch2.id,
+      { id: paramTypes.stitch_pitch2.id,
         type: valueTypes.numberAuto,
         value: 0,
         defaultValue: 0,
         flagId: paramTypes.stitch_pitch2Auto.id
       },
-
-      {
-        id: paramTypes.stitch_yaw2Auto.id,
+      { id: paramTypes.stitch_yaw2Auto.id,
         type: valueTypes.bool,
         value: 1,
         defaultValue: 1
       },
-      {
-        id: paramTypes.stitch_pitch2Auto.id,
+      { id: paramTypes.stitch_pitch2Auto.id,
         type: valueTypes.bool,
         value: 1,
         defaultValue: 1
       },
-
-      {
-        id: paramTypes.multiStitch_projectionType.id,
+      { id: paramTypes.multiStitch_projectionType.id,
         type: valueTypes.discrete,
         value: paramTypes.stitch_projectionTypeSpherical.id,
         defaultValue: paramTypes.stitch_projectionTypeSpherical.id,
         values: this.getDiscreteParams(paramTypes.multiStitch_projectionType.id)
       },
-      {
-        id: paramTypes.multiStitch_rectifyPerspective.id,
+      { id: paramTypes.multiStitch_rectifyPerspective.id,
         type: valueTypes.bool,
         value: 0,
         defaultValue: 0,
       },
-      {
-        id: paramTypes.multiStitch_rectifyStretch.id,
+      { id: paramTypes.multiStitch_rectifyStretch.id,
         type: valueTypes.bool,
         value: 0,
         defaultValue: 0,
       },
-      {
-        id: paramTypes.multiStitch_maxRectangle.id,
+      { id: paramTypes.multiStitch_maxRectangle.id,
         type: valueTypes.bool,
         value: 0,
         defaultValue: 0,
       },
-      {
-        id: paramTypes.multiStitch_camEstimate.id,
+      { id: paramTypes.multiStitch_camEstimate.id,
         type: valueTypes.bool,
         value: 1,
         defaultValue: 1,
       },
-      {
-        id: paramTypes.multiStitch_bundleAdjust.id,
+      { id: paramTypes.multiStitch_bundleAdjust.id,
         type: valueTypes.discrete,
         value: paramTypes.bat_rayBlacklist.id,
         defaultValue: paramTypes.bat_rayBlacklist.id,
         values: this.getDiscreteParams(paramTypes.multiStitch_bundleAdjust.id)
       },
-      {
-        id: paramTypes.multiStitch_waveCorrection.id,
+      { id: paramTypes.multiStitch_waveCorrection.id,
         type: valueTypes.discrete,
         value: paramTypes.waveCorrectionType_H.id,
         defaultValue: paramTypes.waveCorrectionType_H.id,
         values: this.getDiscreteParams(paramTypes.multiStitch_waveCorrection.id)
       },
-      {
-        id: paramTypes.multiStitch_seamBlend.id,
+      { id: paramTypes.multiStitch_seamBlend.id,
         type: valueTypes.bool,
         value: 1,
         defaultValue: 1,
       },
 
-      {
-        id: paramTypes.multiStitch_seamFinderType.id,
+      { id: paramTypes.multiStitch_seamFinderType.id,
         type: valueTypes.discrete,
         value: paramTypes.seamFinderType_Vornoi.id,
         defaultValue: paramTypes.seamFinderType_Vornoi.id,
@@ -407,32 +382,28 @@ export class Settings {
         range: { min: 0, max: 100 }
       },
 
-      {
-        id: paramTypes.multiStitch_colorTransfer.id,
+      { id: paramTypes.multiStitch_colorTransfer.id,
         type: valueTypes.bool,
         value: 0,
         defaultValue: 0
       },
-      {
-        id: paramTypes.multiStitch_exposureCompensator.id,
+      { id: paramTypes.multiStitch_exposureCompensator.id,
         type: valueTypes.bool,
         value: 0,
         defaultValue: 0
       },
-      {
-        id: paramTypes.multiStitch_calcImageOrder.id,
+      // {
+      //   id: paramTypes.multiStitch_calcImageOrder.id,
+      //   type: valueTypes.bool,
+      //   value: 1,
+      //   defaultValue: 1
+      // },
+      { id: paramTypes.multiStitch_calcCenterImage.id,
         type: valueTypes.bool,
         value: 1,
         defaultValue: 1
       },
-      {
-        id: paramTypes.multiStitch_calcCenterImage.id,
-        type: valueTypes.bool,
-        value: 1,
-        defaultValue: 1
-      },
-      {
-        id: paramTypes.multiStitch_warpFirst.id,
+      { id: paramTypes.multiStitch_warpFirst.id,
         type: valueTypes.bool,
         value: 0,
         defaultValue: 0
@@ -441,20 +412,16 @@ export class Settings {
         type: valueTypes.range,
         defaultValue: 0.4,
         value: 0.4,
-        range: { min: 0.0, max: 4.0 }
+        range: { min: 0.0, max: 3.0 },
+        step: 0.01
       },
-
-      { id: paramTypes.multiStitch_confidenceThreshCam.id,
+      
+      { id: paramTypes.multiStitch_inputImagesMatchReach.id,
         type: valueTypes.range,
-        defaultValue: 1.2,
-        value: 1.2,
-        range: { min: 0.0, max: 4.0 }
-      },
-      {
-        id: paramTypes.multiStitch_confidenceThreshCamManual.id,
-        type: valueTypes.bool,
+        defaultValue: 0,
         value: 0,
-        defaultValue: 0
+        range: { min: 0, max: 40 },
+        step: 1
       },
 
       { id: paramTypes.multiStitch_limitResultPreview.id,
@@ -481,8 +448,7 @@ export class Settings {
         value: 200000,
         range: { min: 10000, max: 1000000 }
       },
-      {
-        id: paramTypes.multiStitch_preserveAlphaChannelValue.id,
+      { id: paramTypes.multiStitch_preserveAlphaChannelValue.id,
         type: valueTypes.bool,
         value: 0,
         defaultValue: 0

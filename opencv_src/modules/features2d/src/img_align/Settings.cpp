@@ -15,7 +15,7 @@ namespace imgalign
   void Settings::init() {
     paramValuesExt = {
 
-      { eImageCap, { 250000.0f, "imageCap" } },
+      { eImageCap, { 300000.0f, "imageCap" } },
       { eImageCapInput, { 350000.0f, "imageCapInput" } },
 
       { eSift_featuresN, { 0.0f, "Sift_featuresN" } },
@@ -95,6 +95,9 @@ namespace imgalign
       { eMultiStitch_confidenceThresh, { 0.4f, "MultiStitch_confidenceThresh" } },
       { eMultiStitch_confidenceThreshCam, { 1.2f, "MultiStitch_confidenceThreshCam" } },
       { eMultiStitch_confidenceThreshCamManual, { 0.0f, "MultiStitch_confidenceThreshCamAuto" } },
+
+      { eMultiStitch_inputImagesMatchReach, { 0.0f, "MultiStitch_inputImagesMatchReach" } },
+
       { eMultiStitch_exposureCompensator, { 0.0f, "MultiStitch_exposureCompensator" } },
       //{ eMultiStitch_blendType, { (float)eBlendType_multiBand, "MultiStitch_blendType"}},
       { eMultiStitch_blendStrength, { 5.0f, "MultiStitch_blendStrength" } },

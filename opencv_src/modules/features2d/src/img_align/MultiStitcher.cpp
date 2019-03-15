@@ -164,12 +164,12 @@ namespace
       << std::endl;
   }
 
-  void dismissDetailedMatchInfoData(std::vector<std::shared_ptr<StitchInfo>> &stitchInfos)
-  {
-    for(auto spStitchInfo : stitchInfos) {
-      spStitchInfo->matchInfo.dismissDetailData();
-    }
-  }
+  // void dismissDetailedMatchInfoData(std::vector<std::shared_ptr<StitchInfo>> &stitchInfos)
+  // {
+  //   for(auto spStitchInfo : stitchInfos) {
+  //     spStitchInfo->matchInfo.dismissDetailData();
+  //   }
+  // }
 
   void setScaledImages(
     const TImages &srcImages, TImages &imagesScaled, std::vector<double> &scaleFactors, int maxPixelsN)
@@ -482,7 +482,12 @@ MultiStitcher::initStiching(
   confidenceThreshCam = confidenceThresh;
   if(settings.getValue(eMultiStitch_confidenceThreshCamManual) > 0.0) {
     confidenceThreshCam = settings.getValue(eMultiStitch_confidenceThreshCam);
-  } 
+  }
+
+  inputImagesMatchReach = (int)settings.getValue(eMultiStitch_inputImagesMatchReach);
+  if(inputImagesMatchReach <= 0) {
+    inputImagesMatchReach = std::numeric_limits<int>::max();
+  }
 
   warpFirst = (bool)settings.getValue(eMultiStitch_warpFirst);
   maxRectangle = (bool)settings.getValue(eMultiStitch_maxRectangle);
@@ -516,6 +521,7 @@ MultiStitcher::initStiching(
     LogUtils::getLog() << "resultPreviewMaxPixelsN " << (int)(settings.getValue(eMultiStitch_limitResultPreview)) << std::endl;
     LogUtils::getLog() << "liveUpdateCycle " << (int)(settings.getValue(eMultiStitch_liveUpdateCycle)) << std::endl;
     LogUtils::getLog() << "maxRectangle " << maxRectangle << std::endl;
+    LogUtils::getLog() << "inputImagesMatchReach " << inputImagesMatchReach << std::endl;
   }
 
   computeKeyPoints();
@@ -532,7 +538,8 @@ MultiStitcher::initStiching(
     }
   }
 
-  sifComputeOrder = std::unique_ptr<StitchInfoFilter>(new SIF_Std(confidenceThresh));
+  iiR = std::unique_ptr<InputImagesReach>(new InputImagesReach(inputImagesMatchReach, (int)srcImages.size()));
+  sifComputeOrder = std::unique_ptr<StitchInfoFilter>(new SIF_Std(confidenceThresh, iiR.get()));
 
   if(!camBasicDataUpToDate) {
 
@@ -543,9 +550,9 @@ MultiStitcher::initStiching(
     stitchOrder = computeStitchOrder();
     centerImageIndex = stitchOrder[0]->srcImageIndex;
 
-    if(calcImageOrder) {  
-      calcAndStoreAllMatches();
-    }
+    // if(calcImageOrder) {  
+    //   calcAndStoreAllMatches();
+    // }
   }
 
   if(abort) {
@@ -570,18 +577,18 @@ MultiStitcher::initStiching(
     switch(bundleAdjustType) {
       case BundleAdjustType::BAT_RAYMINTILES:
       case BundleAdjustType::BAT_REPROJMINTILES:
-        sifBundleAdjust = std::unique_ptr<StitchInfoFilter>(new SIF_BestNeighbourOnly(confidenceThresh, stitchOrder));
-        sifCamEstimate = std::unique_ptr<StitchInfoFilter>(new SIF_BestNeighbourOnly(confidenceThresh, stitchOrder));
+        sifBundleAdjust = std::unique_ptr<StitchInfoFilter>(new SIF_BestNeighbourOnly(confidenceThresh, iiR.get(), stitchOrder));
+        sifCamEstimate = std::unique_ptr<StitchInfoFilter>(new SIF_BestNeighbourOnly(confidenceThresh, iiR.get(), stitchOrder));
         break;
       case BundleAdjustType::BAT_RAYCONFIDENCESTEP:
-        sifComputeOrder = std::unique_ptr<StitchInfoFilter>(new SIF_IgnoreEdgesConfidence(confidenceThresh, tempStitchInfos));
-        sifCamEstimate = std::unique_ptr<StitchInfoFilter>(new SIF_IgnoreEdgesConfidence(confidenceThresh, tempStitchInfos)); 
-        sifBundleAdjust = std::unique_ptr<StitchInfoFilter>(new SIF_IgnoreEdgesConfidence(confidenceThresh, tempStitchInfos));
+        sifComputeOrder = std::unique_ptr<StitchInfoFilter>(new SIF_IgnoreEdgesConfidence(confidenceThresh, iiR.get(), tempStitchInfos));
+        sifCamEstimate = std::unique_ptr<StitchInfoFilter>(new SIF_IgnoreEdgesConfidence(confidenceThresh, iiR.get(), tempStitchInfos)); 
+        sifBundleAdjust = std::unique_ptr<StitchInfoFilter>(new SIF_IgnoreEdgesConfidence(confidenceThresh, iiR.get(), tempStitchInfos));
         break;
       case BundleAdjustType::BAT_RAYBLACKLIST:
-        sifBundleAdjust = std::unique_ptr<StitchInfoFilter>(new SIF_IgnoreEdgesBlacklist(confidenceThresh, tempStitchInfos.size()));
-        sifComputeOrder = std::unique_ptr<StitchInfoFilter>(new SIF_IgnoreEdgesBlacklist(confidenceThresh, tempStitchInfos.size()));
-        sifCamEstimate = std::unique_ptr<StitchInfoFilter>(new SIF_IgnoreEdgesBlacklist(confidenceThresh, tempStitchInfos.size()));
+        sifBundleAdjust = std::unique_ptr<StitchInfoFilter>(new SIF_IgnoreEdgesBlacklist(confidenceThresh, iiR.get(), tempStitchInfos.size()));
+        sifComputeOrder = std::unique_ptr<StitchInfoFilter>(new SIF_IgnoreEdgesBlacklist(confidenceThresh, iiR.get(), tempStitchInfos.size()));
+        sifCamEstimate = std::unique_ptr<StitchInfoFilter>(new SIF_IgnoreEdgesBlacklist(confidenceThresh, iiR.get(), tempStitchInfos.size()));
         break;
       case BundleAdjustType::BAT_NONE:
       case BundleAdjustType::BAT_REPROJ:
@@ -589,8 +596,8 @@ MultiStitcher::initStiching(
       case BundleAdjustType::BAT_REPROJNOCAM:
       case BundleAdjustType::BAT_REPROJNOCAMCAP200:
       default: {
-        sifBundleAdjust = std::unique_ptr<StitchInfoFilter>(new SIF_Std(confidenceThresh));
-        sifCamEstimate = std::unique_ptr<StitchInfoFilter>(new SIF_Std(confidenceThresh));
+        sifBundleAdjust = std::unique_ptr<StitchInfoFilter>(new SIF_Std(confidenceThresh, iiR.get()));
+        sifCamEstimate = std::unique_ptr<StitchInfoFilter>(new SIF_Std(confidenceThresh, iiR.get()));
       }
     }
 
@@ -607,6 +614,15 @@ MultiStitcher::initStiching(
       //   return false;
       // }
       if(sifBundleAdjust == nullptr || sifBundleAdjust->done()) {
+
+        LogUtils::getLogUserError() << "Bundle adjust failed" << std::endl;
+
+        LogUtils::getLogUserError()
+          << "Advice: "
+          << "1. Increase/decrease confidence value, "
+          << "2. Try a difference bundle adjustement type."
+          << std::endl;
+
         return false;
       }
       stitchOrder = computeStitchOrder();
@@ -636,12 +652,9 @@ MultiStitcher::initStiching(
 
   logStitchOrder(globalScale, srcImagesSizes, stitchOrder);
 
-  if(calcImageOrder) {
+  if(calcImageOrder && inputImagesMatchReach == std::numeric_limits<int>::max()) {
     descriptors.clear();
   }
-  //keyPoints.clear();
-  //points.clear();
-  //dismissDetailedMatchInfoData(stitchInfos);
   
   stitchedImage.init(
     srcImages[centerImageIndex],
@@ -1011,66 +1024,78 @@ MultiStitcher::getStitchInfo(size_t dstI, size_t srcI, bool createIf)
   if(dstI >= srcImages.size() || srcI >= srcImages.size()) {
     throw std::logic_error("invalid image index");
   }
-  auto it = std::find_if(stitchInfos.begin(), stitchInfos.end(),
-    [&](const std::shared_ptr<StitchInfo> stitchInfo) {
-    return stitchInfo->srcImageIndex == srcI
-        && stitchInfo->dstImageIndex == dstI;
-  });
-  if(it != stitchInfos.end())
-  {
-    return (*it).get();
-  }
+  
+  auto findStitchInfo = [this](size_t srcI, size_t dstI) {
+    auto it = std::find_if(stitchInfos.begin(), stitchInfos.end(),
+      [&](const std::shared_ptr<StitchInfo> stitchInfo) {
+      return stitchInfo->srcImageIndex == srcI
+          && stitchInfo->dstImageIndex == dstI;
+    });
+    if(it != stitchInfos.end()) {
+      return *it;
+    }
+    return std::shared_ptr<imgalign::StitchInfo>(nullptr);
+  };
 
-  if(!createIf) {
+  auto spStitchInfo = findStitchInfo(srcI, dstI);
+  std::shared_ptr<imgalign::StitchInfo> spStitchInfoInverse(nullptr);
+  if(spStitchInfo != nullptr) {
+    if(spStitchInfo->matched) return spStitchInfo.get();
+  }
+  else if(!createIf) {
     return nullptr;
   }
+  else {
+    spStitchInfo = std::make_shared<StitchInfo>(srcI, dstI);
+    spStitchInfoInverse = std::make_shared<StitchInfo>(dstI, srcI);
+    stitchInfos.push_back(spStitchInfo);
+    stitchInfos.push_back(spStitchInfoInverse);
+  }
 
-  //auto startTime = imgalign::milliseconds();
+  if(srcI == dstI) return spStitchInfo.get();
+  if(iiR != nullptr && !iiR->insideReach((int)srcI, (int)dstI)) {
+    return spStitchInfo.get();
+  }
 
-  auto spStitchInfo = std::make_shared<StitchInfo>(srcI, dstI);
-  auto spStitchInfoInverse = std::make_shared<StitchInfo>(dstI, srcI);
-  stitchInfos.push_back(spStitchInfo);
-  stitchInfos.push_back(spStitchInfoInverse);
-  if(dstI != srcI) {
+  if(descriptors.empty()) {
+    throw std::logic_error("Can not match, descriptors not available");
+  }
+  if(keyPoints.empty()) {
+    throw std::logic_error("Can not match, key points not available");
+  }
+  
+  const auto &matcher = getMatcher(srcI, descriptors[srcI], keyPoints[srcI]);
 
-    if(descriptors.empty()) {
-      throw std::logic_error("Can not match, descriptors not available");
-    }
-    if(keyPoints.empty()) {
-      throw std::logic_error("Can not match, key points not available");
-    }
-    
-    const auto &matcher = getMatcher(srcI, descriptors[srcI], keyPoints[srcI]);
+  spStitchInfo->matchInfo = matcher.match(
+    tfType, descriptors[dstI],
+    keyPoints[dstI],
+    warpFirst ? DataExtractionMode::eBasic : DataExtractionMode::eMin);
+  spStitchInfo->matched = true;
 
-    spStitchInfo->matchInfo = matcher.match(
-      tfType, descriptors[dstI],
-      keyPoints[dstI],
-      warpFirst ? DataExtractionMode::eBasic : DataExtractionMode::eMin);
-
-    // const auto &matcher = getMatcherRef(srcI);
-
-    // spStitchInfo->matchInfo = matcher.match(
-    //   tfType, descriptors[dstI], descriptors[srcI],
-    //   keyPoints[dstI], keyPoints[srcI],
-    //   warpFirst ? DataExtractionMode::eBasic : DataExtractionMode::eMin);
-
-    if(LogUtils::isDebug) {
-      LogUtils::getLog() << "Matching from " << srcI << " to " << dstI << ", confidence: "
-        << spStitchInfo->matchInfo.confidence << ", determinant: "
-        << spStitchInfo->matchInfo.determinant <<  std::endl;
-    }
-
-    if(spStitchInfo->matchInfo.success) {
-      spStitchInfoInverse->matchInfo = spStitchInfo->matchInfo.getInverse();
-    }
-
-    if(spStitchInfo->matchInfo.isHomographyGood()) {
-      computeRelativeRotation(*spStitchInfo);
-      spStitchInfoInverse->deltaH = -spStitchInfo->deltaH;
-      spStitchInfoInverse->deltaV = -spStitchInfo->deltaV;
+  if(spStitchInfoInverse == nullptr) {
+    spStitchInfoInverse = findStitchInfo(dstI, srcI);
+    if(spStitchInfoInverse == nullptr) {
+      throw std::logic_error("No inverse stitchinfo found");
     }
   }
-  //LogUtils::getLog() << "getStitchInfo time used: " << (imgalign::milliseconds() - startTime) << " ms" << std::endl;
+  spStitchInfoInverse->matched = true;
+
+  if(spStitchInfo->matchInfo.success) {
+    spStitchInfoInverse->matchInfo = spStitchInfo->matchInfo.getInverse();
+  }
+
+  if(spStitchInfo->matchInfo.isHomographyGood()) {
+    computeRelativeRotation(*spStitchInfo);
+    spStitchInfoInverse->deltaH = -spStitchInfo->deltaH;
+    spStitchInfoInverse->deltaV = -spStitchInfo->deltaV;
+  }
+
+  if(LogUtils::isDebug) {
+    LogUtils::getLog() << "Match " << srcI << "->" << dstI << ", c: "
+      << spStitchInfo->matchInfo.confidence << ", d: "
+      << spStitchInfo->matchInfo.determinant <<  std::endl;
+  }
+  
   return spStitchInfo.get();
 }
 
@@ -1433,13 +1458,13 @@ MultiStitcher::camEstimateAndBundleAdjustIf(
     logCameraParams(baCamParamsV, srcImagesSizes, rStitchOrder);
   }
   else {
-    LogUtils::getLogUserError() << "Bundle adjust failed" << std::endl;
+    // LogUtils::getLogUserError() << "Bundle adjust failed" << std::endl;
 
-    LogUtils::getLogUserError()
-      << "Advice: "
-      << "1. Increase/decrease confidence value, "
-      << "2. Try a difference bundle adjustement type."
-      << std::endl;
+    // LogUtils::getLogUserError()
+    //   << "Advice: "
+    //   << "1. Increase/decrease confidence value, "
+    //   << "2. Try a difference bundle adjustement type."
+    //   << std::endl;
 
     applyCamParams(cameraParamsV, camEstimate, false, rStitchOrder, rGlobalScale);
   }
@@ -1526,9 +1551,9 @@ MultiStitcher::isCamBasicDataUpToDate()
     lastRunData->settings.getValue(eMultiStitch_confidenceThresh)) return false;
   if(settings.getValue(eMultiStitch_confidenceThreshCam) !=
     lastRunData->settings.getValue(eMultiStitch_confidenceThreshCam)) return false;
-  // if(settings.getValue(eMultiStitch_warpFirst) !=
-  //   lastRunData->settings.getValue(eMultiStitch_warpFirst)) return false;
-
+  if(settings.getValue(eMultiStitch_inputImagesMatchReach) !=
+    lastRunData->settings.getValue(eMultiStitch_inputImagesMatchReach)) return false;
+  
 
   if(fieldsOfView.size() != lastRunData->fieldsOfView.size()) return false;
   for(size_t i = 0; i < fieldsOfView.size(); ++i) {
@@ -1921,6 +1946,7 @@ StitchedImage::stitch(
 StitchInfo::StitchInfo(size_t srcI, size_t dstI)
   : srcImageIndex(srcI)
   , dstImageIndex(dstI)
+  , matched(false)
 {
   FUNCLOGTIMEL("StitchInfo::StitchInfo");
   //LogUtils::getLogUserInfo() << "StitchInfo::StitchInfo, srcIndex: " << srcImageIndex << std::endl;
@@ -1958,7 +1984,6 @@ LastRunData::LastRunData(
   }
 
   globalScale = inGlobalScale;
-
 }
 
 

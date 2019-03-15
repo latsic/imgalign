@@ -22,56 +22,54 @@
             : null,
         }"
         @click.stop="imageClicked(index)"
-       
         @drop.prevent="e => dragDrop(e, index)"
         @dragover.prevent="() => {}"
         @dragend.prevent="() => {}"
         @dragenter.prevent="() => {}"
-        >
-        
+      >
+        <div
+          :style="{
+            position: 'relative',
+            padding: '0.3rem',
+          }"
+        > 
           <div
             :style="{
               position: 'relative',
-              padding: '0.3rem',
             }"
-          > 
+            >    
+            <img
+              :style="{
+                display: 'block',
+                'max-width': '100%',
+                'max-height': '30vh',
+                'width': 'auto',
+                'height': 'auto'
+              }"
+              class="transparent-pattern"
+              :id="index + ''"
+              :ref="index + ''"
+              :src="imageUrl" 
+              @dragstart="e => dragStart(e, index)"
+              @dragover.prevent="() => {}"
+              @dragend.prevent="() => {}"
+            >
+          
             <div
               :style="{
-                position: 'relative',
+                position: 'absolute',
+                bottom: '0px',
+                right: '0px',
+                color: $vuetify.theme.primary,
+                transform: 'translateY(0%) translateX(0%)',
+                'background-color': $vuetify.theme.accent,
+                padding: '0.1rem 0.3rem'
               }"
-              >    
-              <img
-                :style="{
-                  display: 'block',
-                  'max-width': '100%',
-                  'max-height': '30vh',
-                  'width': 'auto',
-                  'height': 'auto'
-                }"
-                class="transparent-pattern"
-                :id="index + ''"
-                :ref="index + ''"
-                :src="imageUrl" 
-                @dragstart="e => dragStart(e, index)"
-                @dragover.prevent="() => {}"
-                @dragend.prevent="() => {}"
-              >
-            
-              <div
-                :style="{
-                  position: 'absolute',
-                  bottom: '0px',
-                  right: '0px',
-                  color: $vuetify.theme.primary,
-                  transform: 'translateY(0%) translateX(0%)',
-                  'background-color': $vuetify.theme.accent,
-                  padding: '0.1rem 0.3rem'
-                }"
-              >
-                <strong>{{ index }}</strong>
-              </div>
-            </div> 
-          </div>
+            >
+              <strong>{{ index }}</strong>
+            </div>
+          </div> 
+        </div>
          
       </v-layout>
     </v-flex>
