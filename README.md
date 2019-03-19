@@ -1,6 +1,6 @@
 # ImgAlign
 
-A client-side only webapplication to join, stitch or align overlapping images. It can be used to create panoramas or to align images, for example forms which have not been scanned properly.
+A webapplication to join, stitch or align overlapping images. It can be used to create panoramas or to align images, for example forms which have not been scanned properly.
 
 Features: Surface projection, feature detection, feature matching, bundle adjustement, wave correction, color transfer, seam detection and multiband blending.
 

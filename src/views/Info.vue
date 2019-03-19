@@ -5,7 +5,7 @@
     <div>
 
       <p class="text-xs-left">
-        A client-side only <strong>webapplication</strong> to <strong>join, stitch or align</strong> overlapping images.
+        A <strong>webapplication</strong> to <strong>join, stitch or align</strong> overlapping images.
         It can be used to create <strong>panoramas</strong> or to <strong>align images</strong>, for example forms which have not been scanned properly.
       </p>
       
