@@ -6,7 +6,7 @@ const state = {
   totalCount: 0,
   infoMessafe: '',
 
-  maxErrorMessagesCount: 5,
+  maxErrorMessagesCount: 15,
   errorMessages: [],
   currentErrorMessage: ''
 }
