@@ -11,6 +11,7 @@
       :multiple="isMultiple"
       @change="fileChanged"
       @click="fileSelectionStarted"
+      @focus="inputFocus"
     >
     <label 
       :for="id"
@@ -142,7 +143,8 @@
     data() {
       return {
         value: '',
-        fileChangedCalled: false
+        fileChangedCalled: false,
+        inputClicked: false
       }
     },
     methods: {
@@ -174,20 +176,20 @@
         this.fileSelectionEnded();
       },
       fileSelectionStarted() {
+        this.inputClicked = true;
         if(UserAgentInfo.instance.isGeckoOnAndroid())
         {
           return;
         }
         this.$emit('file-selection-started');
         // a hack, don't know a way to detect if the user canceled the file dialog.
-        setTimeout(() => {
-          if(!this.fileChangedCalled) {
-            this.fileSelectionEnded();
-          }
-        }, 7000);
+        // setTimeout(() => {
+        //   if(!this.fileChangedCalled) {
+        //     this.fileSelectionEnded();
+        //   }
+        // }, 7000);
       },
       fileSelectionEnded() {
-
         if(UserAgentInfo.instance.isGeckoOnAndroid())
         {
           return;
@@ -195,6 +197,21 @@
 
         this.$emit('file-selection-ended');
         this.fileChangedCalled = false;
+      },
+      inputFocus() {
+        if(UserAgentInfo.instance.isGeckoOnAndroid())
+        {
+          return;
+        }
+        if(this.inputClicked) {
+          this.inputClicked = false;
+          setTimeout(() => {
+            if(!this.fileChangedCalled) {
+              this.fileSelectionEnded();
+            }
+          }, 4000);
+
+        }
       }
     },
     beforeDestroy() {
@@ -203,7 +220,6 @@
       {
         return;
       }
-
       this.$emit('file-selection-ended');
     }
   }

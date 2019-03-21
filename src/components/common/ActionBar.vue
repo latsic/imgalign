@@ -456,6 +456,8 @@ export default {
     setCurrentLoadingTime(value) {
       this.$store.commit('worker/currentLoadingTime', value);
     }
+
+
   }
 }
 </script>
