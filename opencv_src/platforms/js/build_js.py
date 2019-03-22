@@ -160,6 +160,8 @@ class Builder:
             flags += "-s BINARYEN_TRAP_MODE='clamp' "
         if self.options.allow_memory_growth:
             flags += "-s ALLOW_MEMORY_GROWTH=1 "
+        if self.options.closurec1:
+            flags += "--closure 1 -s MODULARIZE=1 "
         return flags
 
     def config(self):
@@ -199,6 +201,7 @@ if __name__ == "__main__":
     parser.add_argument('--enable_exception', action="store_true", help="Enable exception handling")
     parser.add_argument('--binaryen_trap_mode_clamp', action="store_true", help="Enable trap mode clamp")
     parser.add_argument('--allow_memory_growth', action="store_true", help="Allow memory growth")
+    parser.add_argument('--closurec1', action="store_true", help="closure compiler")
 
     args = parser.parse_args()
 
