@@ -21,7 +21,9 @@ export const paramGroups = Object.freeze({
   multiStitcherImage:       { id: 1019, name: 'Image'},
   multiStitcherStitchOrder: { id: 1020, name: 'Experimental'},
   multiStitcherMemory:      { id: 1021, name: 'Memory'},
-  multiStitcherConfidence:  { id: 1022, name: 'Confidence'}
+  multiStitcherConfidence:  { id: 1022, name: 'Confidence'},
+  main:                     { id: 1023, name: 'Main'},
+  opencv:                   { id: 1024, name: 'OpenCV'}
 });
 
 const detTypeId = 200;
@@ -37,11 +39,16 @@ const bundleAdjustTypeId = 583;
 const blendTypeId = 591;
 const seamFinderTypeId = 577;
 const waveCorrectionTypeId = 610;
+const openCvTypeId = 810;
 
 export const paramTypes = Object.freeze({
 
-  imageCap: { id: 10, name: 'Image cap for detector', groupId: paramGroups.other.id },
-  imageCapInput: { id: 11, name: 'Input images image cap', groupId: paramGroups.other.id },
+  openCvType: { id: openCvTypeId, name: 'OpenCV type', groupId: paramGroups.opencv.id },
+  openCvType_fast: { id: 811, name: 'Fast', groupId: openCvTypeId },
+  openCvType_small: { id: 812, name: 'Small', groupId: openCvTypeId },
+
+  imageCap: { id: 10, name: 'Image cap for detector', groupId: paramGroups.main.id },
+  imageCapInput: { id: 11, name: 'Input images image cap', groupId: paramGroups.main.id },
   
   sift_featuresN: { id: 20, name: 'Max feature count', groupId: paramGroups.sift.id },
   sift_octaveLayersN: { id: 21, name: 'Number of octave layers', groupId: paramGroups.sift.id },
@@ -207,7 +214,6 @@ export const paramTypes = Object.freeze({
   multiStitch_limitInputView: { id: 597, name: 'Max input view size', groupId: paramGroups.multiStitcherMemory.id },
   multiStitch_limitLiveStitchingPreview: { id: 599, name: 'Max temp result size', groupId: paramGroups.multiStitcherMemory.id },
   multiStitch_liveUpdateCycle: { id: 601, name: 'Live update cycle', groupId: paramGroups.multiStitcherMemory.id }
-  
 });
 
 export const paramTexts = Object.freeze([

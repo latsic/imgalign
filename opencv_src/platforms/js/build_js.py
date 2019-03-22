@@ -162,6 +162,10 @@ class Builder:
             flags += "-s ALLOW_MEMORY_GROWTH=1 "
         if self.options.closurec1:
             flags += "--closure 1 -s MODULARIZE=1 "
+        if self.options.Oz:
+            flags += "-Oz "
+        if self.options.O3:
+            flags += "-O3 "
         return flags
 
     def config(self):
@@ -202,6 +206,8 @@ if __name__ == "__main__":
     parser.add_argument('--binaryen_trap_mode_clamp', action="store_true", help="Enable trap mode clamp")
     parser.add_argument('--allow_memory_growth', action="store_true", help="Allow memory growth")
     parser.add_argument('--closurec1', action="store_true", help="closure compiler")
+    parser.add_argument('--O3', action="store_true", help="optimize for speed")
+    parser.add_argument('--Oz', action="store_true", help="optimize for size")
 
     args = parser.parse_args()
 

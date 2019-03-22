@@ -458,7 +458,15 @@ export class Settings {
         defaultValue: 5,
         value: 5,
         range: { min: 1, max: 20 }
+      },
+
+      { id: paramTypes.openCvType.id,
+        type: valueTypes.discrete,
+        value: paramTypes.openCvType_small.id,
+        defaultValue: paramTypes.openCvType_small.id,
+        values: this.getDiscreteParams(paramTypes.openCvType.id)
       }
+
     ];
   }
 

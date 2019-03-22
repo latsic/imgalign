@@ -24,18 +24,6 @@
         :style="{'margin-top': '0', 'margin-bottom': '0'}"
         @change="value => $emit('changed', { id: param.id, value })"
       />
-      <v-slider
-        v-if="param.type == valueTypes.rangeSquareRoot"  
-        always-dirty
-        :value="sliderValueSqrt(param.value)"
-        :hint="`${paramName(param.id)} ${param.value} px`"
-        persistent-hint
-        :max="sliderValueSqrt(param.range.max)"
-        :min="sliderValueSqrt(param.range.min)"
-        :step="20"
-        :style="{'margin-top': '0', 'margin-bottom': '0'}"
-        @change="value => $emit('changed', { id: param.id, value: value * value })"
-      />
       <v-switch
         v-if="param.type == valueTypes.bool"
         :value="switchValue(param)"
@@ -73,9 +61,6 @@ export default {
     },
     switchValue(param) {
       return param.value > 0 ? true : false;
-    },
-    sliderValueSqrt(value) {
-      return Math.round(Math.sqrt(value));
     }
   }
 }

@@ -17,6 +17,7 @@ namespace imgalign
 
       { eImageCap, { 300000.0f, "imageCap" } },
       { eImageCapInput, { 350000.0f, "imageCapInput" } },
+      { eOpenCvType, { 812.0f, "OpenCvType" } },
 
       { eSift_featuresN, { 0.0f, "Sift_featuresN" } },
       { eSift_octaveLayersN, { 3.0f, "Sift_octaveLayersN" } },

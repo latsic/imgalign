@@ -22,19 +22,32 @@
 
     </template>
 
-    <app-basic-settings
-      :params="params(groupKeyBasicSettings)"
-      @change="paramChanged"
-    />
-    <app-view-spacer
-      :show-line="true"
-      :mtop="'1.5rem'"
+    <app-main-settings
+      :params="params(groupKeyMainSettings)"
+      :paramsOpenCv="params(groupKeyOpenCvSettings)"
+      :openCvReady="$store.getters['worker/ready']"
+      :openCvLoading="$store.getters['worker/busyLoad']"
+      @changed="paramChanged"
+      @load-opencv="$store.dispatch('worker/reload')"
     />
 
     <app-view-spacer
       :show-line="false"
     />
-    
+
+    <app-view-title
+      title="Feature detection/matching"
+    />
+
+    <app-basic-settings
+      :params="params(groupKeyBasicSettings)"
+      @change="paramChanged"
+    />
+
+    <app-view-spacer
+      :show-line="false"
+    />
+
     <app-view-title
       title="Advanced detector/descriptor"
     />
@@ -68,24 +81,29 @@
     <app-view-spacer
       :show-line="false"
     />
-    <app-view-title
-      title="Image and other settings"
-    />
-    <app-other-settings
-      :params="params(groupKeyOtherSettings)"
-      @changed="paramChanged"
-    />
 
-    <app-view-spacer
-      :show-line="false"
-    />
-    <app-view-title
+     <app-view-title
       title="Advanced match filter"
     />
     <app-match-filter
       :params="params(groupKeyMatchFilter)"
       @changed="paramChanged"
     />
+    
+
+    <app-view-spacer
+      :show-line="false"
+    />
+
+    <app-view-title
+      title="Matcher selection settings"
+    />
+    <app-other-settings
+      :params="params(groupKeyOtherSettings)"
+      @changed="paramChanged"
+    />
+
+   
 
     <app-view-spacer
       :show-line="false"
@@ -112,6 +130,7 @@ import DetectorSettings from '@/components/settings/DetectorSettings';
 import MatchFilter from '@/components/settings/MatchFilter';
 import OtherSettings from '@/components/settings/OtherSettings';
 import LogSettings from '@/components/settings/LogSettings';
+import MainSettings from '@/components/settings/MainSettings';
 //import StitchSettings from '@/components/settings/StitchSettings';
 import { paramTypes, paramGroups } from '@/models/constants/params';
 
@@ -125,7 +144,7 @@ export default {
     'AppMatchFilter': MatchFilter,
     'AppOtherSettings': OtherSettings,
     'AppLogSettings': LogSettings,
-    //'AppStitchSettings': StitchSettings
+    'AppMainSettings': MainSettings
   },
   data() {
     return {
@@ -135,6 +154,8 @@ export default {
       groupKeyMatchFilter: 'matchFilter',
       groupKeyLogSettings: 'logging',
       groupKeyStitchSettings: 'stitching',
+      groupKeyMainSettings: 'main',
+      groupKeyOpenCvSettings: 'opencv',
       activeTabIndexDetector: 0
     }
   },

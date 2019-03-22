@@ -22,3 +22,5 @@ bin/
 *.log
 *.tlog
 build
+build_O3
+build_Oz

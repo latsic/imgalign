@@ -122,7 +122,14 @@ const actions = {
     context.commit('_init', context);
     context.commit('currentActionInfo', 'Loading opencv');
     try {
-      await WorkerClient.instance.loadAsync();
+
+      const opencvType = context.rootGetters['settings/param'](paramTypes.openCvType.id);
+      let workerFileName = 'opencv_3_4_custom_Oz.js'
+      if(opencvType == paramTypes.openCvType_fast.id) {
+        workerFileName = 'opencv_3_4_custom_O3.js';
+      }
+
+      await WorkerClient.instance.loadAsync(workerFileName);
       context.commit('_ready', true);
     }
     catch(error) {
@@ -136,6 +143,7 @@ const actions = {
     }
   },
   async reload(context) {
+
     WorkerClient.instance.reInitWorker();
     context.commit('error', null);
     context.commit('_busyCompute', false);

@@ -13,6 +13,7 @@ namespace imgalign
     
     eImageCap = 10,
     eImageCapInput = 11,
+    eOpenCvType = 810,
     
     eSift_featuresN = 20,
     eSift_octaveLayersN = 21,
@@ -182,7 +183,9 @@ namespace imgalign
     eMultiStitch_disposeInputImages = 598,
     eMultiStitch_limitLiveStitchingPreview = 599,
     eMultiStitch_preserveAlphaChannelValue = 600,
-    eMultiStitch_liveUpdateCycle = 601
+    eMultiStitch_liveUpdateCycle = 601,
+
+
   };
 
   class Settings {

@@ -86,8 +86,13 @@ export class WorkerClient {
     return await this.postWorkerMessageAsync({ msg: msgMultiStitchReset });
   }
 
-  async loadAsync() {
-    return await this.postWorkerMessageAsync({ msg: msgLoad });
+  async loadAsync(workerFileName) {
+    return await this.postWorkerMessageAsync({
+      msg: msgLoad,
+      payload: {
+        workerFileName
+      }
+    });
   }
 
   async _initAsync(fixedImage, movingImage) {
