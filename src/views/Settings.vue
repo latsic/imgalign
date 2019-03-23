@@ -24,11 +24,23 @@
 
     <app-main-settings
       :params="params(groupKeyMainSettings)"
-      :paramsOpenCv="params(groupKeyOpenCvSettings)"
       :openCvReady="$store.getters['worker/ready']"
       :openCvLoading="$store.getters['worker/busyLoad']"
       @changed="paramChanged"
       @load-opencv="$store.dispatch('worker/reload')"
+    />
+
+    <app-view-spacer
+      :show-line="false"
+    />
+
+    <app-view-title
+      title="Images input"
+    />
+
+    <app-image-input-settings
+      :params="params(groupKeyImageInputSettings)"
+      @changed="paramChanged"
     />
 
     <app-view-spacer
@@ -56,8 +68,11 @@
       :value="$store.getters['settings/activeTabIndexDetector'] || 0"
       
       light
-      color="warning"
+      height="30px"
+      color="#eeeeee"
+      slider-color="secondary"
       @change="index => $store.dispatch('settings/activeTabIndexDetector', index)"
+
     >
       <v-tab
         v-for="(groupKey, index) of groupKeysDetectorSettings"
@@ -103,8 +118,6 @@
       @changed="paramChanged"
     />
 
-   
-
     <app-view-spacer
       :show-line="false"
     />
@@ -131,7 +144,7 @@ import MatchFilter from '@/components/settings/MatchFilter';
 import OtherSettings from '@/components/settings/OtherSettings';
 import LogSettings from '@/components/settings/LogSettings';
 import MainSettings from '@/components/settings/MainSettings';
-//import StitchSettings from '@/components/settings/StitchSettings';
+import ImageInputSettings from '@/components/settings/ImageInputSettings';
 import { paramTypes, paramGroups } from '@/models/constants/params';
 
 export default {
@@ -144,7 +157,8 @@ export default {
     'AppMatchFilter': MatchFilter,
     'AppOtherSettings': OtherSettings,
     'AppLogSettings': LogSettings,
-    'AppMainSettings': MainSettings
+    'AppMainSettings': MainSettings,
+    'AppImageInputSettings': ImageInputSettings
   },
   data() {
     return {
@@ -155,7 +169,7 @@ export default {
       groupKeyLogSettings: 'logging',
       groupKeyStitchSettings: 'stitching',
       groupKeyMainSettings: 'main',
-      groupKeyOpenCvSettings: 'opencv',
+      groupKeyImageInputSettings: 'imageInput',
       activeTabIndexDetector: 0
     }
   },

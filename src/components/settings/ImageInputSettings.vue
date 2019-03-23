@@ -12,14 +12,6 @@
       sm6
       pa-2
     >
-      <app-select-action
-        v-if="param.type == valueTypes.discrete"
-        :param="param"
-        :action-disabled="openCvLoading"
-        @select-change="value => $emit('changed', value)"
-        @action-click="$emit('load-opencv')"
-      />
-
       <v-slider
         v-if="param.type == valueTypes.rangeSquareRoot"  
         always-dirty
@@ -39,23 +31,12 @@
 <script>
 
 import { ParamUtils, valueTypes } from '@/models/constants/params';
-import SelectAction from '@/components/settings/SelectAction';
 
 export default {
-  components: {
-    'AppSelectAction': SelectAction
-  },
+  
   props: {
     params: {
       type: Array,
-      required: true
-    },
-    openCvReady: {
-      type: Boolean,
-      required: true
-    },
-    openCvLoading: {
-      type: Boolean,
       required: true
     }
   },
@@ -67,9 +48,6 @@ export default {
   methods: {
     paramName(id) {
       return ParamUtils.getParamName(id);
-    },
-    paramText(id) {
-      return ParamUtils.getParamText(id);
     },
     sliderValueSqrt(value) {
       return Math.round(Math.sqrt(value));

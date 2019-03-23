@@ -10,7 +10,6 @@
       :key="param.id"
       xs12
       sm6
-      pa-2
     >
       <v-switch
         v-if="param.type == valueTypes.bool"

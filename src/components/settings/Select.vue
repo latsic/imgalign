@@ -38,7 +38,7 @@
         v-else-if="index === paramValue().length - 1"
         class="caption"
       >
-        &nbsp;, ( + {{ paramValue().length - 2 }}  )
+        &nbsp;, ( + {{ paramValue().length - 2 }} other )
       </span>
     </template>
   </v-select>

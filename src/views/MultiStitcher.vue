@@ -72,6 +72,7 @@
           :value="$store.getters['settings/activeTabIndexMultiStitcher'] || 0"
           height="30px"
           color="#eeeeee"
+          slider-color="secondary"
           @change="index => $store.dispatch('settings/activeTabIndexMultiStitcher', index)"
         >
           <v-tab

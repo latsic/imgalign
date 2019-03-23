@@ -16,7 +16,7 @@
         v-if="param.type == valueTypes.range"  
         always-dirty
         :value="param.value"
-        :hint="`${paramName(param.id)} ${param.value} px`"
+        :hint="`${paramName(param.id)}: ${param.value} px`"
         persistent-hint
         :max="param.range.max"
         :min="param.range.min"

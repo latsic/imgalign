@@ -23,7 +23,7 @@ export const paramGroups = Object.freeze({
   multiStitcherMemory:      { id: 1021, name: 'Memory'},
   multiStitcherConfidence:  { id: 1022, name: 'Confidence'},
   main:                     { id: 1023, name: 'Main'},
-  opencv:                   { id: 1024, name: 'OpenCV'}
+  imageInput:               { id: 1024, name: 'Image Input'}
 });
 
 const detTypeId = 200;
@@ -43,13 +43,13 @@ const openCvTypeId = 810;
 
 export const paramTypes = Object.freeze({
 
-  openCvType: { id: openCvTypeId, name: 'OpenCV type', groupId: paramGroups.opencv.id },
+  imageCapInput: { id: 11, name: 'Input images image cap', groupId: paramGroups.imageInput.id },
+  imageCap: { id: 10, name: 'Image cap for detector', groupId: paramGroups.imageInput.id },
+  
+  openCvType: { id: openCvTypeId, name: 'OpenCV type', groupId: paramGroups.main.id },
   openCvType_fast: { id: 811, name: 'Fast', groupId: openCvTypeId },
   openCvType_small: { id: 812, name: 'Small', groupId: openCvTypeId },
 
-  imageCap: { id: 10, name: 'Image cap for detector', groupId: paramGroups.main.id },
-  imageCapInput: { id: 11, name: 'Input images image cap', groupId: paramGroups.main.id },
-  
   sift_featuresN: { id: 20, name: 'Max feature count', groupId: paramGroups.sift.id },
   sift_octaveLayersN: { id: 21, name: 'Number of octave layers', groupId: paramGroups.sift.id },
   sift_contrastThresh: { id: 22, name: 'Contrast threshold', groupId: paramGroups.sift.id },
