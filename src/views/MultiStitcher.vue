@@ -149,6 +149,7 @@
 
       <app-multi-input-images
         :imageUrlArray="$store.getters['multiInput/imageDataUrlsArray']"
+        :imageKeyArray="$store.getters['multiInput/imageDataKeyArray']"
         :fieldOfViewArray="$store.getters['multiInput/imageFieldOfViewArray']"
         :indicesSelected="$store.getters['multiInput/indicesSelected']"
         @imageClicked="index => $store.commit('multiInput/imageClicked', index)"

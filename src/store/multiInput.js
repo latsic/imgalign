@@ -9,6 +9,7 @@ import defaultImage3 from '@/assets/ms3.jpg';
 
 const state = {
   imageDataArray: [],
+  imageDataKeysArray: [],
   imageDataUrlsArray: [],
   imageFileArray: [],
   imageFieldOfViewArray: [],
@@ -22,6 +23,9 @@ const state = {
 const getters = {
   imageDataArray(state) {
     return state.imageDataArray;
+  },
+  imageDataKeyArray(state) {
+    return state.imageDataKeysArray;
   },
   imageDataUrlsArray(state) {
     return state.imageDataUrlsArray;
@@ -72,6 +76,7 @@ const mutations = {
   },
   imageData(state, imageData) {
     state.imageDataArray.push(imageData);
+    state.imageDataKeysArray.push(Math.random());
   },
   _imageDataUrl(state, imageDataUrl) {
     state.imageDataUrlsArray.push(imageDataUrl);
@@ -112,18 +117,21 @@ const mutations = {
   },
   swap(state, { indexFrom, indexTo} ) {
     const tempImageData = state.imageDataArray[indexTo];
+    const tempKeyData = state.imageDataKeysArray[indexTo];
     const tempImageDataUrl = state.imageDataUrlsArray[indexTo];
     const tempImageFile = state.imageFileArray[indexTo];
     const tempFieldOfView = state.imageFieldOfViewArray[indexTo];
     const tempFieldOfViewInitial = state.imageFieldOfViewInitialArray[indexTo];
 
     state.imageDataArray.splice(indexTo, 1, state.imageDataArray[indexFrom]);
+    state.imageDataKeysArray.splice(indexTo, 1, state.imageDataKeysArray[indexFrom]);
     state.imageDataUrlsArray.splice(indexTo, 1, state.imageDataUrlsArray[indexFrom]);
     state.imageFileArray.splice(indexTo, 1, state.imageFileArray[indexFrom]);
     state.imageFieldOfViewArray.splice(indexTo, 1, state.imageFieldOfViewArray[indexFrom]);
     state.imageFieldOfViewInitialArray.splice(indexTo, 1, state.imageFieldOfViewInitialArray[indexFrom]);
 
     state.imageDataArray.splice(indexFrom, 1, tempImageData);
+    state.imageDataKeysArray.splice(indexFrom, 1, tempKeyData);
     state.imageDataUrlsArray.splice(indexFrom, 1, tempImageDataUrl);
     state.imageFileArray.splice(indexFrom, 1, tempImageFile);
     state.imageFieldOfViewArray.splice(indexFrom, 1, tempFieldOfView);
@@ -132,6 +140,7 @@ const mutations = {
   removeSelected(state) {
 
     state.imageDataArray = state.imageDataArray.filter((_, index) => !state.indicesSelected.some(val => val == index));
+    state.imageDataKeysArray = state.imageDataKeysArray.filter((_, index) => !state.indicesSelected.some(val => val == index));
     state.imageDataUrlsArray = state.imageDataUrlsArray.filter((_, index) => !state.indicesSelected.some(val => val == index));
     state.imageFileArray = state.imageFileArray.filter((_, index) => !state.indicesSelected.some(val => val == index));
     state.imageFieldOfViewArray = state.imageFieldOfViewArray.filter((_, index) => !state.indicesSelected.some(val => val == index));
@@ -141,6 +150,7 @@ const mutations = {
   },
   removeAll(state) {
     state.imageDataArray = [];
+    state.imageDataKeysArray = [];
     state.imageDataUrlsArray = [];
     state.imageFileArray = [];
     state.imageFieldOfViewArray = [];

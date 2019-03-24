@@ -154,9 +154,7 @@
 <script>
 
 import Spinner from '@/components/gui/Spinner';
-import LogoSvg from '@/assets/logo.svg';
-
-import FingerPrint from '@/assets/fingerprint.svg';
+import LogoSvg from '@/assets/logo_150x150.png';
 
 export default {
   components: {
@@ -282,9 +280,6 @@ export default {
     },
     logo() {
       return LogoSvg;
-    },
-    fingerPrint() {
-      return FingerPrint;
     }
   },
   methods: {
