@@ -5,6 +5,7 @@
     :style="{
       'width': '100%',
       'border': imageUrlArray.length > 0 ? '1px solid #00000055' : 'none',
+      'background-color': imageUrlArray.length > 0 ? '#f6f6f6' : '#ffffff',
       'padding': '0.1rem 0.1rem',
       'margin-top': '1rem',
     }"
@@ -44,7 +45,8 @@
       >
         <div
           :style="{
-            padding: '0.3rem'
+            padding: '0.3rem',
+            'background-color': '#ffffff'
           }"
         > 
           <div
