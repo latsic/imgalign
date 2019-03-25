@@ -1,88 +1,95 @@
 <template>
 
-  <!-- <transition-group -->
+  
   <div
-    tag="div"
-    :name="doTransition ? '' : ''"
-
     :style="{
-      display: 'grid',
-      'grid-gap': '0px',
-      'grid-template-columns': `repeat(auto-fill, ${gridCellWidth}%)`,
-      'grid-template-rows': 'auto',
-      'margin': '0 auto',
+      'width': '100%',
+      'border': imageUrlArray.length > 0 ? '1px solid #00000055' : 'none',
+      'padding': '0.1rem 0.1rem',
       'margin-top': '1rem',
-      'width': gridWidth + '%',
     }"
   >
-    
-    <div
-      class="list-item"
-      v-for="(imageUrl, index) of imageUrlArray"
-      :key="imageKeyArray[index]"
-    
+  
+    <transition-group
+      tag="div"
+      :name="'list'"
       :style="{
-        outline: $store.getters['multiInput/imageDataValid'](index)
-          ? `${borderLineWidth(index)} solid ${borderColor(index)}`
-          : null,
-        margin: '3px',
-        display: 'flex',
-        'align-items': 'center'
+        display: 'grid',
+        'grid-template-columns': `repeat(auto-fill, ${gridCellWidth2}%)`,
+        'grid-template-rows': 'auto',
+        'margin': '0 auto',
+        width: '100%'
       }"
-      @click.stop="imageClicked(index)"
-      @drop.prevent="e => dragDrop(e, index)"
-      @dragover.prevent="() => {}"
-      @dragend.prevent="() => {}"
-      @dragenter.prevent="() => {}"
     >
+      
       <div
+        class="list-item"
+        v-for="(imageUrl, index) of imageUrlArray"
+        :key="imageKeyArray[index]"
+      
         :style="{
-          padding: '0.3rem',
+          outline: $store.getters['multiInput/imageDataValid'](index)
+            ? `${borderLineWidth(index)} solid ${borderColor(index)}`
+            : null,
+          margin: '3px',
+          display: 'flex',
+          'align-items': 'center',
+          'justify-content': 'center'
         }"
-      > 
+        @click.stop="imageClicked(index)"
+        @drop.prevent="e => dragDrop(e, index)"
+        @dragover.prevent="() => {}"
+        @dragend.prevent="() => {}"
+        @dragenter.prevent="() => {}"
+      >
         <div
           :style="{
-            position: 'relative'
+            padding: '0.3rem'
           }"
-          >    
-          <img
-            :style="{
-              display: 'block',
-              'max-width': '100%',
-              'max-height': '100%',
-              'width': 'auto',
-              'height': 'auto'
-            }"
-            class="transparent-pattern"
-            :id="index + ''"
-            :ref="index + ''"
-            :src="imageUrl" 
-            @dragstart="e => dragStart(e, index)"
-            @dragover.prevent="() => {}"
-            @dragend.prevent="() => {}"
-          >
-        
+        > 
           <div
             :style="{
-              position: 'absolute',
-              bottom: '0px',
-              right: '0px',
-              color: $vuetify.theme.primary,
-              transform: 'translateY(0%) translateX(0%)',
-              'background-color': $vuetify.theme.accent,
-              padding: '0.1rem 0.3rem',
-              margin: '0 0.2rem 0.2rem 0'
+              position: 'relative'
             }"
-          >
-            <strong>{{ index }}</strong>
-          </div>
-        </div> 
+            >    
+            <img
+              :style="{
+                display: 'block',
+                'max-width': '100%',
+                'max-height': '100%',
+                'width': 'auto',
+                'height': 'auto'
+              }"
+              class="transparent-pattern"
+              :id="index + ''"
+              :ref="index + ''"
+              :src="imageUrl" 
+              @dragstart="e => dragStart(e, index)"
+              @dragover.prevent="() => {}"
+              @dragend.prevent="() => {}"
+            >
+          
+            <div
+              :style="{
+                position: 'absolute',
+                bottom: '0px',
+                right: '0px',
+                color: $vuetify.theme.primary,
+                transform: 'translateY(0%) translateX(0%)',
+                'background-color': $vuetify.theme.accent,
+                padding: '0.1rem 0.3rem',
+                margin: '0 0.2rem 0.2rem 0'
+              }"
+            >
+              <strong>{{ index }}</strong>
+            </div>
+          </div> 
+        </div>
+          
+      
       </div>
-        
-    
-    </div>
+    </transition-group>
   </div>
-  <!-- </transition-group> -->
 </template>
 
 <script>
@@ -112,8 +119,18 @@ export default {
     }
   },
   computed: {
+    gridCellWidth2() {
+      if(this.$vuetify.breakpoint.name == 'xs') {
+        return 50;
+      }
+      else if(this.$vuetify.breakpoint.name == 'sm') {
+        return 33.3333333;
+      }
+      else {
+        return 25;
+      }
+    },
     gridCellWidth() {
-
       if(this.imageUrlArray.length <= 1) {
         return 100;
       }
@@ -130,7 +147,6 @@ export default {
     gridWidth() {
       
       let w;
-
       if(this.$vuetify.breakpoint.name == 'xs') {
         w = this.imageUrlArray.length * 50;
       }
@@ -140,7 +156,7 @@ export default {
       else {
         w = this.imageUrlArray.length * 25;
       }
-      // console.log("gridW: ", w);
+      console.log("gridW: ", w);
       return w >= 100 ? 100 : w;
     },
     doTransition() {
@@ -161,7 +177,7 @@ export default {
     },
     borderColor(index) {
       return this.indicesSelected.some(selectedIndex => selectedIndex == index)
-        ? this.$vuetify.theme.error
+        ? this.$vuetify.theme.primary
         : this.$vuetify.theme.secondary;
     },
     borderLineWidth(index) {
@@ -178,47 +194,12 @@ export default {
       if(!isNaN(indexFrom)) {
         this.$emit('swap', {indexFrom, indexTo: index });
       }
-    },
-    gridCellWidth2() {
-
-      if(this.imageUrlArray.length <= 1) {
-        return 100;
-      }
-      else if(this.imageUrlArray.length == 2 || this.$vuetify.breakpoint.name == 'xs') {
-        return 50;
-      }
-      else if(this.imageUrlArray.length == 3 || this.$vuetify.breakpoint.name == 'sm') {
-        return 33.333333;
-      }
-      else {
-        return 25;
-      }
-    },
-    gridWidth2() {
-      
-      let w;
-
-      if(this.$vuetify.breakpoint.name == 'xs') {
-        w = this.imageUrlArray.length * 50;
-      }
-      else if(this.$vuetify.breakpoint.name == 'sm') {
-        w = this.imageUrlArray.length * 33.3333333;
-      }
-      else {
-        w = this.imageUrlArray.length * 25;
-      }
-      // console.log("gridW: ", w);
-      return w >= 100 ? 100 : w;
-    },
+    }
   }
 }
 </script>
 
 <style scoped>
-
-.list-item {
-  
-}
 .list-enter{
   opacity: 0;
 }
@@ -233,9 +214,6 @@ export default {
   visibility: hidden;
 }
 .list-move {
-  transition: all 3s;
+  transition: all 1s;
 }
-
-
-
 </style>

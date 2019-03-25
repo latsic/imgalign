@@ -154,7 +154,7 @@
 <script>
 
 import Spinner from '@/components/gui/Spinner';
-import LogoSvg from '@/assets/logo_150x150.png';
+import LogoSvg from '@/assets/logo_200x200.png';
 
 export default {
   components: {
