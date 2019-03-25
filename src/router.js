@@ -15,7 +15,7 @@ export default new Router({
   base: process.env.BASE_URL,
   routes: [
     {
-      path: '/index.html', redirect: { name: 'matcher' }
+      path: '/index.html', redirect: { name: 'multistitcher' }
     },
     {
       path: '/', redirect: { name: 'info'}

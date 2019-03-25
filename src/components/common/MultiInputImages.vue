@@ -15,7 +15,7 @@
       :name="'list'"
       :style="{
         display: 'grid',
-        'grid-template-columns': `repeat(auto-fill, ${gridCellWidth2}%)`,
+        'grid-template-columns': `repeat(auto-fill, ${gridCellWidth}%)`,
         'grid-template-rows': 'auto',
         'margin': '0 auto',
         width: '100%'
@@ -112,14 +112,8 @@ export default {
       required: true
     }
   },
-  data() {
-    return {
-      currentGridWidth: this.gridWidth,
-      leaveOngoing: false
-    }
-  },
   computed: {
-    gridCellWidth2() {
+    gridCellWidth() {
       if(this.$vuetify.breakpoint.name == 'xs') {
         return 50;
       }
@@ -130,46 +124,19 @@ export default {
         return 25;
       }
     },
-    gridCellWidth() {
-      if(this.imageUrlArray.length <= 1) {
-        return 100;
-      }
-      else if(this.imageUrlArray.length == 2 || this.$vuetify.breakpoint.name == 'xs') {
-        return 50;
-      }
-      else if(this.imageUrlArray.length == 3 || this.$vuetify.breakpoint.name == 'sm') {
-        return 33.333333;
-      }
-      else {
-        return 25;
-      }
-    },
-    gridWidth() {
-      
-      let w;
-      if(this.$vuetify.breakpoint.name == 'xs') {
-        w = this.imageUrlArray.length * 50;
-      }
-      else if(this.$vuetify.breakpoint.name == 'sm') {
-        w = this.imageUrlArray.length * 33.3333333;
-      }
-      else {
-        w = this.imageUrlArray.length * 25;
-      }
-      console.log("gridW: ", w);
-      return w >= 100 ? 100 : w;
-    },
-    doTransition() {
-      if(this.$vuetify.breakpoint.name == 'xs') {
-        return this.imageUrlArray.length > 2 - 1
-      }
-      else if(this.$vuetify.breakpoint.name == 'sm') {
-        return this.imageUrlArray.length > 3 - 1
-      }
-      else {
-        return this.imageUrlArray.length > 4 - 1
-      }
-    }
+    // gridWidth() {
+    //   let w;
+    //   if(this.$vuetify.breakpoint.name == 'xs') {
+    //     w = this.imageUrlArray.length * 50;
+    //   }
+    //   else if(this.$vuetify.breakpoint.name == 'sm') {
+    //     w = this.imageUrlArray.length * 33.3333333;
+    //   }
+    //   else {
+    //     w = this.imageUrlArray.length * 25;
+    //   }
+    //   return w >= 100 ? 100 : w;
+    // }
   },
   methods: {
     imageClicked(index) {
@@ -204,7 +171,7 @@ export default {
   opacity: 0;
 }
 .list-enter-active{
-  transition: opacity 1s;
+  transition: opacity 0.7s;
 }
 .list-leave {
   visibility: hidden;
