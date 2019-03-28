@@ -1,97 +1,100 @@
 <template>
 
-  
-  <div
-    :style="{
-      'width': '100%',
-      'border': imageUrlArray.length > 0 ? '1px solid #00000055' : 'none',
-      'background-color': imageUrlArray.length > 0 ? '#f6f6f6' : '#ffffff',
-      'padding': '0.1rem 0.1rem',
-      'margin-top': '1rem',
-    }"
+  <transition
+    name="images-all"
   >
-  
-    <transition-group
-      tag="div"
-      :name="'list'"
+    <div
+      v-if="imageUrlArray.length > 0"
       :style="{
-        display: 'grid',
-        'grid-template-columns': `repeat(auto-fill, ${gridCellWidth}%)`,
-        'grid-template-rows': 'auto',
-        'margin': '0 auto',
-        width: '100%'
+        'width': '100%',
+        'border': '1px solid #00000055',
+        'background-color': '#f6f6f6',
+        'padding': '0.1rem 0.1rem',
+        'margin-top': '1rem',
       }"
     >
-      
-      <div
-        class="list-item"
-        v-for="(imageUrl, index) of imageUrlArray"
-        :key="imageKeyArray[index]"
-      
+    
+      <transition-group
+        tag="div"
+        :name="'images-list-items'"
         :style="{
-          outline: $store.getters['multiInput/imageDataValid'](index)
-            ? `${borderLineWidth(index)} solid ${borderColor(index)}`
-            : null,
-          margin: '3px',
-          display: 'flex',
-          'align-items': 'center',
-          'justify-content': 'center'
+          display: 'grid',
+          'grid-template-columns': `repeat(auto-fill, ${gridCellWidth}%)`,
+          'grid-template-rows': 'auto',
+          'margin': '0 auto',
+          width: '100%'
         }"
-        @click.stop="imageClicked(index)"
-        @drop.prevent="e => dragDrop(e, index)"
-        @dragover.prevent="() => {}"
-        @dragend.prevent="() => {}"
-        @dragenter.prevent="() => {}"
       >
+        
         <div
+          v-for="(imageUrl, index) of imageUrlArray"
+          :key="imageKeyArray[index]"
+        
           :style="{
-            padding: '0.3rem',
-            'background-color': '#ffffff'
+            outline: $store.getters['multiInput/imageDataValid'](index)
+              ? `${borderLineWidth(index)} solid ${borderColor(index)}`
+              : null,
+            margin: '3px',
+            display: 'flex',
+            'align-items': 'center',
+            'justify-content': 'center'
           }"
-        > 
+          @click.stop="imageClicked(index)"
+          @drop.prevent="e => dragDrop(e, index)"
+          @dragover.prevent="() => {}"
+          @dragend.prevent="() => {}"
+          @dragenter.prevent="() => {}"
+        >
           <div
             :style="{
-              position: 'relative'
+              padding: '0.3rem',
+              'background-color': '#ffffff'
             }"
-            >    
-            <img
-              :style="{
-                display: 'block',
-                'max-width': '100%',
-                'max-height': '100%',
-                'width': 'auto',
-                'height': 'auto'
-              }"
-              class="transparent-pattern"
-              :id="index + ''"
-              :ref="index + ''"
-              :src="imageUrl" 
-              @dragstart="e => dragStart(e, index)"
-              @dragover.prevent="() => {}"
-              @dragend.prevent="() => {}"
-            >
-          
+          > 
             <div
               :style="{
-                position: 'absolute',
-                bottom: '0px',
-                right: '0px',
-                color: $vuetify.theme.primary,
-                transform: 'translateY(0%) translateX(0%)',
-                'background-color': $vuetify.theme.accent,
-                padding: '0.1rem 0.3rem',
-                margin: '0 0.2rem 0.2rem 0'
+                position: 'relative'
               }"
-            >
-              <strong>{{ index }}</strong>
-            </div>
-          </div> 
+              >    
+              <img
+                :style="{
+                  display: 'block',
+                  'max-width': '100%',
+                  'max-height': '100%',
+                  'width': 'auto',
+                  'height': 'auto'
+                }"
+                class="transparent-pattern"
+                :id="index + ''"
+                :ref="index + ''"
+                :src="imageUrl" 
+                @dragstart="e => dragStart(e, index)"
+                @dragover.prevent="() => {}"
+                @dragend.prevent="() => {}"
+              >
+            
+              <div
+                :style="{
+                  position: 'absolute',
+                  bottom: '0px',
+                  right: '0px',
+                  color: $vuetify.theme.primary,
+                  transform: 'translateY(0%) translateX(0%)',
+                  'background-color': $vuetify.theme.accent,
+                  padding: '0.1rem 0.3rem',
+                  margin: '0 0.2rem 0.2rem 0'
+                }"
+              >
+                <strong>{{ index }}</strong>
+              </div>
+            </div> 
+          </div>
+            
+        
         </div>
-          
-      
-      </div>
-    </transition-group>
-  </div>
+      </transition-group>
+    </div>
+    </transition>
 </template>
 
 <script>
@@ -146,7 +149,7 @@ export default {
     },
     borderColor(index) {
       return this.indicesSelected.some(selectedIndex => selectedIndex == index)
-        ? this.$vuetify.theme.primary
+        ? this.$vuetify.theme.error
         : this.$vuetify.theme.secondary;
     },
     borderLineWidth(index) {
@@ -169,20 +172,31 @@ export default {
 </script>
 
 <style scoped>
-.list-enter{
-  opacity: 0;
-}
-.list-enter-active{
-  transition: opacity 0.7s;
-}
-.list-leave {
-  visibility: hidden;
-}
-.list-leave-active {
-  position: absolute;
-  visibility: hidden;
-}
-.list-move {
-  transition: all 1s;
-}
+
+  .images-list-items-enter{
+    opacity: 0;
+  }
+  .images-list-items-active{
+    transition: opacity 0.7s;
+  }
+  .images-list-items-leave {
+    visibility: hidden;
+  }
+  .images-list-items-leave-active {
+    position: absolute;
+    visibility: hidden;
+  }
+  .images-list-items-move {
+    transition: all 1s;
+  }
+
+  .images-all-leave-active,
+  .images-all-enter-active {
+    transition: opacity 1s;
+  }
+  .images-all-leave-to,
+  .images-all-enter {
+    opacity: 0;
+  }
+
 </style>
